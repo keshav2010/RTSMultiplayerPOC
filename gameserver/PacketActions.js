@@ -11,15 +11,17 @@
 const Player = require("./Player");
 
 function PlayerInitPacketAction(packetType, socket, io, stateManager){
+    console.log(`Player ${socket.id} just joined and a packet is scheduled for it.`)
     stateManager.clientInitUpdates.push({
         type: packetType,
         socket,
         players: [...stateManager.SocketToPlayerData.values()],
-        readyPlayers: [...stateManager.readyPlayers.values()]
+        readyPlayers: [...stateManager.ReadyPlayers.values()]
     })
 }
 
 function PlayerJoinedPacketAction(packetType, socket, io, stateManager){
+    console.log(`Player ${socket.id} Joined.`)
     if(stateManager.GameStarted){
         socket.disconnect();
         return;
@@ -33,7 +35,8 @@ function PlayerJoinedPacketAction(packetType, socket, io, stateManager){
 }
 
 function PlayerReadyPacketAction(packetType, socket, io, stateManager){
-    stateManager.ReadyPlayers.set(socketId, true);
+    console.log(`Player ${socket.id} Marked ready.`)
+    stateManager.ReadyPlayers.set(socket.id, true);
     if(stateManager.ReadyPlayers.size === stateManager.SocketToPlayerData.size)
         stateManager.GameStarted = true;
     
@@ -46,13 +49,14 @@ function PlayerReadyPacketAction(packetType, socket, io, stateManager){
 }
 
 function PlayerUnreadyPacketAction(packetType, socket, io, stateManager){
+    console.log(`Player ${socket.id} Marked Unready.`)
     if(stateManager.GameStarted || stateManager.ReadyPlayers.size === stateManager.SocketToPlayerData.size){
         stateManager.GameStarted = true;
         return;
     }
 
     //mark as unready and addTo cumulative update
-    stateManager.ReadyPlayers.delete(socketId);
+    stateManager.ReadyPlayers.delete(socket.id);
 
     //Whose not ready and game-start status
     stateManager.cumulativeUpdates.push({
@@ -63,9 +67,14 @@ function PlayerUnreadyPacketAction(packetType, socket, io, stateManager){
 }
 
 function PlayerLeftPacketAction(packetType, socket, io, stateManager){
+    console.log(`Player ${socket.id} Left/Disconnected.`)
+    
     stateManager.SocketToPlayerData.delete(socket.id);
     stateManager.ReadyPlayers.delete(socket.id);
 
+    if(stateManager.SocketToPlayerData.size === 0){
+        stateManager.GameStarted=false;
+    }
     //Who Left
     stateManager.cumulativeUpdates.push({
         type:packetType,

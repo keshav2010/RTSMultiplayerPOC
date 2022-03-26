@@ -1,8 +1,7 @@
 const {v4} = require('uuid');
 const uuidv = v4;
-co
- class Player
- {
+class Player
+{
     constructor(id, name){
         this.name = name || 'Keshav';
         this.id = id || `player_${uuidv()}`;
@@ -16,5 +15,5 @@ co
     removeSoldier(id){
         let isDeleted = this.SoldierMap.delete(id);
     }
- }
+}
  module.exports = Player;

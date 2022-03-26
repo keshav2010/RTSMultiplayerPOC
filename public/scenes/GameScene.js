@@ -17,12 +17,12 @@ var selectorDraw=false;
 export class GameScene extends BaseScene {
     constructor(){
         super(CONSTANT.SCENES.GAME)
-        this.playerReadyStatus = new Column(this, 100, 50);
-        this.stateManager = new ClientStateManager(socket);
+        //this.stateManager = new ClientStateManager(socket);
     }
 
     init()
     {
+        this.playerReadyStatus = new Column(this, 100, 50);
         socket = io.connect('ws://localhost:3000', {
             reconnection: false
         });
@@ -30,11 +30,9 @@ export class GameScene extends BaseScene {
         //Lasso Selection Code
         selectorGraphics = this.add.graphics();
         this.input.on('pointerdown', function(pointer){
-            console.log('mouse clicked at ', pointer);
             selectorDraw=true;
         })
         this.input.on('pointerup', function(pointer){
-            console.log('mouse released');
             selectorDraw=false;
             selectorGraphics.clear();
         })
@@ -61,7 +59,7 @@ export class GameScene extends BaseScene {
 
         socket.on('connect', ()=>{
             //register socket with socket manager
-            this.stateManager.socket = socket;
+            //this.stateManager.socket = socket;
         });
         socket.on('disconnect', reason => {
             console.log(reason);
@@ -82,13 +80,11 @@ export class GameScene extends BaseScene {
         this.load.image('playbutton', "../assets/playbutton.png");
         this.load.image('knight', "../assets/knight.png");
         this.load.image('spearman', "../assets/spearman.png");
-        console.log('about to make spearman');
     }
     create(){
         var t = this.add.text(0, 0, "Game Started");
 
         var ReadyButton = this.add.text(200, 220, "I'm Ready!").setInteractive().on('pointerdown', ()=>{
-            console.log("I'm Ready");
             buttonState=!buttonState;
             ReadyButton.setColor(buttonState ? 'green':'white');
             if(buttonState)

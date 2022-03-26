@@ -1,6 +1,5 @@
 
 //Establish Websocket to game server.
-const PacketType = require('../common/PacketType');
 import {GameScene} from './scenes/GameScene';
 import {MenuScene} from './scenes/MenuScene';
 import {ResultScene} from './scenes/ResultScene';

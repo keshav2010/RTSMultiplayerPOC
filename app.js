@@ -66,7 +66,8 @@ function processPendingUpdates()
 
         //how many ms elapsed
         timeUtilised = (new Date().getTime() - startTime);
-        updatePacket = pendingUpdates.getClientRequest();
+        if(timeUtilised < MAX_MS_PER_TICK)
+            updatePacket = pendingUpdates.getClientRequest();
     }
 
     //Broadcast delta-changes to all connected clients
@@ -74,7 +75,6 @@ function processPendingUpdates()
     gameState.broadcastClientInitUpdate();
 
     const newTickAfterMS = Math.abs(MAX_MS_PER_TICK - timeUtilised);
-    console.log('next run after ', newTickAfterMS)
 
     //reschedule
     setTimeout(processPendingUpdates, newTickAfterMS);
@@ -93,19 +93,16 @@ io.on('connection', socket=>{
     pendingUpdates.queueClientRequest(new Packet(PacketType.ByServer.PLAYER_INIT, socket, {}, PacketActions.PlayerInitPacketAction));
 
     socket.on('disconnect', (reason)=>{
-        pendingUpdates.queueClientRequest({
-            type: PacketType.ByServer.PLAYER_LEFT,
-            socket,
-            io
-        });
+        pendingUpdates.queueClientRequest(new Packet(PacketType.ByServer.PLAYER_LEFT, socket, {}, PacketActions.PlayerLeftPacketAction));
     })
-    
+
     socket.on(PacketType.ByClient.PLAYER_READY, (data)=>{
         pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.PLAYER_READY, socket, data, PacketActions.PlayerReadyPacketAction));
     });
     socket.on(PacketType.ByClient.PLAYER_UNREADY, (data)=>{
         pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.PLAYER_UNREADY, socket, data, PacketActions.PlayerUnreadyPacketAction));
     });
+
     socket.on(PacketType.ByClient.SOLDIER_CREATE_REQUESTED, (data)=>{
 
     });
