@@ -2,7 +2,6 @@ const PacketType = require('../common/PacketType');
 const Player = require('./Player');
 /**
  * Manages entire game state.
- * StateManager also spawns a new nodejs process which is responsible for running update over each.
  */
 class GameStateManager
 {
