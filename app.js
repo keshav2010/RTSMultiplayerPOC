@@ -98,8 +98,8 @@ io.on('connection', socket=>{
     Packet.io = io;
 
     //add packets to stack
-    pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.PLAYER_JOINED, socket, {}, PacketActions.PlayerJoinedPacketAction));
     pendingUpdates.queueClientRequest(new Packet(PacketType.ByServer.PLAYER_INIT, socket, {}, PacketActions.PlayerInitPacketAction));
+    pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.PLAYER_JOINED, socket, {}, PacketActions.PlayerJoinedPacketAction));
 
     socket.on('disconnect', (reason)=>{
         pendingUpdates.queueClientRequest(new Packet(PacketType.ByServer.PLAYER_LEFT, socket, {}, PacketActions.PlayerLeftPacketAction));
