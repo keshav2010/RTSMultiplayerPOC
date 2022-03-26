@@ -28,7 +28,12 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
         this.setData('currentpos', new Phaser.Math.Vector2(x,y));
 
         this.on('pointerdown', (d)=>{
-            this.scene.events.emit('SoldierSelected', this);
+
+            //emit scene wide event
+            this.scene.events.emit(GAMEEVENTS.SOLDIER_SELECTED, this);
+            if(this.onSelected){
+                this.onSelected();
+            }
         });
     }
 }

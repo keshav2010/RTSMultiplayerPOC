@@ -91,9 +91,14 @@ export class GameScene extends BaseScene {
             console.log('Player Unready  : ', data);
             this.playerReadyStatus.addNode(this.add.text(150, 150, `${data.playerId} Marked UnReady`))
         });
-        this.events.on('SoldierSelected', (d)=>{
+
+        this.events.on(GAMEEVENTS.SOLDIER_SELECTED, (d)=>{
             console.log('Soldier Selected ...',d);
         })
+        this.events.on(GAMEEVENTS.SOLDIER_UNSELECTED, (d)=>{
+
+        });
+
         var ReadyButton = this.add.text(200, 220, "I'm Ready!").setInteractive().on('pointerdown', ()=>{
             buttonState=!buttonState;
             ReadyButton.setColor(buttonState ? 'green':'white');

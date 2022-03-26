@@ -8,6 +8,9 @@ module.exports = {
     GAMEEVENTS:{
         SOLDIER_CREATED:'SC',
         SOLDIER_KILLED:'SK',
-        SOLDIER_UPDATED: 'SU'
+        SOLDIER_UPDATED: 'SU',
+        
+        SOLDIER_SELECTED: 'SS',
+        SOLDIER_UNSELECTED: 'SUS'
     }
 }
