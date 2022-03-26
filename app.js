@@ -39,13 +39,12 @@ let httpServer = app.listen(PORT,()=>{console.log('Live @ ',PORT)});
 //Init support for Websocket
 const io = socketIO(httpServer);
 
-const TICKRATE = 25;
+const TICKRATE = 8;
 const MAX_MS_PER_TICK = 1000/TICKRATE;
 
 
 const pendingUpdates = new PendingUpdateManager();
 const gameState = new GameStateManager(io);
-
 
 /**
  * Executed at frequency of TickRate
@@ -57,27 +56,37 @@ function processPendingUpdates()
     var startTime = new Date().getTime();
     var timeUtilised=0;
 
-    //get pending update and apply it.
-    var updatePacket = pendingUpdates.getClientRequest();
-    while(timeUtilised < MAX_MS_PER_TICK && updatePacket)
-    {
-        //let packet modify game state
-        updatePacket.updateStateManager(gameState);
-
-        //how many ms elapsed
+    var loop = (onEnd)=>{
+        console.log('     tick', onEnd);
+        //read pending packets and update state
+        var updatePacket = pendingUpdates.getClientRequest();
+        if(updatePacket)
+            updatePacket.updateStateManager(gameState);
+        else {
+            console.log(onEnd);
+            onEnd();
+            return;
+        }
         timeUtilised = (new Date().getTime() - startTime);
-        if(timeUtilised < MAX_MS_PER_TICK)
-            updatePacket = pendingUpdates.getClientRequest();
-    }
+        if(timeUtilised < MAX_MS_PER_TICK){
+            setImmediate(()=>{
+                loop(onEnd);
+            });
+        }
+        else{
+            onEnd();
+        }
+    };
+    loop(()=>{
+        //Broadcast delta-changes to all connected clients
+        gameState.broadcastCumulativeUpdate();
+        gameState.broadcastClientInitUpdate();
+        const newTickAfterMS = Math.abs(MAX_MS_PER_TICK - timeUtilised);
 
-    //Broadcast delta-changes to all connected clients
-    gameState.broadcastCumulativeUpdate();
-    gameState.broadcastClientInitUpdate();
-
-    const newTickAfterMS = Math.abs(MAX_MS_PER_TICK - timeUtilised);
-
-    //reschedule
-    setTimeout(processPendingUpdates, newTickAfterMS);
+        //reschedule
+        setTimeout(processPendingUpdates, newTickAfterMS);
+        console.log('====tick end, time ', timeUtilised);
+    });
 }
 setTimeout(processPendingUpdates, 0);
 

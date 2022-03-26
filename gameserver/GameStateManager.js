@@ -1,5 +1,7 @@
 const PacketType = require('../common/PacketType');
 const Player = require('./Player');
+
+const {Worker, isMainThread, parentPort, workerData} = require('worker_threads');
 /**
  * Manages entire game state.
  */
@@ -40,12 +42,13 @@ class GameStateManager
         if(this.clientInitUpdates.length === 0)
             return;
 
-        this.clientInitUpdates.forEach(update=>{
-            update.socket.emit(PacketType.ByServer.PLAYER_INIT, JSON.stringify({
-                players: update.players,
-                readyPlayers: update.readyPlayers
+        this.clientInitUpdates.forEach(deltaPacket=>{
+            deltaPacket.socket.emit(PacketType.ByServer.PLAYER_INIT, JSON.stringify({
+                players: deltaPacket.players,
+                readyPlayers: deltaPacket.readyPlayers
             }));
         })
+        this.clientInitUpdates=[];
     }
 }
 

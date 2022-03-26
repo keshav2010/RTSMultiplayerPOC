@@ -1,23 +1,27 @@
 const LinkedList = require("dbly-linked-list");
-//Stack based implementation (LIFO)
+
+//FIFO
 class PendingUpdateManager
 {
     constructor(maxPackets){
-        this.pendingUpdates = new Array();
+        this.pendingUpdates = new LinkedList();
         this.limit = maxPackets || 500;
     }
 
     //queue the new request
     queueClientRequest(clientRequestData){
-        if(this.pendingUpdates.length === this.limit)
+        if(this.pendingUpdates.getSize() === this.limit)
             return false;
-        this.pendingUpdates.push(clientRequestData);
+        this.pendingUpdates.insert(clientRequestData);
         return true;
     }
 
     //retrieve oldest client pending request and remove it from queue.
     getClientRequest(){
-        let node = this.pendingUpdates.pop();
+        if(!this.pendingUpdates.getHeadNode())
+            return null;
+        let node = this.pendingUpdates.getHeadNode().getData();
+        this.pendingUpdates.removeFirst();
         return node;
     }
 }
