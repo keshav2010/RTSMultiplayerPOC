@@ -57,13 +57,12 @@ function processPendingUpdates()
     var timeUtilised=0;
 
     var loop = (onEnd)=>{
-        console.log('     tick', onEnd);
+        console.log('     tick');
         //read pending packets and update state
         var updatePacket = pendingUpdates.getClientRequest();
         if(updatePacket)
             updatePacket.updateStateManager(gameState);
         else {
-            console.log(onEnd);
             onEnd();
             return;
         }

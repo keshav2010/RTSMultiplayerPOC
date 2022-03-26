@@ -17,6 +17,7 @@ export class Spearman extends BaseSoldier {
             cost: 5,
             range: 5
         });
+        this.soldierType='SPEARMAN';
     }
     preUpdate(elapsedTime, deltaTime){
 

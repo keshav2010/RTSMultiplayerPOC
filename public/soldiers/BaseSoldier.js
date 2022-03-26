@@ -13,6 +13,8 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
 
         //add object to scene
         scene.add.existing(this);
+        this.setInteractive();
+
         scene.events.on('update', this.update, this);
 
         this.initialParam = initialParam || {};
@@ -24,5 +26,9 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
 
         this.setData('targetpos', new Phaser.Math.Vector2(x,y));
         this.setData('currentpos', new Phaser.Math.Vector2(x,y));
+
+        this.on('pointerdown', (d)=>{
+            this.scene.events.emit('SoldierSelected', this);
+        });
     }
 }
