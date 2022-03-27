@@ -60,6 +60,7 @@ function processPendingUpdates()
         console.log('     tick');
         //read pending packets and update state
         var updatePacket = pendingUpdates.getClientRequest();
+        console.log(updatePacket);
         if(updatePacket)
             updatePacket.updateStateManager(gameState);
         else {
@@ -78,8 +79,8 @@ function processPendingUpdates()
     };
     loop(()=>{
         //Broadcast delta-changes to all connected clients
-        gameState.broadcastCumulativeUpdate();
         gameState.broadcastClientInitUpdate();
+        gameState.broadcastCumulativeUpdate();
         const newTickAfterMS = Math.abs(MAX_MS_PER_TICK - timeUtilised);
 
         //reschedule
@@ -122,6 +123,4 @@ io.on('connection', socket=>{
     socket.on(PacketType.ByClient.SOLDIER_MOVE_REQUESTED, (data)=>{
     
     });
-
-    socket.emit('message', {x:50,y:50});
 });

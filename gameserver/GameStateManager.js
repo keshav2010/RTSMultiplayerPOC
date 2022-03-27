@@ -36,16 +36,16 @@ class GameStateManager
     }
 
     /**
-     * This function is expected to execute only once per client
+     * This function is expected to execute only once per client.
      */
     broadcastClientInitUpdate(){
-        if(this.clientInitUpdates.length === 0)
-            return;
-
         this.clientInitUpdates.forEach(deltaPacket=>{
-            deltaPacket.socket.emit(PacketType.ByServer.PLAYER_INIT, JSON.stringify({
+            deltaPacket.socket.emit('tick', JSON.stringify({
+                data:[{
+                type: deltaPacket.type,
+                playerId: deltaPacket.playerId,
                 players: deltaPacket.players,
-                readyPlayers: deltaPacket.readyPlayers
+                readyPlayers: deltaPacket.readyPlayers}]
             }));
         })
         this.clientInitUpdates=[];

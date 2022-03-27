@@ -12,9 +12,12 @@ const Player = require("./Player");
 
 function PlayerInitPacketAction(packetType, socket, io, stateManager){
     console.log(`Player ${socket.id} just joined and a packet is scheduled for it.`)
+    stateManager.SocketToPlayerData.set(socket.id, new Player(socket.id));
+
     stateManager.clientInitUpdates.push({
         type: packetType,
         socket,
+        playerId: socket.id,
         players: [...stateManager.SocketToPlayerData.values()],
         readyPlayers: [...stateManager.ReadyPlayers.values()]
     })

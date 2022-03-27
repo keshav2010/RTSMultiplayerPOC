@@ -17,7 +17,6 @@ var selectorDraw=false;
 export class GameScene extends BaseScene {
     constructor(){
         super(CONSTANT.SCENES.GAME)
-        this.stateManager = new ClientStateManager(socket);
     }
 
     init()
@@ -53,12 +52,14 @@ export class GameScene extends BaseScene {
             console.log(reason);
             this.scene.start(CONSTANT.SCENES.MENU);
         });
+        this.stateManager = new ClientStateManager(this, socket);
 
         //tick brings in delta updates
         socket.on('tick',(d)=>{
             let deltaChanges = JSON.parse(d).data;
             console.log('tick--', deltaChanges);
             deltaChanges.forEach(deltaUpdate=>{
+                console.log('emitting ', deltaUpdate.type)
                 this.events.emit(deltaUpdate.type, deltaUpdate);
             });
         });
@@ -80,15 +81,12 @@ export class GameScene extends BaseScene {
             this.playerReadyStatus.addNode(this.add.text(150, 150, `${data.player.id} Joined`))
         });
         this.events.on(PacketType.ByClient.PLAYER_JOINED, (data)=>{
-            console.log('Player Joined Game  : ', data);
             this.playerReadyStatus.addNode(this.add.text(150, 150, `${data.player.id} Joined`))
         });
         this.events.on(PacketType.ByClient.PLAYER_READY, (data)=>{
-            console.log('Player Ready  : ', data);
             this.playerReadyStatus.addNode(this.add.text(150, 150, `${data.playerId} Ready`))
         });
         this.events.on(PacketType.ByClient.PLAYER_UNREADY, (data)=>{
-            console.log('Player Unready  : ', data);
             this.playerReadyStatus.addNode(this.add.text(150, 150, `${data.playerId} Marked UnReady`))
         });
 
