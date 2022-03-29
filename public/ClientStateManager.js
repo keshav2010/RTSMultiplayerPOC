@@ -55,15 +55,18 @@ class ClientStateManager
 
         //gameplay events
         this.scene.events.on(PacketType.ByServer.SOLDIER_CREATE_ACCEPTED, (data)=>{
-
+            let {playerId, soldierId, soldierType} = data;
+            player.addSoldier(new Spearman(this.scene, 620, 420, 'spearman'));
         });
         this.scene.events.on(PacketType.ByServer.SOLDIER_CREATE_REJECTED, (data)=>{
 
         });
     }
     addPlayer(player){
-        console.log('adding player ', player);
         player.addSoldier(new Spearman(this.scene, 620, 420, 'spearman'));
+        player.addSoldier(new Spearman(this.scene, 320, 420, 'spearman'));
+        player.addSoldier(new Spearman(this.scene, 820, 420, 'spearman'));
+
         if(!this.ConnectedPlayers.has(player.playerId))
             this.ConnectedPlayers.set(player.playerId, player);
     }
@@ -73,6 +76,15 @@ class ClientStateManager
     removePlayer(playerId){
         if(this.ConnectedPlayers.has(playerId))
             this.ConnectedPlayers.delete(playerId);
+    }
+    update(time, delta)
+    {
+
+        //update each player
+        this.ConnectedPlayers.forEach((player, playerId)=>{
+            player.update(time, delta);
+        });
+
     }
 }
 module.exports = ClientStateManager;

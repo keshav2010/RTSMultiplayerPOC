@@ -1,6 +1,8 @@
 
 class Soldier
 {
+    static sid=0;
+
     constructor(type, params)
     {
         this.currentPosition = {x:params.x, y:params.y};
@@ -10,12 +12,19 @@ class Soldier
         this.speed = fighterParams.speed || 5;
         this.cost = fighterParams.cost || 5;
         this.damage = fighterParams.damage || 5;
-        this.id = params.id || `soldier${uuidv4()}`;
+        this.id = Soldier.sid;
+        Soldier.sid++;
     }
-    moveTo(x,y)
+    isMoveRequired(){
+        return (this.expectedPosition.x !== this.currentPosition.x) || (this.expectedPosition.y !== this.currentPosition.y);
+    }
+    move()
     {
         if(x === this.currentPosition.x && y === this.currentPosition.y)
             return;
+        this.expectedPosition = {x,y};
+    }
+    setTargetPosition(x,y){
         this.expectedPosition = {x,y};
     }
     updateSoldier(){

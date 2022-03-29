@@ -27,6 +27,12 @@ class Player extends Phaser.GameObjects.Group
         this.dataManager.set('health', Math.max(0, this.dataManager.get('health')-10));
     }
 
+    update(time, deltaTime) {
+
+        //update each soldier
+        this.getChildren().forEach(child => child.update(time, deltaTime));
+    }
+
     //create a soldier game object and add it to this group as well as scene
     addSoldier(soldierObject){
         this.add(soldierObject, true);

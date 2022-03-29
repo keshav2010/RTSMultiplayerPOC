@@ -11,6 +11,8 @@ module.exports = {
         SOLDIER_UPDATED: 'SU',
         
         SOLDIER_SELECTED: 'SS',
-        SOLDIER_UNSELECTED: 'SUS'
+        SOLDIER_UNSELECTED: 'SUS',
+
+        RIGHT_CLICK: 'RC',
     }
 }

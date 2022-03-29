@@ -39,7 +39,7 @@ let httpServer = app.listen(PORT,()=>{console.log('Live @ ',PORT)});
 //Init support for Websocket
 const io = socketIO(httpServer);
 
-const TICKRATE = 8;
+const TICKRATE = 1;
 const MAX_MS_PER_TICK = 1000/TICKRATE;
 
 
@@ -57,7 +57,6 @@ function processPendingUpdates()
     var timeUtilised=0;
 
     var loop = (onEnd)=>{
-        console.log('     tick');
         //read pending packets and update state
         var updatePacket = pendingUpdates.getClientRequest();
         console.log(updatePacket);
@@ -69,9 +68,7 @@ function processPendingUpdates()
         }
         timeUtilised = (new Date().getTime() - startTime);
         if(timeUtilised < MAX_MS_PER_TICK){
-            setImmediate(()=>{
-                loop(onEnd);
-            });
+            setImmediate(loop, onEnd);
         }
         else{
             onEnd();
@@ -85,10 +82,9 @@ function processPendingUpdates()
 
         //reschedule
         setTimeout(processPendingUpdates, newTickAfterMS);
-        console.log('====tick end, time ', timeUtilised);
     });
 }
-setTimeout(processPendingUpdates, 0);
+setImmediate(processPendingUpdates);
 
 
 
@@ -97,7 +93,7 @@ io.on('connection', socket=>{
 
     Packet.io = io;
 
-    //add packets to stack
+    //Initial packets
     pendingUpdates.queueClientRequest(new Packet(PacketType.ByServer.PLAYER_INIT, socket, {}, PacketActions.PlayerInitPacketAction));
     pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.PLAYER_JOINED, socket, {}, PacketActions.PlayerJoinedPacketAction));
 
@@ -105,22 +101,28 @@ io.on('connection', socket=>{
         pendingUpdates.queueClientRequest(new Packet(PacketType.ByServer.PLAYER_LEFT, socket, {}, PacketActions.PlayerLeftPacketAction));
     })
 
+    //client marked ready
     socket.on(PacketType.ByClient.PLAYER_READY, (data)=>{
         pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.PLAYER_READY, socket, data, PacketActions.PlayerReadyPacketAction));
     });
+
+    //client is not ready
     socket.on(PacketType.ByClient.PLAYER_UNREADY, (data)=>{
         pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.PLAYER_UNREADY, socket, data, PacketActions.PlayerUnreadyPacketAction));
     });
 
-    socket.on(PacketType.ByClient.SOLDIER_CREATE_REQUESTED, (data)=>{
-
-    });
-
-    socket.on(PacketType.ByClient.SOLDIER_DELETED, (data)=>{
-
-    });
-
+    //Client Requesting to move a soldier
     socket.on(PacketType.ByClient.SOLDIER_MOVE_REQUESTED, (data)=>{
-    
+        pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_MOVE_REQUESTED, socket, data, PacketActions.SoldierMoveRequestedPacketAction))
+    });
+
+    //Client requesting a new soldier
+    socket.on(PacketType.ByClient.SOLDIER_CREATE_REQUESTED, (data)=>{
+        pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_CREATE_REQUESTED, socket, data, PacketActions.SoldierCreateRequestedPacketAction))
+    });
+
+    //Client deleted their soldier
+    socket.on(PacketType.ByClient.SOLDIER_DELETED, (data)=>{
+        pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_DELETED, socket, data, PacketActions.SoldierDeletedPacketAction));
     });
 });

@@ -30,16 +30,24 @@ export class GameScene extends BaseScene {
 
         //Lasso Selection Code
         selectorGraphics = this.add.graphics();
-        this.input.on('pointerdown', function(pointer){
-            selectorDraw=true;
-            console.log('client state manager detected pointer down');
+        this.input.on('pointerdown', function(pointer)
+        {
+            if(pointer.button === 0){
+                selectorDraw=true;
+                console.log(pointer);
+                console.log('client state manager detected pointer down');
+            }
+            else if(pointer.button === 2){
+                console.log('right click ', pointer.position);
+                this.scene.events.emit(GAMEEVENTS.RIGHT_CLICK, pointer.position);
+            }
         })
         this.input.on('pointerup', function(pointer){
             selectorDraw=false;
             selectorGraphics.clear();
         })
         this.input.on('pointermove', function(pointer){
-            if(selectorDraw){
+            if(selectorDraw && pointer.button === 0){
                 selectorGraphics.clear();
                 selectorGraphics.lineStyle(selectorThickness, selectorColor, 1);
 
@@ -115,6 +123,6 @@ export class GameScene extends BaseScene {
         });
     }
     update(time, delta){
-        //console.log('GameScene Update : ', time, delta, 1000/delta)
+        this.stateManager.update(time, delta);
     }
 }

@@ -1,3 +1,4 @@
+
 class Packet
 {
     //socketio's io reference
@@ -16,7 +17,7 @@ class Packet
         this.stateUpdator = packetAction;
     }
     updateStateManager(stateManager){
-        this.stateUpdator(this.type, this.socket, Packet.io, stateManager);
+        this.stateUpdator(this.type, this.socket, Packet.io, stateManager, this.data);
     }
 }
 module.exports = Packet;
