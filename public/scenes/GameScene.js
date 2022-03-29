@@ -24,11 +24,15 @@ export class GameScene extends BaseScene {
         socket = io.connect('ws://localhost:3000', {
             reconnection: false
         });
+        socket.on('connect', ()=>{
+        });
+        this.stateManager = new ClientStateManager(this);
 
         //Lasso Selection Code
         selectorGraphics = this.add.graphics();
         this.input.on('pointerdown', function(pointer){
             selectorDraw=true;
+            console.log('client state manager detected pointer down');
         })
         this.input.on('pointerup', function(pointer){
             selectorDraw=false;
@@ -38,21 +42,30 @@ export class GameScene extends BaseScene {
             if(selectorDraw){
                 selectorGraphics.clear();
                 selectorGraphics.lineStyle(selectorThickness, selectorColor, 1);
-                selectorGraphics.strokeRect(pointer.downX, pointer.downY, pointer.x - pointer.downX, pointer.y - pointer.downY);
+
+                let rect = new Phaser.Geom.Rectangle(pointer.downX, pointer.downY, pointer.x - pointer.downX, pointer.y - pointer.downY);
+                selectorGraphics.strokeRectShape(rect);
+
+                //for every sprite belonging to this player, check if it overlaps with rect
+                let soldiers = this.scene.stateManager.getPlayer().getSoldiers();
+                
+                soldiers.forEach(soldier=>{
+                    let bound = soldier.getBounds();
+                    if(Phaser.Geom.Intersects.RectangleToRectangle(bound, rect)){
+                        soldier.markSelected();
+                    }
+                    else{
+                        soldier.markUnselected();
+                    }
+                });
             }
         });
 
-        
-
-        socket.on('connect', ()=>{
-            //register socket with socket manager
-            this.stateManager.socket = socket;
-        });
         socket.on('disconnect', reason => {
             console.log(reason);
             this.scene.start(CONSTANT.SCENES.MENU);
+            this.stateManager = null;
         });
-        this.stateManager = new ClientStateManager(this, socket);
 
         //tick brings in delta updates
         socket.on('tick',(d)=>{
@@ -71,11 +84,9 @@ export class GameScene extends BaseScene {
     }
     create(){
         this.add.text(5, 5, "Game Started");
+
         this.playerReadyStatus = new Column(this, 0, 0, 'knight');
 
-        this.events.on(PacketType.ByServer.PLAYER_INIT, (data)=>{
-            console.log('Player Init Packet From Server :', data);
-        });
         this.events.on(PacketType.ByClient.PLAYER_JOINED, (data)=>{
             console.log('Player Joined Game  : ', data);
             this.playerReadyStatus.addNode(this.add.text(150, 150, `${data.player.id} Joined`))
@@ -90,13 +101,6 @@ export class GameScene extends BaseScene {
             this.playerReadyStatus.addNode(this.add.text(150, 150, `${data.playerId} Marked UnReady`))
         });
 
-        this.events.on(GAMEEVENTS.SOLDIER_SELECTED, (d)=>{
-            console.log('Soldier Selected ...',d);
-        })
-        this.events.on(GAMEEVENTS.SOLDIER_UNSELECTED, (d)=>{
-
-        });
-
         var ReadyButton = this.add.text(200, 220, "I'm Ready!").setInteractive().on('pointerdown', ()=>{
             buttonState=!buttonState;
             ReadyButton.setColor(buttonState ? 'green':'white');
@@ -109,8 +113,6 @@ export class GameScene extends BaseScene {
             console.log("Quit");
             socket.disconnect();
         });
-
-        var x = new Spearman(this, 50,50, 'spearman');
     }
     update(time, delta){
         //console.log('GameScene Update : ', time, delta, 1000/delta)

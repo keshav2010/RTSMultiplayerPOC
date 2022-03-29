@@ -12,6 +12,7 @@
   "dependencies": {
     "dbly-linked-list": "^0.3.5",
     "express": "^4.17.3",
+    "js-quadtree": "^3.3.6",
     "lance-gg": "^4.0.9",
     "nav2d": "^1.3.1",
     "nodemon": "^2.0.15",

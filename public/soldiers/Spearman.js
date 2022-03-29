@@ -19,24 +19,12 @@ export class Spearman extends BaseSoldier {
         });
         this.soldierType='SPEARMAN';
     }
+    onClicked(){
+    }
     preUpdate(elapsedTime, deltaTime){
 
     }
     update(elapsedTime, deltaTime){
 
-    }
-
-    onSelected(){
-        //draw outline
-        this.alpha = 0.5;
-        this.scale=1.5;
-        setTimeout(()=>{
-            this.onUnselected();
-        }, 2000);
-    }
-    onUnselected(){
-        //remove outline
-        this.alpha = 1;
-        this.scale=1;
     }
 }

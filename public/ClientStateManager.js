@@ -2,18 +2,18 @@
 const {GAMEEVENTS} = require('./constant');
 const PacketType = require('../common/PacketType');
 const Player = require('./Player');
+const { Spearman } = require('./soldiers/Spearman');
 
 class ClientStateManager
 {
-    constructor(scene, socket)
+    constructor(scene)
     {
         this.scene = scene;
-        this.selectedSoldiers = [];
-
-        this.playerId;
+        this.selectedSoldiers = new Map();
 
         //All the players connected (including self)
         this.ConnectedPlayers = new Map();
+        this.playerId;
 
         //register soldier
         this.scene.events.on(GAMEEVENTS.SOLDIER_CREATED, (data)=>{
@@ -28,8 +28,6 @@ class ClientStateManager
             players.forEach(player =>{
                 this.addPlayer(new Player(this.scene, player.id, player.name))
             });
-
-            //TODO: handle ready packets
         });
 
 
@@ -51,7 +49,8 @@ class ClientStateManager
         });
 
         this.scene.events.on(GAMEEVENTS.SOLDIER_SELECTED, (d)=>{
-            this.selectedSoldiers.push(d);
+            this.selectedSoldiers.set(d.id, d);
+            console.log(this.selectedSoldiers)
         })
 
         //gameplay events
@@ -61,14 +60,15 @@ class ClientStateManager
         this.scene.events.on(PacketType.ByServer.SOLDIER_CREATE_REJECTED, (data)=>{
 
         });
-        
     }
     addPlayer(player){
-        if(!this.ConnectedPlayers.has(player.id))
-            this.ConnectedPlayers.set(player.id, player);
+        console.log('adding player ', player);
+        player.addSoldier(new Spearman(this.scene, 620, 420, 'spearman'));
+        if(!this.ConnectedPlayers.has(player.playerId))
+            this.ConnectedPlayers.set(player.playerId, player);
     }
     getPlayer(id){
-        return this.ConnectedPlayers.get(id);
+        return this.ConnectedPlayers.get(id || this.playerId);
     }
     removePlayer(playerId){
         if(this.ConnectedPlayers.has(playerId))

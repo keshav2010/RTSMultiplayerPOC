@@ -1,5 +1,7 @@
 const {GAMEEVENTS} = require('../constant');
 export class BaseSoldier extends Phaser.GameObjects.Sprite {
+
+    static idgen=0;
     /**
      * @param {*} scene 
      * @param {number} x 
@@ -15,6 +17,8 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
         scene.add.existing(this);
         this.setInteractive();
 
+        this.id=BaseSoldier.idgen;
+        BaseSoldier.idgen++;
         scene.events.on('update', this.update, this);
 
         this.initialParam = initialParam || {};
@@ -28,12 +32,33 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
         this.setData('currentpos', new Phaser.Math.Vector2(x,y));
 
         this.on('pointerdown', (d)=>{
+            
+            this.scene.stateManager.selectedSoldiers.set(d.id, d);
+            this.alpha = 0.5;
+            this.scale = 1.5;
 
             //emit scene wide event
             this.scene.events.emit(GAMEEVENTS.SOLDIER_SELECTED, this);
-            if(this.onSelected){
-                this.onSelected();
+            if(this.onClicked){
+                this.onClicked();
             }
         });
+    }
+
+    markSelected(){
+        this.scene.stateManager.selectedSoldiers.set(this.id, this);
+        this.alpha = 0.5;
+        this.scale = 1.5;
+
+        //emit scene wide event
+        this.scene.events.emit(GAMEEVENTS.SOLDIER_SELECTED, this);
+    }
+    markUnselected(){
+        this.scene.stateManager.selectedSoldiers.delete(this.id);
+        this.alpha = 1;
+        this.scale = 1;
+
+        //emit scene wide event
+        this.scene.events.emit(GAMEEVENTS.SOLDIER_UNSELECTED, this);
     }
 }

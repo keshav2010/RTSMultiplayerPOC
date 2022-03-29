@@ -32,6 +32,10 @@ class Player extends Phaser.GameObjects.Group
         this.add(soldierObject, true);
     }
 
+    getSoldiers(){
+        return this.getChildren();
+    }
+
     //remove a soldier object from the group
     removeSoldier(soldierObject){
         this.remove(soldierObject, true, true);
