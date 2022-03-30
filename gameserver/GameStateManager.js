@@ -1,7 +1,5 @@
 const PacketType = require('../common/PacketType');
 const Player = require('./Player');
-
-const {Worker, isMainThread, parentPort, workerData} = require('worker_threads');
 /**
  * Manages entire game state.
  */

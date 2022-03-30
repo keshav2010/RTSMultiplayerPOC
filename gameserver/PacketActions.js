@@ -13,13 +13,15 @@ function PlayerInitPacketAction(packetType, socket, io, stateManager){
     console.log(`Player ${socket.id} just joined and a packet is scheduled for it.`)
     stateManager.SocketToPlayerData.set(socket.id, new Player(socket.id));
 
-    stateManager.clientInitUpdates.push({
+    const deltaUpdate = {
         type: packetType,
         socket,
         playerId: socket.id,
         players: [...stateManager.SocketToPlayerData.values()],
         readyPlayers: [...stateManager.ReadyPlayers.values()]
-    })
+    }
+
+    stateManager.clientInitUpdates.push(deltaUpdate);
 }
 
 function PlayerJoinedPacketAction(packetType, socket, io, stateManager){
@@ -30,10 +32,12 @@ function PlayerJoinedPacketAction(packetType, socket, io, stateManager){
     }
 
     stateManager.SocketToPlayerData.set(socket.id, new Player(socket.id));
-    stateManager.cumulativeUpdates.push({
+
+    const deltaUpdate={
         type: packetType,
         player: stateManager.SocketToPlayerData.get(socket.id)
-    });
+    }
+    stateManager.cumulativeUpdates.push(deltaUpdate);
 }
 
 function PlayerReadyPacketAction(packetType, socket, io, stateManager){
@@ -42,12 +46,13 @@ function PlayerReadyPacketAction(packetType, socket, io, stateManager){
     if(stateManager.ReadyPlayers.size === stateManager.SocketToPlayerData.size)
         stateManager.GameStarted = true;
     
-    //Whose Ready and whether to start game ?
-    stateManager.cumulativeUpdates.push({
+    const deltaUpdate = {
         type:packetType,
         playerId:socket.id,
         startGame:stateManager.GameStarted
-    });
+    }
+    //Whose Ready and whether to start game ?
+    stateManager.cumulativeUpdates.push(deltaUpdate);
 }
 
 function PlayerUnreadyPacketAction(packetType, socket, io, stateManager){
@@ -59,13 +64,14 @@ function PlayerUnreadyPacketAction(packetType, socket, io, stateManager){
 
     //mark as unready and addTo cumulative update
     stateManager.ReadyPlayers.delete(socket.id);
-
-    //Whose not ready and game-start status
-    stateManager.cumulativeUpdates.push({
+    
+    const deltaUpdate = {
         type: packetType,
         playerId: socket.id,
         startGame:stateManager.GameStarted
-    });
+    }
+    //Whose not ready and game-start status
+    stateManager.cumulativeUpdates.push(deltaUpdate);
 }
 
 function PlayerLeftPacketAction(packetType, socket, io, stateManager){
@@ -77,11 +83,13 @@ function PlayerLeftPacketAction(packetType, socket, io, stateManager){
     if(stateManager.SocketToPlayerData.size === 0){
         stateManager.GameStarted=false;
     }
-    //Who Left
-    stateManager.cumulativeUpdates.push({
+
+    const deltaUpdate={
         type:packetType,
         playerId: socket.id
-    });
+    }
+    //Who Left
+    stateManager.cumulativeUpdates.push(deltaUpdate);
 }
 
 /**
