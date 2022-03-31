@@ -51,6 +51,11 @@ class ClientStateManager
         this.scene.events.on(GAMEEVENTS.SOLDIER_SELECTED, (d)=>{
             this.selectedSoldiers.set(d.id, d);
             console.log(this.selectedSoldiers)
+        });
+        
+        this.scene.events.on(PacketType.ByServer.PLAYER_RESOURCE_UPDATED, (data)=>{
+            this.getPlayer(data.playerId).dataManager.set('resource', data.resources);
+            console.log(this.getPlayer(data.playerId));
         })
 
         //gameplay events

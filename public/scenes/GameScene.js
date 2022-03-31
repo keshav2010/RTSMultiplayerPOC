@@ -78,9 +78,9 @@ export class GameScene extends BaseScene {
         //tick brings in delta updates
         socket.on('tick',(d)=>{
             let deltaChanges = JSON.parse(d).data;
-            console.log('tick--', deltaChanges);
+            //console.log('tick--', deltaChanges);
             deltaChanges.forEach(deltaUpdate=>{
-                console.log('emitting ', deltaUpdate.type)
+                //console.log('emitting ', deltaUpdate)
                 this.events.emit(deltaUpdate.type, deltaUpdate);
             });
         });

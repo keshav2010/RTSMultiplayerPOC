@@ -1,27 +1,30 @@
 
 const PacketType={
     ByClient:{
-        'PLAYER_READY':'1',
-        'PLAYER_UNREADY':'2',
-        'SOLDIER_CREATE_REQUESTED':'3',
-        'SOLDIER_DELETED': '4',
-        'SOLDIER_MOVE_REQUESTED': '5',
-        'PLAYER_JOINED':'6',
-        'SOLDIER_ATTACK_REQUESTED': '7',
+        'PLAYER_READY':'plr',
+        'PLAYER_UNREADY':'plur',
+        'SOLDIER_CREATE_REQUESTED':'slcrreq',
+        'SOLDIER_DELETED': 'sldel',
+        'SOLDIER_MOVE_REQUESTED': 'slmovreq',
+        'PLAYER_JOINED':'pljoin',
+        'SOLDIER_ATTACK_REQUESTED': 'sldierattkreq',
     },
     ByServer:{
-        'SOLDIER_KILLED':'7',
-        'SOLDIER_MOVE':'8',
-        'GAME_STARTED':'9',
-        'SOLDIER_CREATE_ACK':'10',
+        'SOLDIER_KILLED':'sk',
+        'SOLDIER_MOVE':'sm',
+        'GAME_STARTED':'gs',
+        'SOLDIER_CREATE_ACK':'sca',
 
-        'GAME_STATE_SYNC':'11',
+        'GAME_STATE_SYNC':'gss',
 
-        'PLAYER_LEFT':'13',
-        'PLAYER_INIT':'14',
+        'PLAYER_LEFT':'pl',
+        'PLAYER_INIT':'pi',
 
-        'SOLDIER_ATTACK_ACK':'15',
-        'SOLDIER_HIT':'16'
+        'SOLDIER_ATTACK_ACK':'saa',
+        'SOLDIER_HIT':'sh',
+
+        'PLAYER_RESOURCE_UPDATED':'pru',
+        'SOLDIER_POSITION_UPDATED':'spu',
     }
 }
 module.exports = PacketType;

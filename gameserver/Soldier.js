@@ -15,20 +15,37 @@ class Soldier
         this.id = Soldier.sid;
         Soldier.sid++;
     }
-    isMoveRequired(){
-        return (this.expectedPosition.x !== this.currentPosition.x) || (this.expectedPosition.y !== this.currentPosition.y);
+
+    tick(delta, updateManager){
+        let diffX = this.expectedPosition.x - this.currentPosition.x;
+        let diffY = this.expectedPosition.y - this.currentPosition.y;
+        this.currentPosition.x += this.speed*delta*diffX;
+        this.currentPosition.y += this.speed*delta*diffY;
+
+        updateManager.queueServerEvent({
+            type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
+            currentPositionX: this.currentPosition.x,
+            currentPositionY: this.currentPosition.y
+        });
     }
-    move()
-    {
-        if(x === this.currentPosition.x && y === this.currentPosition.y)
-            return;
-        this.expectedPosition = {x,y};
+
+    //Returns a perfectly serializable object with no refs, this object can be shared between threads
+    getSnapshot(){
+        return {
+            currentPositionX: this.currentPosition.x,
+            currentPositionY: this.currentPosition.y,
+            expectedPositionX: this.expectedPosition.x,
+            expectedPositionY: this.expectedPosition.y,
+            type: this.type,
+            health: this.health,
+            speed: this.speed,
+            cost: this.cost,
+            damage: this.damage,
+            id: this.id
+        }
     }
     setTargetPosition(x,y){
         this.expectedPosition = {x,y};
-    }
-    updateSoldier(){
-
     }
 }
 module.exports = Soldier

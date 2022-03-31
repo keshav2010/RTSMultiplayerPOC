@@ -5,6 +5,8 @@ class PendingUpdateManager
 {
     constructor(maxPackets){
         this.pendingUpdates = new LinkedList();
+        this.pendingServerEvents = new LinkedList();
+
         this.limit = maxPackets || 500;
     }
 
@@ -14,6 +16,20 @@ class PendingUpdateManager
             return false;
         this.pendingUpdates.insert(clientRequestData);
         return true;
+    }
+
+    queueServerEvent(data){
+        if(this.pendingServerEvents.getSize() === this.limit)
+            return false;
+        this.pendingServerEvents.insert(data);
+        return true;
+    }
+    getServerEvent(){
+        if(!this.pendingServerEvents.getHeadNode())
+            return null;
+        let node = this.pendingServerEvents.getHeadNode().getData();
+        this.pendingServerEvents.removeFirst();
+        return node;
     }
 
     //retrieve oldest client pending request and remove it from queue.

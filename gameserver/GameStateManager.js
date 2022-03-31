@@ -1,5 +1,6 @@
 const PacketType = require('../common/PacketType');
 const Player = require('./Player');
+const nbLoop = require('../common/nonBlockingLoop');
 /**
  * Manages entire game state.
  */
@@ -17,6 +18,7 @@ class GameStateManager
         this.GameStarted=false;
         this.SocketToPlayerData = new Map();
         this.ReadyPlayers = new Map();
+        this.lastSimulateTime_ms =new Date().getTime();
     }
 
 
@@ -47,6 +49,24 @@ class GameStateManager
             }));
         })
         this.clientInitUpdates=[];
+    }
+
+    simulate(updateManager)
+    {
+        var deltaTime = new Date().getTime()-this.lastSimulateTime_ms;
+        this.lastSimulateTime_ms = new Date().getTime();
+
+        let playerIdArray = [...this.SocketToPlayerData.keys()];
+        var i=0;
+        var test = ()=>{return (i<playerIdArray.length)};
+        var loop = ()=>{
+            //simulate each player
+            let playerObject = this.SocketToPlayerData.get(playerIdArray[i++]);
+            console.log('[simulate] > player delta :',deltaTime*0.001);
+            playerObject.tick(deltaTime*0.001, updateManager);
+            return true;//continue loop
+        }
+        nbLoop(test, loop);
     }
 }
 

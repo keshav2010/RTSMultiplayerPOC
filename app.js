@@ -11,6 +11,9 @@ const PacketActions = require('./gameserver/PacketActions');
 
 const PendingUpdateManager = require('./gameserver/PendingUpdateManager');
 const GameStateManager = require('./gameserver/GameStateManager');
+
+const nbLoop = require('./common/nonBlockingLoop');
+
 app.use(express.static('dist'))
 app.use(express.static('public'))
 
@@ -39,7 +42,7 @@ let httpServer = app.listen(PORT,()=>{console.log('Live @ ',PORT)});
 //Init support for Websocket
 const io = socketIO(httpServer);
 
-const TICKRATE = 1;
+const TICKRATE = 999;
 const MAX_MS_PER_TICK = 1000/TICKRATE;
 
 
@@ -51,33 +54,33 @@ const gameState = new GameStateManager(io);
  */
 function processPendingUpdates()
 {
-
     //tick start time
     var startTime = new Date().getTime();
     var timeUtilised=0;
 
-    var loop = (onEnd)=>{
+    var loop = ()=>{
         //read pending packets and update state
         var updatePacket = pendingUpdates.getClientRequest();
-        console.log(updatePacket);
         if(updatePacket)
             updatePacket.updateStateManager(gameState);
-        else {
-            onEnd();
-            return;
-        }
+
+
         timeUtilised = (new Date().getTime() - startTime);
-        if(timeUtilised < MAX_MS_PER_TICK){
-            setImmediate(loop, onEnd);
-        }
-        else{
-            onEnd();
-        }
+        return true;
     };
-    loop(()=>{
+    var test = ()=>{return timeUtilised < MAX_MS_PER_TICK};
+    nbLoop(test, loop, ()=>{
+        gameState.simulate(pendingUpdates);
+
         //Broadcast delta-changes to all connected clients
         gameState.broadcastClientInitUpdate();
         gameState.broadcastCumulativeUpdate();
+
+        let serverEvent = pendingUpdates.getServerEvent();
+        if(serverEvent){
+            console.log('server received = ', serverEvent);
+            io.emit('tick', JSON.stringify({data: [serverEvent]}));
+        }
         const newTickAfterMS = Math.abs(MAX_MS_PER_TICK - timeUtilised);
 
         //reschedule
