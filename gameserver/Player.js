@@ -2,7 +2,7 @@
 /**
  * Stores soldiers in a map ds
  */
-const {Soldier} = require('./Soldier');
+const Soldier = require('./Soldier');
 const {v4} = require('uuid');
 const nbLoop = require('../common/nonBlockingLoop');
 const PacketType = require('../common/PacketType');
@@ -63,10 +63,17 @@ class Player
         type=type||'spearman';
         if(this.resources < 10)
             return {status:false};
-        let s = new Soldier(type, x, y);
+        let s = new Soldier(type, {
+            x, 
+            y,
+            health:50,
+            speed:5,
+            cost:5,
+            damage:5
+        });
         this.resources -= 10;
         this.SoldierMap.set(s.id, s);
-        return {status:true, soldierId: s.id};
+        return {status:true, soldierId: s.id, soldier:s};
     }
     getSoldier(soldierId){
         return this.SoldierMap.get(soldierId);

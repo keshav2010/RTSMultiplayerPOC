@@ -1,7 +1,6 @@
 const {GAMEEVENTS} = require('../constant');
 export class BaseSoldier extends Phaser.GameObjects.Sprite {
 
-    static idgen=0;
     /**
      * @param {*} scene 
      * @param {number} x 
@@ -16,9 +15,8 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
         //add object to scene
         scene.add.existing(this);
         this.setInteractive();
+        this.id=initialParam.id;
 
-        this.id=BaseSoldier.idgen;
-        BaseSoldier.idgen++;
         scene.events.on('update', this.update, this);
 
         this.initialParam = initialParam || {};
@@ -26,7 +24,6 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
         this.setData('speed',this.initialParam.speed || 10);
         this.setData('damage',this.initialParam.damage || 10);
         this.setData('cost',this.initialParam.cost || 5);
-        this.setData('range',this.initialParam.range || 5);
 
         this.setData('targetpos', new Phaser.Math.Vector2(x,y));
         this.setData('currentpos', new Phaser.Math.Vector2(x,y));

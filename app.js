@@ -42,7 +42,7 @@ let httpServer = app.listen(PORT,()=>{console.log('Live @ ',PORT)});
 //Init support for Websocket
 const io = socketIO(httpServer);
 
-const TICKRATE = 5;
+const TICKRATE = 24;
 const MAX_MS_PER_TICK = 1000/TICKRATE;
 
 
@@ -78,7 +78,6 @@ function processPendingUpdates()
 
         let serverEvent = pendingUpdates.getServerEvent();
         if(serverEvent){
-            console.log('server received = ', serverEvent);
             io.emit('tick', JSON.stringify({data: [serverEvent]}));
         }
         const newTickAfterMS = Math.abs(MAX_MS_PER_TICK - timeUtilised);

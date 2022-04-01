@@ -8,7 +8,7 @@
  */
 
 const Player = require("./Player");
-
+const PacketType = require("../common/PacketType")
 function PlayerInitPacketAction(packetType, socket, io, stateManager){
     console.log(`Player ${socket.id} just joined and a packet is scheduled for it.`)
     stateManager.SocketToPlayerData.set(socket.id, new Player(socket.id));
@@ -102,8 +102,7 @@ function PlayerLeftPacketAction(packetType, socket, io, stateManager){
  */
 function SoldierMoveRequestedPacketAction(packetType, socket, io, stateManager, data){
     let playerId = socket.id;
-    let {posX, posY} = data;
-    var soldiers;
+    var {expectedPositionX, expectedPositionY, soldiers} = data;
 
     //soldiers can be array or comma seperated string with ids
     if(typeof data.soldiers === 'string')
@@ -111,7 +110,10 @@ function SoldierMoveRequestedPacketAction(packetType, socket, io, stateManager, 
     else soldiers = data.soldiers;
 
     soldiers.forEach(soldierId=>{
-        stateManager.SocketToPlayerData.get(playerId).getSoldier(soldierId).setTargetPosition(posX, posY);
+        console.log('soldier id ', soldierId);
+        console.log('soldier obj ',stateManager.SocketToPlayerData.get(playerId).getSoldier(soldierId));
+        let soldier = stateManager.SocketToPlayerData.get(playerId).getSoldier(soldierId);
+        soldier.setTargetPosition(expectedPositionX, expectedPositionY);
     });
 
     //NOTE ; Not sending delta-update for this, a tick call should be able to send movements
@@ -127,11 +129,11 @@ function SoldierMoveRequestedPacketAction(packetType, socket, io, stateManager, 
  */
 function SoldierCreateRequestedPacketAction(packetType, socket, io, stateManager, data){
     let playerId = socket.id;
-    let {soldierType} = data;
-    let createStatus = stateManager.SocketToPlayerData.get(playerId).createSoldier(soldierType);
+    let {soldierType, currentPositionX, currentPositionY} = data;
+    let createStatus = stateManager.SocketToPlayerData.get(playerId).createSoldier(soldierType, currentPositionX, currentPositionY);
     
     var updatePacket = {
-        type:PacketType.SOLDIER_CREATE_ACK,
+        type: PacketType.ByServer.SOLDIER_CREATE_ACK,
         isCreated: createStatus.status
     };
     if(createStatus.status)
@@ -139,10 +141,9 @@ function SoldierCreateRequestedPacketAction(packetType, socket, io, stateManager
         //record whatever things we've modified in this array
         updatePacket={
             ...updatePacket,
-            soldierId: createStatus.soldierId,
+            soldier: createStatus.soldier.getSnapshot(),
             playerId,
-            soldierType,
-            resources: stateManager.SocketToPlayerData.get(playerId).resources
+            soldierType
         }
     }
     stateManager.cumulativeUpdates.push(updatePacket);

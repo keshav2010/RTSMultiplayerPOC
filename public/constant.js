@@ -14,6 +14,7 @@ module.exports = {
         SOLDIER_SELECTED: 'SS',
         SOLDIER_UNSELECTED: 'SUS',
 
-        RIGHT_CLICK: 'RC'
+        RIGHT_CLICK: 'RC',
+        SOLDIER_MOVE_REQUESTED: 'SMR'
     }
 }

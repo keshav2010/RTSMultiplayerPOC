@@ -8,15 +8,9 @@ export class Spearman extends BaseSoldier {
      * @param {string|Phaser.Textures.Texture} texture 
      * @param {string|number <optional>} frame
      */
-    constructor (scene, x, y, texture, frame)
+    constructor (scene, x, y, texture, frame, initialParam)
     {
-        super(scene, x, y, texture, frame, {
-            health: 25,
-            speed: 10,
-            damage: 5,
-            cost: 5,
-            range: 5
-        });
+        super(scene, x, y, texture, frame, initialParam);
         this.soldierType='SPEARMAN';
     }
     onClicked(){

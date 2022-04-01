@@ -19,7 +19,7 @@ export class PlayerStatisticHUD extends BaseScene {
 
         const resourceText = this.add.text(50, 50, "Resources: 0");
         gameScene.events.on(PacketType.ByServer.PLAYER_RESOURCE_UPDATED, ({type, playerId, resources})=>{
-            console.log(this.stateManager.getPlayer());
+            
             if(this.stateManager.getPlayer().playerId === playerId)
                 resourceText.setText(`Resources: ${(resources).toFixed(2)}`);
         });

@@ -62,7 +62,6 @@ class GameStateManager
         var loop = ()=>{
             //simulate each player
             let playerObject = this.SocketToPlayerData.get(playerIdArray[i++]);
-            console.log('[simulate] > player delta :',deltaTime*0.001);
             playerObject.tick(deltaTime*0.001, updateManager);
             return true;//continue loop
         }

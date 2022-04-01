@@ -22,7 +22,6 @@ class ClientStateManager
 
         //initialise player
         this.scene.events.on(PacketType.ByServer.PLAYER_INIT, (data)=>{
-            console.log('Player Init ');
             const {playerId, players, readyPlayers} = data;
             this.playerId = playerId;
             players.forEach(player =>{
@@ -50,23 +49,9 @@ class ClientStateManager
 
         this.scene.events.on(GAMEEVENTS.SOLDIER_SELECTED, (d)=>{
             this.selectedSoldiers.set(d.id, d);
-            console.log(this.selectedSoldiers)
-        });
-
-        //gameplay events
-        this.scene.events.on(PacketType.ByServer.SOLDIER_CREATE_ACCEPTED, (data)=>{
-            let {playerId, soldierId, soldierType} = data;
-            player.addSoldier(new Spearman(this.scene, 620, 420, 'spearman'));
-        });
-        this.scene.events.on(PacketType.ByServer.SOLDIER_CREATE_REJECTED, (data)=>{
-
         });
     }
     addPlayer(player){
-        player.addSoldier(new Spearman(this.scene, 620, 420, 'spearman'));
-        player.addSoldier(new Spearman(this.scene, 320, 420, 'spearman'));
-        player.addSoldier(new Spearman(this.scene, 820, 420, 'spearman'));
-
         if(!this.ConnectedPlayers.has(player.playerId))
             this.ConnectedPlayers.set(player.playerId, player);
     }

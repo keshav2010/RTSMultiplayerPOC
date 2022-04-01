@@ -35,12 +35,30 @@ export class GameScene extends BaseScene {
         {
             if(pointer.button === 0){
                 selectorDraw=true;
-                console.log(pointer);
-                console.log('client state manager detected pointer down');
+            }
+            else if(pointer.button === 1)
+            {
+                //middle mouse btn press => create spearman
+                socket.emit(PacketType.ByClient.SOLDIER_CREATE_REQUESTED, {
+                    soldierType: 'spearman',
+                    currentPositionX: pointer.position.x,
+                    currentPositionY: pointer.position.y
+                });
             }
             else if(pointer.button === 2){
-                console.log('right click ', pointer.position);
-                this.scene.events.emit(GAMEEVENTS.RIGHT_CLICK, pointer.position);
+                
+                //if any soldier selected
+                if(this.scene.stateManager.selectedSoldiers.size > 0){
+
+                    //inform server
+                    socket.emit(PacketType.ByClient.SOLDIER_MOVE_REQUESTED, {
+                        soldiers: [...this.scene.stateManager.selectedSoldiers.values()].map(v=>v.id).join(','),
+                        expectedPositionX: pointer.position.x,
+                        expectedPositionY: pointer.position.y
+                    });
+                }   
+                
+                //this.scene.events.emit(GAMEEVENTS.RIGHT_CLICK, pointer.position);
             }
         })
         this.input.on('pointerup', function(pointer){
@@ -71,7 +89,6 @@ export class GameScene extends BaseScene {
         });
 
         socket.on('disconnect', reason => {
-            console.log(reason);
             this.scene.stop(CONSTANT.SCENES.HUD_SCORE);
             this.scene.start(CONSTANT.SCENES.MENU);
             this.stateManager = null;
@@ -95,7 +112,6 @@ export class GameScene extends BaseScene {
     create(){
         this.playerReadyStatus = new Column(this, 0, 120);
         this.events.on(PacketType.ByClient.PLAYER_JOINED, (data)=>{
-            console.log('Player Joined Game  : ', data);
             this.playerReadyStatus.addNode(this.add.text(150, 150, `${data.player.id} Joined`))
         });
         this.events.on(PacketType.ByClient.PLAYER_JOINED, (data)=>{
@@ -106,6 +122,18 @@ export class GameScene extends BaseScene {
         });
         this.events.on(PacketType.ByClient.PLAYER_UNREADY, (data)=>{
             this.playerReadyStatus.addNode(this.add.text(150, 150, `${data.playerId} Marked UnReady`))
+        });
+        
+        this.events.on(PacketType.ByServer.SOLDIER_CREATE_ACK, ({isCreated, soldier, playerId, soldierType})=>{
+            if(!isCreated)
+                return;
+            this.stateManager.getPlayer(playerId).addSoldier(new Spearman(this, soldier.currentPositionX, soldier.currentPositionY, 'spearman', null, {
+                health: soldier.health,
+                speed: soldier.speed,
+                cost: soldier.cost,
+                damage: soldier.damage,
+                id: soldier.id
+            }))
         });
 
         var ReadyButton = this.add.text(200, 220, "I'm Ready!").setInteractive().on('pointerdown', ()=>{
