@@ -10,6 +10,7 @@ const PacketType = require('../common/PacketType');
 const uuidv = v4;
 class Player
 {
+    static maxResources = 200;
     constructor(id, name){
         this.name = name || 'Keshav';
         this.id = id || `player_${uuidv()}`;
@@ -24,7 +25,7 @@ class Player
     tick(delta, updateManager){
         console.log('player ticking', delta);
         this.resources += 0.5*delta;
-        this.resources = Math.min(this.resources, 103);
+        this.resources = Math.min(this.resources, Player.maxResources);
 
         //Queue delta update
         updateManager.queueServerEvent({

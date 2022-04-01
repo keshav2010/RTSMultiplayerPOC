@@ -28,6 +28,7 @@ export class GameScene extends BaseScene {
         });
         this.stateManager = new ClientStateManager(this);
 
+
         //Lasso Selection Code
         selectorGraphics = this.add.graphics();
         this.input.on('pointerdown', function(pointer)
@@ -71,6 +72,7 @@ export class GameScene extends BaseScene {
 
         socket.on('disconnect', reason => {
             console.log(reason);
+            this.scene.stop(CONSTANT.SCENES.HUD_SCORE);
             this.scene.start(CONSTANT.SCENES.MENU);
             this.stateManager = null;
         });
@@ -78,12 +80,12 @@ export class GameScene extends BaseScene {
         //tick brings in delta updates
         socket.on('tick',(d)=>{
             let deltaChanges = JSON.parse(d).data;
-            //console.log('tick--', deltaChanges);
             deltaChanges.forEach(deltaUpdate=>{
-                //console.log('emitting ', deltaUpdate)
                 this.events.emit(deltaUpdate.type, deltaUpdate);
             });
         });
+
+        this.scene.launch(CONSTANT.SCENES.HUD_SCORE, this.stateManager);
     }
     preload(){
         this.load.image('playbutton', "../assets/playbutton.png");
@@ -91,10 +93,7 @@ export class GameScene extends BaseScene {
         this.load.image('spearman', "../assets/spearman.png");
     }
     create(){
-        this.add.text(5, 5, "Game Started");
-
-        this.playerReadyStatus = new Column(this, 0, 0, 'knight');
-
+        this.playerReadyStatus = new Column(this, 0, 120);
         this.events.on(PacketType.ByClient.PLAYER_JOINED, (data)=>{
             console.log('Player Joined Game  : ', data);
             this.playerReadyStatus.addNode(this.add.text(150, 150, `${data.player.id} Joined`))
@@ -114,7 +113,7 @@ export class GameScene extends BaseScene {
             ReadyButton.setColor(buttonState ? 'green':'white');
             if(buttonState)
                 socket.emit(PacketType.ByClient.PLAYER_READY, {});
-            else 
+            else
                 socket.emit(PacketType.ByClient.PLAYER_UNREADY,{});
         });
         var QuitButton = this.add.text(700, 220, "Leave Server").setInteractive().on('pointerdown', ()=>{

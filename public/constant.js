@@ -3,7 +3,8 @@ module.exports = {
         MENU: "MENU",
         LOAD: "LOAD",
         GAME: "GAME",
-        RESULT:"RESULT"
+        RESULT:"RESULT",
+        HUD_SCORE: "SCOREHUD"
     },
     GAMEEVENTS:{
         SOLDIER_CREATED:'SC',
@@ -13,6 +14,6 @@ module.exports = {
         SOLDIER_SELECTED: 'SS',
         SOLDIER_UNSELECTED: 'SUS',
 
-        RIGHT_CLICK: 'RC',
+        RIGHT_CLICK: 'RC'
     }
 }
