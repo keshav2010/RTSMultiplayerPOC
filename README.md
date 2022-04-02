@@ -10,4 +10,3 @@ Approach
 5. Server send back delta updates (stored in cumulativeUpdate array) back to all clients
 
 This is a timestep based approach that makes sure server only send delta updates back to all clients instead of whole game state.
-NodeJS's single threaded event loop does present a challenge as in each tick cycle, as long as server updates game state it will block node's event loop.
