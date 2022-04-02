@@ -42,7 +42,7 @@ let httpServer = app.listen(PORT,()=>{console.log('Live @ ',PORT)});
 //Init support for Websocket
 const io = socketIO(httpServer);
 
-const TICKRATE = 500;
+const TICKRATE = 10;
 const MAX_MS_PER_TICK = 1000/TICKRATE;
 
 
@@ -75,10 +75,12 @@ function processPendingUpdates()
         //Broadcast delta-changes to all connected clients
         gameState.broadcastClientInitUpdate();
         gameState.broadcastCumulativeUpdate();
-
-        let serverEvent = pendingUpdates.getServerEvent();
-        if(serverEvent){
-            io.emit('tick', JSON.stringify({data: [serverEvent]}));
+        
+        let serverEvent;
+        while(serverEvent = pendingUpdates.getServerEvent()){
+            if(serverEvent){
+                io.emit('tick', JSON.stringify({data: [serverEvent]}));
+            }
         }
         const newTickAfterMS = Math.abs(MAX_MS_PER_TICK - timeUtilised);
 

@@ -11,6 +11,7 @@ const uuidv = v4;
 class Player
 {
     static maxResources = 200;
+    static resourceMultiplier=12; //per second
     constructor(id, name){
         this.name = name || 'Keshav';
         this.id = id || `player_${uuidv()}`;
@@ -24,7 +25,7 @@ class Player
 
     tick(delta, updateManager){
         console.log('player ticking', delta);
-        this.resources += 0.5*delta;
+        this.resources += Player.resourceMultiplier*delta;
         this.resources = Math.min(this.resources, Player.maxResources);
 
         //Queue delta update

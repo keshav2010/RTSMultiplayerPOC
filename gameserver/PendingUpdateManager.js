@@ -7,7 +7,7 @@ class PendingUpdateManager
         this.pendingUpdates = new LinkedList();
         this.pendingServerEvents = new LinkedList();
 
-        this.limit = maxPackets || 500;
+        this.limit = maxPackets || 1220;
     }
 
     //queue the new request

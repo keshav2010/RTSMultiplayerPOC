@@ -114,7 +114,8 @@ function SoldierMoveRequestedPacketAction(packetType, socket, io, stateManager, 
         console.log('soldier id ', soldierId);
         console.log('soldier obj ',stateManager.SocketToPlayerData.get(playerId).getSoldier(soldierId));
         let soldier = stateManager.SocketToPlayerData.get(playerId).getSoldier(soldierId);
-        soldier.setTargetPosition(expectedPositionX, expectedPositionY);
+        if(soldier)
+            soldier.setTargetPosition(expectedPositionX, expectedPositionY);
     });
 
     //NOTE ; Not sending delta-update for this, a tick call should be able to send movements

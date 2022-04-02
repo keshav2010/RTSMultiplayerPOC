@@ -18,6 +18,11 @@ export class PlayerStatisticHUD extends BaseScene {
         console.log('game scene ', gameScene);
 
         const resourceText = this.add.text(50, 50, "Resources: 0");
+        const soldierCount = this.add.text(50, 100, "Soldiers: 0");
+        var count=0;
+        gameScene.events.on(PacketType.ByServer.SOLDIER_CREATE_ACK, ({isCreated})=>{
+            soldierCount.setText(`Soldiers: ${++count}`);
+        });
         gameScene.events.on(PacketType.ByServer.PLAYER_RESOURCE_UPDATED, ({type, playerId, resources})=>{
             
             if(this.stateManager.getPlayer().playerId === playerId)
