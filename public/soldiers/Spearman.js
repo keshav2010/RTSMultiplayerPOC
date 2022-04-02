@@ -19,6 +19,14 @@ export class Spearman extends BaseSoldier {
 
     }
     update(elapsedTime, deltaTime){
-
+        let diffX = this.expectedPositionX- this.x;
+        let diffY = this.expectedPositionY - this.y;
+        let mag = Math.sqrt(diffX*diffX + diffY*diffY);
+        if(mag === 0)
+            return;
+        diffX = diffX/mag;
+        diffY = diffY/mag;
+        this.x += diffX*0.05*deltaTime;
+        this.y += diffY*0.05*deltaTime;
     }
 }

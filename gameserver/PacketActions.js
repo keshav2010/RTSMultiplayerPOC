@@ -110,6 +110,7 @@ function SoldierMoveRequestedPacketAction(packetType, socket, io, stateManager, 
     else soldiers = data.soldiers;
 
     soldiers.forEach(soldierId=>{
+        soldierId=''+soldierId;
         console.log('soldier id ', soldierId);
         console.log('soldier obj ',stateManager.SocketToPlayerData.get(playerId).getSoldier(soldierId));
         let soldier = stateManager.SocketToPlayerData.get(playerId).getSoldier(soldierId);

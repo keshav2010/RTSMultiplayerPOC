@@ -25,8 +25,10 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
         this.setData('damage',this.initialParam.damage || 10);
         this.setData('cost',this.initialParam.cost || 5);
 
-        this.setData('targetpos', new Phaser.Math.Vector2(x,y));
-        this.setData('currentpos', new Phaser.Math.Vector2(x,y));
+        this.expectedPositionX = x;
+        this.expectedPositionY = y;
+        this.x = x;
+        this.y = y;
 
         this.on('pointerdown', (d)=>{
             

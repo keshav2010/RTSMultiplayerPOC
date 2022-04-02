@@ -11,7 +11,6 @@ const PacketType={
     },
     ByServer:{
         'SOLDIER_KILLED':'sk',
-        'SOLDIER_MOVE':'sm',
         'GAME_STARTED':'gs',
         'SOLDIER_CREATE_ACK':'sca',
 

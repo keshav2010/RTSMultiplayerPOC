@@ -42,7 +42,7 @@ let httpServer = app.listen(PORT,()=>{console.log('Live @ ',PORT)});
 //Init support for Websocket
 const io = socketIO(httpServer);
 
-const TICKRATE = 24;
+const TICKRATE = 500;
 const MAX_MS_PER_TICK = 1000/TICKRATE;
 
 

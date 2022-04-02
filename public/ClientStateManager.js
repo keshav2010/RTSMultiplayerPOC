@@ -46,6 +46,16 @@ class ClientStateManager
             console.log('Player Left ', data);
 
         });
+        this.scene.events.on(PacketType.ByServer.SOLDIER_POSITION_UPDATED, (data)=>{
+            var {soldier, type} = data;
+            console.log(this.ConnectedPlayers);
+            this.ConnectedPlayers.get(soldier.playerId).getChildren().forEach(s =>{
+                if(s.id === soldier.id){
+                    s.expectedPositionX = soldier.currentPositionX;
+                    s.expectedPositionY = soldier.currentPositionY;
+                }
+            });
+        })
 
         this.scene.events.on(GAMEEVENTS.SOLDIER_SELECTED, (d)=>{
             this.selectedSoldiers.set(d.id, d);

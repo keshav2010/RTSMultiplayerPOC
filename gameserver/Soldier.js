@@ -14,6 +14,7 @@ class Soldier
         this.cost = params.cost || 5;
         this.damage = params.damage || 5;
         this.id = ''+Soldier.sid;
+        this.playerId = ''+params.playerId
         Soldier.sid++;
     }
 
@@ -33,8 +34,7 @@ class Soldier
         }
         updateManager.queueServerEvent({
             type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
-            currentPositionX: this.currentPosition.x,
-            currentPositionY: this.currentPosition.y
+            soldier: this.getSnapshot()
         });
     }
 
@@ -57,7 +57,8 @@ class Soldier
             damage: this.damage,
             cost: this.cost,
 
-            id: this.id
+            id: this.id,
+            playerId: this.playerId
         }
     }
 }

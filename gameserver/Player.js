@@ -69,7 +69,8 @@ class Player
             health:50,
             speed:5,
             cost:5,
-            damage:5
+            damage:5,
+            playerId: this.id
         });
         this.resources -= 10;
         this.SoldierMap.set(s.id, s);
