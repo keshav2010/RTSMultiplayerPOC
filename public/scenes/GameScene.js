@@ -3,6 +3,7 @@ const {GAMEEVENTS} = CONSTANT;
 const PacketType = require('../../common/PacketType');
 const {Spearman} = require('../soldiers/Spearman');
 import {BaseScene} from './BaseScene';
+const SoldierType = require('../../common/SoldierType')
 const {Column, Viewport, Scrollbar} =  require('phaser-ui-tools');
 const ClientStateManager = require('../ClientStateManager');
 const Player = require('../Player');
@@ -45,7 +46,7 @@ export class GameScene extends BaseScene {
             {
                 //middle mouse btn press => create spearman
                 socket.emit(PacketType.ByClient.SOLDIER_CREATE_REQUESTED, {
-                    soldierType: 'spearman',
+                    soldierType: SoldierType.SPEARMAN,
                     currentPositionX: pointer.position.x,
                     currentPositionY: pointer.position.y
                 });

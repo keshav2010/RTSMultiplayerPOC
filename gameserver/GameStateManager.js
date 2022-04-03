@@ -53,16 +53,15 @@ class GameStateManager
 
     simulate(updateManager)
     {
-        var deltaTime = new Date().getTime()-this.lastSimulateTime_ms;
+        var deltaTime = (new Date().getTime()-this.lastSimulateTime_ms)/1000;
         this.lastSimulateTime_ms = new Date().getTime();
-
         let playerIdArray = [...this.SocketToPlayerData.keys()];
         var i=0;
         var test = ()=>{return (i<playerIdArray.length)};
         var loop = ()=>{
             //simulate each player
             let playerObject = this.SocketToPlayerData.get(playerIdArray[i++]);
-            playerObject.tick(deltaTime*0.001, updateManager);
+            playerObject.tick(deltaTime, updateManager);
             return true;//continue loop
         }
         nbLoop(test, loop);

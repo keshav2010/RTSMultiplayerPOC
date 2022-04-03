@@ -42,7 +42,7 @@ let httpServer = app.listen(PORT,()=>{console.log('Live @ ',PORT)});
 //Init support for Websocket
 const io = socketIO(httpServer);
 
-const TICKRATE = 10;
+const TICKRATE = 25;
 const MAX_MS_PER_TICK = 1000/TICKRATE;
 
 
@@ -63,15 +63,12 @@ function processPendingUpdates()
         var updatePacket = pendingUpdates.getClientRequest();
         if(updatePacket)
             updatePacket.updateStateManager(gameState);
-
-
         timeUtilised = (new Date().getTime() - startTime);
         return true;
     };
     var test = ()=>{return timeUtilised < MAX_MS_PER_TICK};
     nbLoop(test, loop, ()=>{
         gameState.simulate(pendingUpdates);
-
         //Broadcast delta-changes to all connected clients
         gameState.broadcastClientInitUpdate();
         gameState.broadcastCumulativeUpdate();

@@ -1,5 +1,6 @@
 const {GAMEEVENTS} = require('../constant');
 import {BaseSoldier} from './BaseSoldier';
+const SoldierType = require('../../common/SoldierType')
 export class Spearman extends BaseSoldier {
     /**
      * @param {*} scene 
@@ -11,7 +12,7 @@ export class Spearman extends BaseSoldier {
     constructor (scene, x, y, texture, frame, initialParam)
     {
         super(scene, x, y, texture, frame, initialParam);
-        this.soldierType='SPEARMAN';
+        this.soldierType=SoldierType.SPEARMAN;
     }
     onClicked(){
     }

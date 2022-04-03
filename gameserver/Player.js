@@ -6,6 +6,7 @@ const Soldier = require('./Soldier');
 const {v4} = require('uuid');
 const nbLoop = require('../common/nonBlockingLoop');
 const PacketType = require('../common/PacketType');
+const SoldierType = require('../common/SoldierType');
 
 const uuidv = v4;
 class Player
@@ -61,14 +62,14 @@ class Player
     createSoldier(type, x, y){
         x = x||this.posX;
         y = y||this.posY;
-        type=type||'spearman';
+        type=type||SoldierType.SPEARMAN;
         if(this.resources < 10)
             return {status:false};
         let s = new Soldier(type, {
             x, 
             y,
             health:50,
-            speed:5,
+            speed:20,
             cost:5,
             damage:5,
             playerId: this.id

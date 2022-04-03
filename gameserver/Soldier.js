@@ -21,16 +21,21 @@ class Soldier
     tick(delta, updateManager){
         let diffX = this.expectedPosition.x - this.currentPosition.x;
         let diffY = this.expectedPosition.y - this.currentPosition.y;
-        if(Math.abs(diffX)+Math.abs(diffY) === 0)
+        let mag = Math.sqrt(diffX*diffX + diffY*diffY);
+        if(mag === 0)
             return;
-        else if(Math.abs(diffX)+Math.abs(diffY) < 1){
-            this.currentPosition = {x:this.expectedPosition.x, y:this.expectedPosition.y}
-            diffX=diffY=0;
-        }
+        else if(mag < 1){
+            this.currentPosition.x = this.expectedPosition.x;
+            this.currentPosition.y = this.expectedPosition.y;
+            diffX = diffY = 0;
+        } 
         else {
-            this.currentPosition.x += this.speed*delta*diffX;
-            this.currentPosition.y += this.speed*delta*diffY;
+            diffX = diffX/mag;
+            diffY = diffY/mag;
         }
+        this.currentPosition.x += this.speed*delta*diffX;
+        this.currentPosition.y += this.speed*delta*diffY;
+
         updateManager.queueServerEvent({
             type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
             soldier: this.getSnapshot()

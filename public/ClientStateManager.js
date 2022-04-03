@@ -29,6 +29,9 @@ class ClientStateManager
             console.log(this.ConnectedPlayers);
             this.ConnectedPlayers.get(soldier.playerId).getChildren().forEach(s =>{
                 if(s.id === soldier.id){
+                    //no interpolation applied for now
+                    s.x = soldier.currentPositionX;
+                    s.y = soldier.currentPositionY;
                     s.expectedPositionX = soldier.currentPositionX;
                     s.expectedPositionY = soldier.currentPositionY;
                 }

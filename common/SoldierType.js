@@ -1,7 +1,7 @@
 
 const SoldierType={
-    'SPEARMAN':1,
-    'KNIGHT':2
+    'SPEARMAN':'spr',
+    'KNIGHT':'knt'
 }
 
 module.exports = SoldierType;
