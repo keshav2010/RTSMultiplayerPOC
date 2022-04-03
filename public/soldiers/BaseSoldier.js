@@ -29,25 +29,12 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
         this.expectedPositionY = y;
         this.x = x;
         this.y = y;
-
-        this.on('pointerdown', (d)=>{
-            
-            this.scene.stateManager.selectedSoldiers.set(d.id, d);
-            this.alpha = 0.5;
-            this.scale = 1.5;
-
-            //emit scene wide event
-            this.scene.events.emit(GAMEEVENTS.SOLDIER_SELECTED, this);
-            if(this.onClicked){
-                this.onClicked();
-            }
-        });
+        this.scale = 0.25;
     }
 
     markSelected(){
         this.scene.stateManager.selectedSoldiers.set(this.id, this);
         this.alpha = 0.5;
-        this.scale = 1.5;
 
         //emit scene wide event
         this.scene.events.emit(GAMEEVENTS.SOLDIER_SELECTED, this);
@@ -55,7 +42,6 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     markUnselected(){
         this.scene.stateManager.selectedSoldiers.delete(this.id);
         this.alpha = 1;
-        this.scale = 1;
 
         //emit scene wide event
         this.scene.events.emit(GAMEEVENTS.SOLDIER_UNSELECTED, this);

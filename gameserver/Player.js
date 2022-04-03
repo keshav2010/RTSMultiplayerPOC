@@ -11,10 +11,10 @@ const uuidv = v4;
 class Player
 {
     static maxResources = 200;
-    static resourceMultiplier=12; //per second
+    static resourceMultiplier=10; //per second
     constructor(id, name){
         this.name = name || 'Keshav';
-        this.id = id || `player_${uuidv()}`;
+        this.id = id;
         this.SoldierMap = new Map();
         this.resources = 100;
 
@@ -23,8 +23,8 @@ class Player
         this.posY = 200+Math.random()*400;
     }
 
-    tick(delta, updateManager){
-        console.log('player ticking', delta);
+    tick(delta, updateManager)
+    {
         this.resources += Player.resourceMultiplier*delta;
         this.resources = Math.min(this.resources, Player.maxResources);
 

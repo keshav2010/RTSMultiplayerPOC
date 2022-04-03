@@ -21,7 +21,6 @@ class Soldier
     tick(delta, updateManager){
         let diffX = this.expectedPosition.x - this.currentPosition.x;
         let diffY = this.expectedPosition.y - this.currentPosition.y;
-        console.log(diffX,diffY);
         if(Math.abs(diffX)+Math.abs(diffY) === 0)
             return;
         else if(Math.abs(diffX)+Math.abs(diffY) < 1){

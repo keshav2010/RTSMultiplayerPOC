@@ -6,19 +6,19 @@ const uuidv = v4;
  */
 class Player extends Phaser.GameObjects.Group
 {
-    constructor(scene, id, name){
+    constructor(scene, prop){
         super(scene);
 
         this.dataManager = new Phaser.Data.DataManager(this);
 
         //group name will be player name
-        this.setName(name || 'Keshav');
-        this.playerId = id || `player_${uuidv()}`;
+        this.setName(prop.name || 'Keshav');
+        this.playerId = prop.id;
 
         //player property
-        this.dataManager.set('resource', 100);
-        this.dataManager.set('flagpos', {x: Math.random()*400, y:Math.random()*400});
-        this.dataManager.set('health', 100);
+        this.dataManager.set('resource', prop.resources);
+        this.dataManager.set('flagpos', {x: prop.posX, y: prop.posY});
+        this.dataManager.set('health', prop.health || 100);
     }
     
     //called when other client tries to hit the flag

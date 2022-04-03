@@ -5,7 +5,7 @@ const {Spearman} = require('../soldiers/Spearman');
 import {BaseScene} from './BaseScene';
 const {Column, Viewport, Scrollbar} =  require('phaser-ui-tools');
 const ClientStateManager = require('../ClientStateManager');
-
+const Player = require('../Player');
 var buttonState=false;
 var socket;
 
@@ -34,9 +34,14 @@ export class GameScene extends BaseScene {
         this.input.on('pointerdown', function(pointer)
         {
             if(pointer.button === 0){
+                selectorGraphics.clear();
+                let soldiers = this.scene.stateManager.getPlayer().getSoldiers();
+                soldiers.forEach(soldier=>{
+                    soldier.markUnselected();
+                });
                 selectorDraw=true;
             }
-            else if(pointer.button === 1)
+            else if(pointer.button === 1) //mmb
             {
                 //middle mouse btn press => create spearman
                 socket.emit(PacketType.ByClient.SOLDIER_CREATE_REQUESTED, {
@@ -112,10 +117,9 @@ export class GameScene extends BaseScene {
     create(){
         this.playerReadyStatus = new Column(this, 0, 120);
         this.events.on(PacketType.ByClient.PLAYER_JOINED, (data)=>{
-            this.playerReadyStatus.addNode(this.add.text(150, 150, `${data.player.id} Joined`))
-        });
-        this.events.on(PacketType.ByClient.PLAYER_JOINED, (data)=>{
-            this.playerReadyStatus.addNode(this.add.text(150, 150, `${data.player.id} Joined`))
+            let player = data.player;
+            this.stateManager.addPlayer(new Player(this, player));
+            this.playerReadyStatus.addNode(this.add.text(150, 150, `${player.id} Joined`))
         });
         this.events.on(PacketType.ByClient.PLAYER_READY, (data)=>{
             this.playerReadyStatus.addNode(this.add.text(150, 150, `${data.playerId} Ready`))
@@ -127,6 +131,8 @@ export class GameScene extends BaseScene {
         this.events.on(PacketType.ByServer.SOLDIER_CREATE_ACK, ({isCreated, soldier, playerId, soldierType})=>{
             if(!isCreated)
                 return;
+            console.log('soldier created ',{isCreated, soldier, playerId, soldierType})
+            console.log(this.stateManager.ConnectedPlayers);
             this.stateManager.getPlayer(playerId).addSoldier(new Spearman(this, soldier.currentPositionX, soldier.currentPositionY, 'spearman', null, {
                 health: soldier.health,
                 speed: soldier.speed,
@@ -134,6 +140,10 @@ export class GameScene extends BaseScene {
                 damage: soldier.damage,
                 id: soldier.id
             }))
+        });
+
+        this.input.on('wheel', (data)=>{
+            console.log('wheel',data)
         });
 
         var ReadyButton = this.add.text(200, 220, "I'm Ready!").setInteractive().on('pointerdown', ()=>{

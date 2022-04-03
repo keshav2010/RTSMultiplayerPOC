@@ -15,37 +15,15 @@ class ClientStateManager
         this.ConnectedPlayers = new Map();
         this.playerId;
 
-        //register soldier
-        this.scene.events.on(GAMEEVENTS.SOLDIER_CREATED, (data)=>{
-
-        });
-
         //initialise player
         this.scene.events.on(PacketType.ByServer.PLAYER_INIT, (data)=>{
             const {playerId, players, readyPlayers} = data;
             this.playerId = playerId;
             players.forEach(player =>{
-                this.addPlayer(new Player(this.scene, player.id, player.name))
+                this.addPlayer(new Player(this.scene, player))
             });
         });
 
-
-        this.scene.events.on(PacketType.ByClient.PLAYER_JOINED, (data)=>{
-            console.log('Player Joined ', data);
-
-        });
-        this.scene.events.on(PacketType.ByClient.PLAYER_READY, (data)=>{
-            console.log('Player Ready ', data);
-
-        });
-        this.scene.events.on(PacketType.ByClient.PLAYER_UNREADY, (data)=>{
-            console.log('Player Unready ', data);
-
-        });
-        this.scene.events.on(PacketType.ByServer.PLAYER_LEFT, (data)=>{
-            console.log('Player Left ', data);
-
-        });
         this.scene.events.on(PacketType.ByServer.SOLDIER_POSITION_UPDATED, (data)=>{
             var {soldier, type} = data;
             console.log(this.ConnectedPlayers);
@@ -62,6 +40,7 @@ class ClientStateManager
         });
     }
     addPlayer(player){
+        console.log('Adding Player : ', player);
         if(!this.ConnectedPlayers.has(player.playerId))
             this.ConnectedPlayers.set(player.playerId, player);
     }

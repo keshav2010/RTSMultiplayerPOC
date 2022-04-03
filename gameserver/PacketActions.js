@@ -11,7 +11,8 @@ const Player = require("./Player");
 const PacketType = require("../common/PacketType")
 function PlayerInitPacketAction(packetType, socket, io, stateManager){
     console.log(`Player ${socket.id} just joined and a packet is scheduled for it.`)
-    stateManager.SocketToPlayerData.set(socket.id, new Player(socket.id));
+    if(!stateManager.SocketToPlayerData.has(socket.id))
+        stateManager.SocketToPlayerData.set(socket.id, new Player(socket.id));
 
     const deltaUpdate = {
         type: packetType,
@@ -30,8 +31,9 @@ function PlayerJoinedPacketAction(packetType, socket, io, stateManager){
         socket.disconnect();
         return;
     }
-
-    stateManager.SocketToPlayerData.set(socket.id, new Player(socket.id));
+    if(!stateManager.SocketToPlayerData.has(socket.id)){
+        stateManager.SocketToPlayerData.set(socket.id, new Player(socket.id));
+    }
 
     const deltaUpdate={
         type: packetType,
@@ -111,8 +113,6 @@ function SoldierMoveRequestedPacketAction(packetType, socket, io, stateManager, 
 
     soldiers.forEach(soldierId=>{
         soldierId=''+soldierId;
-        console.log('soldier id ', soldierId);
-        console.log('soldier obj ',stateManager.SocketToPlayerData.get(playerId).getSoldier(soldierId));
         let soldier = stateManager.SocketToPlayerData.get(playerId).getSoldier(soldierId);
         if(soldier)
             soldier.setTargetPosition(expectedPositionX, expectedPositionY);
@@ -143,8 +143,8 @@ function SoldierCreateRequestedPacketAction(packetType, socket, io, stateManager
         //record whatever things we've modified in this array
         updatePacket={
             ...updatePacket,
-            soldier: createStatus.soldier.getSnapshot(),
-            playerId,
+            soldier: createStatus.soldier.getSnapshot(), //detail of soldier
+            playerId, //person who created soldier
             soldierType
         }
     }
