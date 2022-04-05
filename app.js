@@ -42,7 +42,7 @@ let httpServer = app.listen(PORT,()=>{console.log('Live @ ',PORT)});
 //Init support for Websocket
 const io = socketIO(httpServer);
 
-const TICKRATE = 25;
+const TICKRATE = 15;
 const MAX_MS_PER_TICK = 1000/TICKRATE;
 
 
@@ -69,6 +69,13 @@ function processPendingUpdates()
     var test = ()=>{return timeUtilised < MAX_MS_PER_TICK};
     nbLoop(test, loop, ()=>{
         gameState.simulate(pendingUpdates);
+        
+        //TODO: This won't have any affect right now as none of the soldiers are inserted into the collision system
+        gameState.scene.system.update();
+        gameState.scene.system.checkAll((res)=>{
+            console.log('collision res = ',res);
+        });
+
         //Broadcast delta-changes to all connected clients
         gameState.broadcastClientInitUpdate();
         gameState.broadcastCumulativeUpdate();

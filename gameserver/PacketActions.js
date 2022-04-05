@@ -9,6 +9,7 @@
 
 const Player = require("./Player");
 const PacketType = require("../common/PacketType")
+
 function PlayerInitPacketAction(packetType, socket, io, stateManager){
     console.log(`Player ${socket.id} just joined and a packet is scheduled for it.`)
     if(!stateManager.SocketToPlayerData.has(socket.id))
@@ -78,19 +79,17 @@ function PlayerUnreadyPacketAction(packetType, socket, io, stateManager){
 
 function PlayerLeftPacketAction(packetType, socket, io, stateManager){
     console.log(`Player ${socket.id} Left/Disconnected.`)
-    
+
+    stateManager.SocketToPlayerData.get(socket.id).clearObject();
     stateManager.SocketToPlayerData.delete(socket.id);
     stateManager.ReadyPlayers.delete(socket.id);
-
-    if(stateManager.SocketToPlayerData.size === 0){
+    if(stateManager.SocketToPlayerData.size === 0)
         stateManager.GameStarted=false;
-    }
 
     const deltaUpdate={
         type:packetType,
         playerId: socket.id
     }
-    //Who Left
     stateManager.cumulativeUpdates.push(deltaUpdate);
 }
 
@@ -110,7 +109,6 @@ function SoldierMoveRequestedPacketAction(packetType, socket, io, stateManager, 
     if(typeof data.soldiers === 'string')
         soldiers = data.soldiers.split(',');
     else soldiers = data.soldiers;
-
     soldiers.forEach(soldierId=>{
         soldierId=''+soldierId;
         let soldier = stateManager.SocketToPlayerData.get(playerId).getSoldier(soldierId);
