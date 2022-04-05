@@ -10,3 +10,4 @@ Approach
 5. Server send back delta updates (stored in cumulativeUpdate array) back to all clients
 
 This is a timestep based approach that makes sure server only send delta updates back to all clients instead of whole game state.
+![Alt Text](https://media.giphy.com/media/MqarH02vUbLk0t6q4q/giphy.gif)
