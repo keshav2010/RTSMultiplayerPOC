@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "dbly-linked-list": "^0.3.5",
+    "detect-collisions": "^3.2.6",
     "express": "^4.17.3",
     "js-quadtree": "^3.3.6",
     "lance-gg": "^4.0.9",

@@ -73,7 +73,7 @@ class Player
             cost:5,
             damage:5,
             playerId: this.id
-        });
+        }, this);
         this.resources -= 10;
         this.SoldierMap.set(s.id, s);
         return {status:true, soldierId: s.id, soldier:s};
@@ -82,7 +82,14 @@ class Player
         return this.SoldierMap.get(soldierId);
     }
     removeSoldier(id){
-        let isDeleted = this.SoldierMap.delete(id);
+        this.SoldierMap.get(id).clearObject();
+        this.SoldierMap.delete(id);
+    }
+
+    clearObject(){
+        this.SoldierMap.forEach(soldier=>{
+            soldier.clearObject();
+        });
     }
 }
 module.exports = Player;

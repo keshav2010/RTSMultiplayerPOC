@@ -1,41 +1,56 @@
 
 const PacketType = require('../common/PacketType')
-class Soldier
-{
-    static sid=0;
+const {Circle} = require('detect-collisions');
 
-    constructor(type, params)
+class Soldier extends Circle {
+    static sid=0;
+    constructor(type, params, parentObject)
     {
-        this.currentPosition = {x:params.x, y:params.y};
+        super({x:params.x, y:params.y}, params.radius || 15);
+
+        this.parent = parentObject;
         this.expectedPosition = {x:params.x, y:params.y};
-        this.type=type;
+
+        //The target position is the actual position client wanted this unit to move to.
+        //However a unit may not reach target position due to other member of blocking the position.
+        //This value however can be used to check if two units were asked to move to same position
+        //and therefore we can assume in that case they were part of same flock.
+        this.targetPosition = {x:params.x, y:params.y};
+
+        this.soldierType=type;
+
         this.health = params.health || 50;
         this.speed = params.speed || 5;
         this.cost = params.cost || 5;
         this.damage = params.damage || 5;
+
         this.id = ''+Soldier.sid;
         this.playerId = ''+params.playerId
+
         Soldier.sid++;
     }
-
+    hasReachedDestination(){
+        let diffX = this.targetPosition.x - this.pos.x;
+        let diffY = this.targetPosition.y - this.pos.y;
+        let mag = Math.sqrt(diffX*diffX + diffY*diffY);
+        return (mag<3);
+    }
     tick(delta, updateManager){
-        let diffX = this.expectedPosition.x - this.currentPosition.x;
-        let diffY = this.expectedPosition.y - this.currentPosition.y;
+        let diffX = this.expectedPosition.x - this.pos.x;
+        let diffY = this.expectedPosition.y - this.pos.y;
         let mag = Math.sqrt(diffX*diffX + diffY*diffY);
         if(mag === 0)
             return;
         else if(mag < 1){
-            this.currentPosition.x = this.expectedPosition.x;
-            this.currentPosition.y = this.expectedPosition.y;
             diffX = diffY = 0;
+            this.setPosition(this.expectedPosition.x, this.expectedPosition.y);
         } 
         else {
             diffX = diffX/mag;
             diffY = diffY/mag;
         }
-        this.currentPosition.x += this.speed*delta*diffX;
-        this.currentPosition.y += this.speed*delta*diffY;
-
+        this.setPosition(this.pos.x+this.speed*delta*diffX, this.pos.y+this.speed*delta*diffY);
+        //this.parent.stateManager.scene.updateBody(this);
         updateManager.queueServerEvent({
             type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
             soldier: this.getSnapshot()
@@ -43,18 +58,20 @@ class Soldier
     }
 
     setTargetPosition(x,y){
-        this.expectedPosition = {x,y}
+        this.targetPosition = {x,y};
+        this.expectedPosition = {x,y};
     }
     //Returns a perfectly serializable object with no refs, this object can be shared between threads
     getSnapshot(){
         return {
-            currentPositionX: this.currentPosition.x,
-            currentPositionY: this.currentPosition.y,
+            currentPositionX: this.pos.x,
+            currentPositionY: this.pos.y,
 
             expectedPositionX: this.expectedPosition.x,
             expectedPositionY: this.expectedPosition.y,
 
-            type: this.type,
+            type: this.soldierType,
+            radius: this.r,
 
             health: this.health,
             speed: this.speed,
@@ -64,6 +81,10 @@ class Soldier
             id: this.id,
             playerId: this.playerId
         }
+    }
+
+    clearObject(){
+
     }
 }
 module.exports = Soldier
