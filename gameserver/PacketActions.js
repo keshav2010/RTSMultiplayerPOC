@@ -130,8 +130,7 @@ function SoldierMoveRequestedPacketAction(packetType, socket, io, stateManager, 
 function SoldierCreateRequestedPacketAction(packetType, socket, io, stateManager, data){
     let playerId = socket.id;
     let {soldierType, currentPositionX, currentPositionY} = data;
-    let createStatus = stateManager.SocketToPlayerData.get(playerId).createSoldier(soldierType, currentPositionX, currentPositionY);
-    
+    let createStatus = stateManager.createSoldier(currentPositionX, currentPositionY, soldierType, playerId)
     var updatePacket = {
         type: PacketType.ByServer.SOLDIER_CREATE_ACK,
         isCreated: createStatus.status

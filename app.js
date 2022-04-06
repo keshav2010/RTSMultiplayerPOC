@@ -42,7 +42,7 @@ let httpServer = app.listen(PORT,()=>{console.log('Live @ ',PORT)});
 //Init support for Websocket
 const io = socketIO(httpServer);
 
-const TICKRATE = 15;
+const TICKRATE = 24;
 const MAX_MS_PER_TICK = 1000/TICKRATE;
 
 
@@ -69,11 +69,16 @@ function processPendingUpdates()
     var test = ()=>{return timeUtilised < MAX_MS_PER_TICK};
     nbLoop(test, loop, ()=>{
         gameState.simulate(pendingUpdates);
-        
         //TODO: This won't have any affect right now as none of the soldiers are inserted into the collision system
         gameState.scene.system.update();
         gameState.scene.system.checkAll((res)=>{
-            console.log('collision res = ',res);
+            let a = res.a;
+            let b = res.b;
+            a.setPosition(a.pos.x - res.overlapV.x, a.pos.y - res.overlapV.y);
+            if(a.targetPosition.x === b.targetPosition.x && a.targetPosition.y === b.targetPosition.y && (a.hasReachedDestination() || b.hasReachedDestination())){
+                a.expectedPosition = {x: a.pos.x, y: a.pos.y};
+                b.expectedPosition = {x: b.pos.x, y: b.pos.y};
+            }
         });
 
         //Broadcast delta-changes to all connected clients

@@ -6,7 +6,7 @@ class Soldier extends Circle {
     static sid=0;
     constructor(type, params, parentObject)
     {
-        super({x:params.x, y:params.y}, params.radius || 50);
+        super({x:params.x, y:params.y}, params.radius || 15);
 
         this.parent = parentObject;
         this.expectedPosition = {x:params.x, y:params.y};
@@ -17,7 +17,7 @@ class Soldier extends Circle {
         //and therefore we can assume in that case they were part of same flock.
         this.targetPosition = {x:params.x, y:params.y};
 
-        this.type=type;
+        this.soldierType=type;
 
         this.health = params.health || 50;
         this.speed = params.speed || 5;
@@ -29,7 +29,12 @@ class Soldier extends Circle {
 
         Soldier.sid++;
     }
-
+    hasReachedDestination(){
+        let diffX = this.targetPosition.x - this.pos.x;
+        let diffY = this.targetPosition.y - this.pos.y;
+        let mag = Math.sqrt(diffX*diffX + diffY*diffY);
+        return (mag<3);
+    }
     tick(delta, updateManager){
         let diffX = this.expectedPosition.x - this.pos.x;
         let diffY = this.expectedPosition.y - this.pos.y;
@@ -65,7 +70,7 @@ class Soldier extends Circle {
             expectedPositionX: this.expectedPosition.x,
             expectedPositionY: this.expectedPosition.y,
 
-            type: this.type,
+            type: this.soldierType,
             radius: this.r,
 
             health: this.health,

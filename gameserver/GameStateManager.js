@@ -86,7 +86,15 @@ class GameStateManager
 
     //create soldier (type) for player
     createSoldier(x, y, type, playerId){
+        let player = this.SocketToPlayerData.get(playerId);
+        
+        //create soldier and insert into scene also (for collision detection)
+        let {status, soldierId, soldier} = player.createSoldier(type, x, y);
+        if(status)
+            this.scene.insertSoldier(soldier);
+
         this.event.emit(ServerLocalEvents.SOLDIER_CREATED, 'test');
+        return {status, soldierId, soldier}
     }
 
     removeSoldier(playerId, soldierId){
