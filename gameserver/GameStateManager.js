@@ -67,7 +67,7 @@ class GameStateManager
             //simulate each player
             //console.log(1/deltaTime);
             let playerObject = this.SocketToPlayerData.get(playerIdArray[i++]);
-            playerObject.tick(deltaTime, updateManager);
+            playerObject.tick(deltaTime, updateManager, this);
             return true;//continue loop
         }
         nbLoop(test, loop);

@@ -19,12 +19,12 @@ class Player
         this.SoldierMap = new Map();
         this.resources = 100;
 
-        //flag pos
+        //flag poss
         this.posX = 200+Math.random()*400;
         this.posY = 200+Math.random()*400;
     }
 
-    tick(delta, updateManager)
+    tick(delta, updateManager, stateManager)
     {
         this.resources += Player.resourceMultiplier*delta;
         this.resources = Math.min(this.resources, Player.maxResources);
@@ -41,7 +41,7 @@ class Player
         var test = ()=>{return (i<soldiersIdArr.length)}
         var loop = ()=>{
             let soldierObject = this.SoldierMap.get(soldiersIdArr[i++]);
-            soldierObject.tick(delta, updateManager);
+            soldierObject.tick(delta, updateManager, stateManager);
             return true; //continue
         }
         nbLoop(test, loop);

@@ -35,7 +35,7 @@ class Soldier extends Circle {
         let mag = Math.sqrt(diffX*diffX + diffY*diffY);
         return (mag<3);
     }
-    tick(delta, updateManager){
+    tick(delta, updateManager, stateManager){
         let diffX = this.expectedPosition.x - this.pos.x;
         let diffY = this.expectedPosition.y - this.pos.y;
         let mag = Math.sqrt(diffX*diffX + diffY*diffY);
@@ -50,6 +50,18 @@ class Soldier extends Circle {
             diffY = diffY/mag;
         }
         this.setPosition(this.pos.x+this.speed*delta*diffX, this.pos.y+this.speed*delta*diffY);
+        stateManager.scene.system.updateBody(this);
+        stateManager.scene.system.checkOne(this, (res)=>{
+            let a = res.a;
+            let b = res.b;
+            a.setPosition(a.pos.x - res.overlapV.x, a.pos.y - res.overlapV.y);
+            if(a.targetPosition.x === b.targetPosition.x && a.targetPosition.y === b.targetPosition.y && (a.hasReachedDestination() || b.hasReachedDestination())){
+                a.expectedPosition = {x: a.pos.x, y: a.pos.y};
+                b.expectedPosition = {x: b.pos.x, y: b.pos.y};
+            }
+        });
+        stateManager.scene.system.updateBody(this);
+
         //this.parent.stateManager.scene.updateBody(this);
         updateManager.queueServerEvent({
             type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
