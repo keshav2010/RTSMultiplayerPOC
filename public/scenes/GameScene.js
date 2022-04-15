@@ -22,10 +22,9 @@ export class GameScene extends BaseScene {
 
     init()
     {
-        socket = io.connect(`ws://gentle-journey-10418.herokuapp.com:3000`, {
-            reconnection: false
-        });
+        socket = io();
         socket.on('connect', ()=>{
+            console.log('Connection Established with BE');
         });
         this.stateManager = new ClientStateManager(this);
 
