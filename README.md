@@ -17,5 +17,9 @@ As shown in this gif below, server is running at tickrate of 15 and not doing mu
 Another gif, with even more soldier units, server sending position at tick rate of 75 in this example. (just playin around)
 ![TickRate75](https://media.giphy.com/media/dqC9pJBTrHiztFfNr9/giphy.gif)
 
+---- With Collision---
 Latest Updates after collision detection lib. integrated, easily able to handle upwards of 500 units (not tested with more)
 ![Alt Text](https://media.giphy.com/media/KCPZcYd3PSkRwAsWNC/giphy.gif)
+
+More Units
+![Alt Text](https://media.giphy.com/media/uPMNVzFXLdrv3ECKku/giphy.gif)
