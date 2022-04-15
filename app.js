@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const socketIO = require('socket.io');
+require('dotenv').config()
 const PORT = process.env.PORT || 3000;
 const app = express();
 
@@ -14,6 +15,7 @@ const GameStateManager = require('./gameserver/GameStateManager');
 const cors = require('cors');
 
 const nbLoop = require('./common/nonBlockingLoop');
+
 app.use(cors())
 app.use(express.static('dist'))
 app.use(express.static('public'))

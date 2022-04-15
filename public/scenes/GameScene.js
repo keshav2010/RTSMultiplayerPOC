@@ -22,7 +22,7 @@ export class GameScene extends BaseScene {
 
     init()
     {
-        socket = io.connect('ws://localhost:3000', {
+        socket = io.connect(`ws://${process.env.SERVER_URL}`, {
             reconnection: false
         });
         socket.on('connect', ()=>{
@@ -169,14 +169,14 @@ export class GameScene extends BaseScene {
         });
 
         this.events.on(PacketType.ByServer.SOLDIER_ATTACKED, (data)=>{
-            console.log('soldiers under attack ', data);
+
             let {a, b} = data;
             this.stateManager.updateSoldierFromServerSnapshot(a);
             this.stateManager.updateSoldierFromServerSnapshot(b);
         })
 
-        this.input.on('wheel', (data)=>{
-            console.log('wheel',data)
+        this.input.on('wheel', (pointer, gameobjects, deltaX, deltaY, deltaZ)=>{
+            //this.cameras.main.setZoom(Math.max(0,this.cameras.main.zoom-deltaY*0.0001));
         });
 
         var ReadyButton = this.add.text(200, 220, "I'm Ready!").setInteractive().on('pointerdown', ()=>{
