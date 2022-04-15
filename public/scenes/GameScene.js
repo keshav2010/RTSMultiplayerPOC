@@ -141,6 +141,10 @@ export class GameScene extends BaseScene {
     }
     create(){
         this.playerReadyStatus = new Column(this, 0, 120);
+        this.events.on(PacketType.ByServer.PLAYER_LEFT, (data)=>{
+            let {playerId} = data;
+            this.stateManager.removePlayer(playerId);
+        })
         this.events.on(PacketType.ByClient.PLAYER_JOINED, (data)=>{
             let player = data.player;
             this.stateManager.addPlayer(new Player(this, player));

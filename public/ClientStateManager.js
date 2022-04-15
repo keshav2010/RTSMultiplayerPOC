@@ -62,8 +62,11 @@ class ClientStateManager
         return this.ConnectedPlayers.get(id || this.playerId);
     }
     removePlayer(playerId){
-        if(this.ConnectedPlayers.has(playerId))
+        if(this.ConnectedPlayers.has(playerId)){
+            //destroy group and all units
+            this.ConnectedPlayers.get(playerId).destroy(true);
             this.ConnectedPlayers.delete(playerId);
+        }
     }
     updateSoldierFromServerSnapshot(serverSoldierSnapshot){
         let clientLocalSoldier = this.getPlayer(serverSoldierSnapshot.playerId).getSoldier(serverSoldierSnapshot.id);
