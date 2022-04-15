@@ -44,38 +44,48 @@ class GameStateManager
      * This function is expected to execute only once per client.
      */
     broadcastClientInitUpdate(){
-        this.clientInitUpdates.forEach(deltaPacket=>{
-            
-            //copy all other parameters except socket field
-            let filtered = Object.keys(deltaPacket)
-            .filter(key=>key!=='socket')
-            .reduce((obj,key)=>{
-                obj[key]=deltaPacket[key]
-                return obj;
-            }, {});
+        try{
+            this.clientInitUpdates.forEach(deltaPacket=>{
+                
+                //copy all other parameters except socket field
+                let filtered = Object.keys(deltaPacket)
+                .filter(key=>key!=='socket')
+                .reduce((obj,key)=>{
+                    obj[key]=deltaPacket[key]
+                    return obj;
+                }, {});
 
-            deltaPacket.socket.emit('tick', JSON.stringify({
-                data:[filtered]
-            }));
-        })
-        this.clientInitUpdates=[];
+                deltaPacket.socket.emit('tick', JSON.stringify({
+                    data:[filtered]
+                }));
+            })
+            this.clientInitUpdates=[];
+        }
+        catch(err){
+            console.log(err);
+        }
     }
 
     simulate(updateManager)
     {
-        var deltaTime = (new Date().getTime()-this.lastSimulateTime_ms)/1000;
-        this.lastSimulateTime_ms = new Date().getTime();
-        let playerIdArray = [...this.SocketToPlayerData.keys()];
-        var i=0;
-        var test = ()=>{return (i<playerIdArray.length)};
-        var loop = ()=>{
-            //simulate each player
-            //console.log(1/deltaTime);
-            let playerObject = this.SocketToPlayerData.get(playerIdArray[i++]);
-            playerObject.tick(deltaTime, updateManager, this);
-            return true;//continue loop
+        try{
+            var deltaTime = (new Date().getTime()-this.lastSimulateTime_ms)/1000;
+            this.lastSimulateTime_ms = new Date().getTime();
+            let playerIdArray = [...this.SocketToPlayerData.keys()];
+            var i=0;
+            var test = ()=>{return (i<playerIdArray.length)};
+            var loop = ()=>{
+                //simulate each player
+                //console.log(1/deltaTime);
+                let playerObject = this.SocketToPlayerData.get(playerIdArray[i++]);
+                playerObject.tick(deltaTime, updateManager, this);
+                return true;//continue loop
+            }
+            nbLoop(test, loop);
         }
-        nbLoop(test, loop);
+        catch(err){
+            console.log(err);
+        }
     }
 
     //creates a new player object
@@ -114,12 +124,16 @@ class GameStateManager
     //This method is called when Player-A initiate attack over Player-B
     //Note that A can attack only single unit at a time for now.
     initiateAttack(aPlayerId, aSoldierIdArr, bPlayerId, bSoldierId){
-        let a = this.SocketToPlayerData.get(aPlayerId);
-
-        let targetSoldier = this.SocketToPlayerData.get(bPlayerId).getSoldier(bSoldierId);
-        aSoldierIdArr.forEach(soldierId=>{
-            a.getSoldier(soldierId).attackUnit(targetSoldier);
-        });
+        try{
+            let a = this.SocketToPlayerData.get(aPlayerId);
+            let b = this.SocketToPlayerData.get(bPlayerId);
+            let targetSoldier = b.getSoldier(bSoldierId);
+            aSoldierIdArr.forEach(soldierId=>{
+                a.getSoldier(soldierId).attackUnit(targetSoldier);
+            });
+        }catch(err){
+            console.log(err);
+        }
     }
 }
 

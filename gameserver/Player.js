@@ -23,7 +23,6 @@ class Player
         this.posX = 200+Math.random()*400;
         this.posY = 200+Math.random()*400;
     }
-
     tick(delta, updateManager, stateManager)
     {
         this.resources += Player.resourceMultiplier*delta;
@@ -46,7 +45,6 @@ class Player
         }
         nbLoop(test, loop);
     }
-
     getSnapshot(){
         //get snapshot for each soldier
         var soldierSnapshots = [...this.SoldierMap.values().map(soldier=>soldier.getSnapshot())]
@@ -81,15 +79,17 @@ class Player
     getSoldier(soldierId){
         return this.SoldierMap.get(soldierId);
     }
-    removeSoldier(id){
-        this.SoldierMap.get(id).clearObject();
+    removeSoldier(id, stateManager)
+    {
+        this.SoldierMap.get(id).clearObject(stateManager);
         this.SoldierMap.delete(id);
     }
-
-    clearObject(){
+    clearObject(stateManager)
+    {
         this.SoldierMap.forEach(soldier=>{
-            soldier.clearObject();
+            soldier.clearObject(stateManager);
         });
+        this.SoldierMap = new Map();
     }
 }
 module.exports = Player;

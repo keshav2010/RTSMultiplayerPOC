@@ -11,104 +11,135 @@ const Player = require("./Player");
 const PacketType = require("../common/PacketType")
 
 function PlayerInitPacketAction(packetType, socket, io, stateManager){
-    console.log(`Player ${socket.id} just joined and a packet is scheduled for it.`)
-    if(!stateManager.SocketToPlayerData.has(socket.id))
-        stateManager.SocketToPlayerData.set(socket.id, new Player(socket.id));
+    try{
+        console.log(`Player ${socket.id} just joined and a packet is scheduled for it.`)
+        if(!stateManager.SocketToPlayerData.has(socket.id))
+            stateManager.SocketToPlayerData.set(socket.id, new Player(socket.id));
 
-    const deltaUpdate = {
-        type: packetType,
-        socket,
-        playerId: socket.id,
-        players: [...stateManager.SocketToPlayerData.values()],
-        readyPlayers: [...stateManager.ReadyPlayers.values()]
+        const deltaUpdate = {
+            type: packetType,
+            socket,
+            playerId: socket.id,
+            players: [...stateManager.SocketToPlayerData.values()],
+            readyPlayers: [...stateManager.ReadyPlayers.values()]
+        }
+        stateManager.clientInitUpdates.push(deltaUpdate);
+
+        //If someone joins in late, they should get update of already-created soldiers
+        [...stateManager.SocketToPlayerData.values()].filter(v=>v.id !== socket.id).forEach(opponent=>{
+            if(opponent.SoldierMap.size < 1)
+                return;
+            [...opponent.SoldierMap.values()].forEach((s)=>{
+                let initPacket = {
+                    type: PacketType.ByServer.SOLDIER_CREATE_ACK,
+                    isCreated: true,
+
+                    socket, //init packets are sent only to the player who joined and not to other players
+
+                    soldier: s.getSnapshot(), //detail of soldier
+                    playerId: s.getSnapshot().playerId, //person who created soldier
+                    soldierType: s.getSnapshot().type
+                }
+                stateManager.clientInitUpdates.push(initPacket);
+            });
+        })
     }
-    stateManager.clientInitUpdates.push(deltaUpdate);
-
-    //If someone joins in late, they should get update of already-created soldiers
-    [...stateManager.SocketToPlayerData.values()].filter(v=>v.id !== socket.id).forEach(opponent=>{
-        if(opponent.SoldierMap.size < 1)
-            return;
-        [...opponent.SoldierMap.values()].forEach((s)=>{
-            let initPacket = {
-                type: PacketType.ByServer.SOLDIER_CREATE_ACK,
-                isCreated: true,
-
-                socket, //init packets are sent only to the player who joined and not to other players
-
-                soldier: s.getSnapshot(), //detail of soldier
-                playerId: s.getSnapshot().playerId, //person who created soldier
-                soldierType: s.getSnapshot().type
-            }
-            stateManager.clientInitUpdates.push(initPacket);
-        });
-    })
+    catch(err){
+        console.log(err);
+    }
 }
 
 function PlayerJoinedPacketAction(packetType, socket, io, stateManager){
-    console.log(`Player ${socket.id} Joined.`)
-    if(stateManager.GameStarted){
-        socket.disconnect();
-        return;
-    }
-    if(!stateManager.SocketToPlayerData.has(socket.id)){
-        stateManager.SocketToPlayerData.set(socket.id, new Player(socket.id));
-    }
+    try{
+        console.log(`Player ${socket.id} Joined.`)
+        if(stateManager.GameStarted){
+            socket.disconnect();
+            return;
+        }
+        if(!stateManager.SocketToPlayerData.has(socket.id)){
+            stateManager.SocketToPlayerData.set(socket.id, new Player(socket.id));
+        }
 
-    const deltaUpdate={
-        type: packetType,
-        player: stateManager.SocketToPlayerData.get(socket.id)
+        const deltaUpdate={
+            type: packetType,
+            player: stateManager.SocketToPlayerData.get(socket.id)
+        }
+        stateManager.cumulativeUpdates.push(deltaUpdate);
     }
-    stateManager.cumulativeUpdates.push(deltaUpdate);
+    catch(err){
+        console.log(err);
+    }
 }
 
 function PlayerReadyPacketAction(packetType, socket, io, stateManager){
-    console.log(`Player ${socket.id} Marked ready.`)
-    stateManager.ReadyPlayers.set(socket.id, true);
-    if(stateManager.ReadyPlayers.size === stateManager.SocketToPlayerData.size)
-        stateManager.GameStarted = true;
-    
-    const deltaUpdate = {
-        type:packetType,
-        playerId:socket.id,
-        startGame:stateManager.GameStarted
+    try{
+        console.log(`Player ${socket.id} Marked ready.`)
+        stateManager.ReadyPlayers.set(socket.id, true);
+        if(stateManager.ReadyPlayers.size === stateManager.SocketToPlayerData.size)
+            stateManager.GameStarted = true;
+        
+        const deltaUpdate = {
+            type:packetType,
+            playerId:socket.id,
+            startGame:stateManager.GameStarted
+        }
+        //Whose Ready and whether to start game ?
+        stateManager.cumulativeUpdates.push(deltaUpdate);
     }
-    //Whose Ready and whether to start game ?
-    stateManager.cumulativeUpdates.push(deltaUpdate);
+    catch(err){
+        console.log(err);
+    }
 }
 
 function PlayerUnreadyPacketAction(packetType, socket, io, stateManager){
-    console.log(`Player ${socket.id} Marked Unready.`)
-    if(stateManager.GameStarted || stateManager.ReadyPlayers.size === stateManager.SocketToPlayerData.size){
-        stateManager.GameStarted = true;
-        return;
-    }
+    try{
+        console.log(`Player ${socket.id} Marked Unready.`)
+        if(stateManager.GameStarted || stateManager.ReadyPlayers.size === stateManager.SocketToPlayerData.size){
+            stateManager.GameStarted = true;
+            return;
+        }
 
-    //mark as unready and addTo cumulative update
-    stateManager.ReadyPlayers.delete(socket.id);
-    
-    const deltaUpdate = {
-        type: packetType,
-        playerId: socket.id,
-        startGame:stateManager.GameStarted
+        //mark as unready and addTo cumulative update
+        stateManager.ReadyPlayers.delete(socket.id);
+        
+        const deltaUpdate = {
+            type: packetType,
+            playerId: socket.id,
+            startGame:stateManager.GameStarted
+        }
+        //Whose not ready and game-start status
+        stateManager.cumulativeUpdates.push(deltaUpdate);
     }
-    //Whose not ready and game-start status
-    stateManager.cumulativeUpdates.push(deltaUpdate);
+    catch(err){
+        console.log(err);
+    }
 }
 
 function PlayerLeftPacketAction(packetType, socket, io, stateManager){
-    console.log(`Player ${socket.id} Left/Disconnected.`)
+    try{
+        console.log(`Player ${socket.id} Left/Disconnected.`)
 
-    stateManager.SocketToPlayerData.get(socket.id).clearObject();
-    stateManager.SocketToPlayerData.delete(socket.id);
-    stateManager.ReadyPlayers.delete(socket.id);
-    if(stateManager.SocketToPlayerData.size === 0)
-        stateManager.GameStarted=false;
+        console.log(`ClearObject for player ${socket.id}`);
+        stateManager.SocketToPlayerData.get(socket.id).clearObject(stateManager);
 
-    const deltaUpdate={
-        type:packetType,
-        playerId: socket.id
+        //update the collision detection part
+        stateManager.scene.system.update();
+
+        stateManager.SocketToPlayerData.delete(socket.id);
+        stateManager.ReadyPlayers.delete(socket.id);
+
+        if(stateManager.SocketToPlayerData.size === 0)
+            stateManager.GameStarted=false;
+
+        const deltaUpdate={
+            type:packetType,
+            playerId: socket.id
+        }
+        stateManager.cumulativeUpdates.push(deltaUpdate);
     }
-    stateManager.cumulativeUpdates.push(deltaUpdate);
+    catch(err){
+        console.log(err);
+    }
 }
 
 /**
@@ -120,19 +151,23 @@ function PlayerLeftPacketAction(packetType, socket, io, stateManager){
  * }
  */
 function SoldierMoveRequestedPacketAction(packetType, socket, io, stateManager, data){
-    let playerId = socket.id;
-    var {expectedPositionX, expectedPositionY, soldiers} = data;
+    try{
+        let playerId = socket.id;
+        var {expectedPositionX, expectedPositionY, soldiers} = data;
 
-    //soldiers can be array or comma seperated string with ids
-    if(typeof data.soldiers === 'string')
-        soldiers = data.soldiers.split(',');
-    else soldiers = data.soldiers;
-    soldiers.forEach(soldierId=>{
-        soldierId=''+soldierId;
-        let soldier = stateManager.SocketToPlayerData.get(playerId).getSoldier(soldierId);
-        if(soldier)
-            soldier.setTargetPosition(expectedPositionX, expectedPositionY);
-    });
+        //soldiers can be array or comma seperated string with ids
+        if(typeof data.soldiers === 'string')
+            soldiers = data.soldiers.split(',');
+        else soldiers = data.soldiers;
+        soldiers.forEach(soldierId=>{
+            soldierId=''+soldierId;
+            let soldier = stateManager.SocketToPlayerData.get(playerId).getSoldier(soldierId);
+            if(soldier)
+                soldier.setTargetPosition(expectedPositionX, expectedPositionY);
+        });
+    }catch(err){
+        console.log(err);
+    }
 
     //NOTE ; Not sending delta-update for this, a tick call should be able to send movements
     //on its own.
@@ -169,7 +204,7 @@ function SoldierCreateRequestedPacketAction(packetType, socket, io, stateManager
 function SoldierDeletedPacketAction(packetType, socket, io, stateManager, data){
     let playerId = socket.id;
     let {soldierId} = data;
-    stateManager.socketToPlayerData.get(playerId).removeSoldier(soldierId);
+    stateManager.socketToPlayerData.get(playerId).removeSoldier(soldierId, stateManager);
 
     //broadcast data to all the players.
     const deltaPacket = {

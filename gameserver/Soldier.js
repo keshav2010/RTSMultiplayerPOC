@@ -179,8 +179,17 @@ class Soldier extends Circle {
         }
     }
 
-    clearObject(){
-
+    //sort of like a destructor
+    clearObject(stateManager){
+        if(stateManager){
+            console.log('---->soldier removed from collision-system.');
+            this.attackTarget=null;
+            this.attackedBy=null;
+            this.parent=null;
+            stateManager.scene.system.remove(this);
+        }
+        else
+            console.log('Soldier failed to be cleared from Collision-System');
     }
 }
 module.exports = Soldier

@@ -8,8 +8,10 @@ const PacketType={
         'SOLDIER_MOVE_REQUESTED': 'slmovreq',
         'PLAYER_JOINED':'pljoin',
         'SOLDIER_ATTACK_REQUESTED': 'sldierattkreq',
+        'CLIENT_SENT_CHAT':'clientchat'
     },
     ByServer:{
+        'NEW_CHAT_MESSAGE':'newcm',
         'SOLDIER_KILLED':'sk',
         'GAME_STARTED':'gs',
         'SOLDIER_CREATE_ACK':'sca',
