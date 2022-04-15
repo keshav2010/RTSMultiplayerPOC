@@ -22,7 +22,7 @@ export class GameScene extends BaseScene {
 
     init()
     {
-        socket = io.connect(`ws://${process.env.SERVER_URL}`, {
+        socket = io.connect(`ws://${process.env.SERVER_URL}:${process.env.PORT||3000}`, {
             reconnection: false
         });
         socket.on('connect', ()=>{
