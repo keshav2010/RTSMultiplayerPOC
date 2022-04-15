@@ -19,6 +19,7 @@ export class PlayerStatisticHUD extends BaseScene {
 
         const resourceText = this.add.text(50, 50, "Resources: 0");
         const soldierCount = this.add.text(50, 100, "Soldiers: 0");
+        const Controls = this.add.text(10, 10, "Dev Testing [MMB => spawn soldier, drag n select units , RightClick for move/attack");
         var count=0;
         gameScene.events.on(PacketType.ByServer.SOLDIER_CREATE_ACK, ({isCreated})=>{
             soldierCount.setText(`Soldiers: ${++count}`);
