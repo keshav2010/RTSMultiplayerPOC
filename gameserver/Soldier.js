@@ -63,6 +63,9 @@ class Soldier extends Circle {
             //both units attack each other
             this.attackTarget.health -= delta*this.damage;
             this.health -= delta*this.attackTarget.damage;
+
+            this.attackTarget.health = Math.max(0, this.attackTarget.health);
+            this.health = Math.max(0, this.health);
             updateManager.queueServerEvent({
                 type: PacketType.ByServer.SOLDIER_ATTACKED,
                 a: this.getSnapshot(),
