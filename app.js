@@ -11,9 +11,10 @@ const PacketActions = require('./gameserver/PacketActions');
 
 const PendingUpdateManager = require('./gameserver/PendingUpdateManager');
 const GameStateManager = require('./gameserver/GameStateManager');
+const cors = require('cors');
 
 const nbLoop = require('./common/nonBlockingLoop');
-
+app.use(cors())
 app.use(express.static('dist'))
 app.use(express.static('public'))
 
