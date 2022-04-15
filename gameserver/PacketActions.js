@@ -22,8 +22,26 @@ function PlayerInitPacketAction(packetType, socket, io, stateManager){
         players: [...stateManager.SocketToPlayerData.values()],
         readyPlayers: [...stateManager.ReadyPlayers.values()]
     }
-
     stateManager.clientInitUpdates.push(deltaUpdate);
+
+    //If someone joins in late, they should get update of already-created soldiers
+    [...stateManager.SocketToPlayerData.values()].filter(v=>v.id !== socket.id).forEach(opponent=>{
+        if(opponent.SoldierMap.size < 1)
+            return;
+        [...opponent.SoldierMap.values()].forEach((s)=>{
+            let initPacket = {
+                type: PacketType.ByServer.SOLDIER_CREATE_ACK,
+                isCreated: true,
+
+                socket, //init packets are sent only to the player who joined and not to other players
+
+                soldier: s.getSnapshot(), //detail of soldier
+                playerId: s.getSnapshot().playerId, //person who created soldier
+                soldierType: s.getSnapshot().type
+            }
+            stateManager.clientInitUpdates.push(initPacket);
+        });
+    })
 }
 
 function PlayerJoinedPacketAction(packetType, socket, io, stateManager){

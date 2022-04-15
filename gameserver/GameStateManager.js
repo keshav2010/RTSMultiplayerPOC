@@ -45,12 +45,17 @@ class GameStateManager
      */
     broadcastClientInitUpdate(){
         this.clientInitUpdates.forEach(deltaPacket=>{
+            
+            //copy all other parameters except socket field
+            let filtered = Object.keys(deltaPacket)
+            .filter(key=>key!=='socket')
+            .reduce((obj,key)=>{
+                obj[key]=deltaPacket[key]
+                return obj;
+            }, {});
+
             deltaPacket.socket.emit('tick', JSON.stringify({
-                data:[{
-                type: deltaPacket.type,
-                playerId: deltaPacket.playerId,
-                players: deltaPacket.players,
-                readyPlayers: deltaPacket.readyPlayers}]
+                data:[filtered]
             }));
         })
         this.clientInitUpdates=[];
