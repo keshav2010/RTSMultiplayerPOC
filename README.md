@@ -12,9 +12,10 @@ Approach
 This is a timestep based approach that makes sure server only send delta updates back to all clients instead of whole game state.
 
 As shown in this gif below, server is running at tickrate of 15 and not doing much computation apart from moving units.
-![Alt Text](https://media.giphy.com/media/MqarH02vUbLk0t6q4q/giphy.gif)
+![TickRate15](https://media.giphy.com/media/MqarH02vUbLk0t6q4q/giphy.gif)
 
 Another gif, with even more soldier units, server sending position at tick rate of 75 in this example. (just playin around)
-![Alt Text](https://media.giphy.com/media/dqC9pJBTrHiztFfNr9/giphy.gif)
+![TickRate75](https://media.giphy.com/media/dqC9pJBTrHiztFfNr9/giphy.gif)
 
-Just raw movement, no collision detection at this phase (WIP)
+Latest Updates after collision detection lib. integrated, easily able to handle upwards of 500 units (not tested with more)
+![Alt Text](https://media.giphy.com/media/KCPZcYd3PSkRwAsWNC/giphy.gif)
