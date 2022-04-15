@@ -20,7 +20,7 @@ const PacketType={
         'PLAYER_INIT':'pi',
 
         'SOLDIER_ATTACK_ACK':'saa',
-        'SOLDIER_HIT':'sh',
+        'SOLDIER_ATTACKED':'sh',
 
         'PLAYER_RESOURCE_UPDATED':'pru',
         'SOLDIER_POSITION_UPDATED':'spu',

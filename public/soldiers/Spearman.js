@@ -16,10 +16,9 @@ export class Spearman extends BaseSoldier {
     }
     onClicked(){
     }
-    preUpdate(elapsedTime, deltaTime){
-
-    }
     update(elapsedTime, deltaTime){
+        if(super.update)
+            super.update();
         let diffX = this.expectedPositionX- this.x;
         let diffY = this.expectedPositionY - this.y;
         let mag = Math.sqrt(diffX*diffX + diffY*diffY);
@@ -27,7 +26,6 @@ export class Spearman extends BaseSoldier {
             return;
         diffX = diffX/mag;
         diffY = diffY/mag;
-        this.x += diffX*0.05*deltaTime;
-        this.y += diffY*0.05*deltaTime;
+        this.setPosition(this.x+diffX*100*deltaTime, this.y+diffY*100*deltaTime);
     }
 }

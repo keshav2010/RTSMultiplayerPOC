@@ -26,7 +26,6 @@ class ClientStateManager
 
         this.scene.events.on(PacketType.ByServer.SOLDIER_POSITION_UPDATED, (data)=>{
             var {soldier, type} = data;
-            console.log(this.ConnectedPlayers);
             this.ConnectedPlayers.get(soldier.playerId).getChildren().forEach(s =>{
                 if(s.id === soldier.id){
                     //no interpolation applied for now
