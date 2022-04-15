@@ -68,7 +68,7 @@ class Player
         let s = new Soldier(type, {
             x, 
             y,
-            health:50,
+            health:100,
             speed:20,
             cost:5,
             damage:5,

@@ -26,7 +26,7 @@ class Soldier extends Circle {
 
         this.soldierType=type;
 
-        this.health = params.health || 50;
+        this.health = params.health || 100;
         this.speed = params.speed || 5;
         this.cost = params.cost || 5;
         this.damage = params.damage || 5;
