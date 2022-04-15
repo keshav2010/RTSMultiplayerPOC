@@ -41,6 +41,18 @@ class ClientStateManager
             this.selectedSoldiers.set(d.id, d);
         });
     }
+    getAllPlayers(){
+        let players = [...this.ConnectedPlayers.values()]
+        return players;
+    }
+    getOpponentSoldiers(){
+        let soldiers = this.getAllPlayers().map(player=>{
+            if(player.playerId !== this.playerId)
+                return player.getSoldiers()
+            return [];
+        });
+        return soldiers.flat();
+    }
     addPlayer(player){
         console.log('Adding Player : ', player);
         if(!this.ConnectedPlayers.has(player.playerId))
@@ -52,6 +64,13 @@ class ClientStateManager
     removePlayer(playerId){
         if(this.ConnectedPlayers.has(playerId))
             this.ConnectedPlayers.delete(playerId);
+    }
+    updateSoldierFromServerSnapshot(serverSoldierSnapshot){
+        let clientLocalSoldier = this.getPlayer(serverSoldierSnapshot.playerId).getSoldier(serverSoldierSnapshot.id);
+        if(clientLocalSoldier.length < 1)
+            return;
+        clientLocalSoldier = clientLocalSoldier[0];
+        clientLocalSoldier.setHealth(serverSoldierSnapshot.health);
     }
     update(time, delta)
     {

@@ -69,6 +69,10 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
         this.scale = 0.25;
         this.hp = new HealthBar(scene, this);
     }
+    setHealth(newHealth){
+        this.setData('health', newHealth);
+        this.hp.currentValue=newHealth;
+    }
     update(){
         this.hp.draw();
     }

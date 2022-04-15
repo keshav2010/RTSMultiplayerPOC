@@ -105,6 +105,17 @@ class GameStateManager
     setSoldierTargetPosition(playerId, soldierId, x, y){
 
     }
+
+    //This method is called when Player-A initiate attack over Player-B
+    //Note that A can attack only single unit at a time for now.
+    initiateAttack(aPlayerId, aSoldierIdArr, bPlayerId, bSoldierId){
+        let a = this.SocketToPlayerData.get(aPlayerId);
+
+        let targetSoldier = this.SocketToPlayerData.get(bPlayerId).getSoldier(bSoldierId);
+        aSoldierIdArr.forEach(soldierId=>{
+            a.getSoldier(soldierId).attackUnit(targetSoldier);
+        });
+    }
 }
 
 module.exports = GameStateManager;

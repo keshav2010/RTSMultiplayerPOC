@@ -14,6 +14,7 @@ class Player extends Phaser.GameObjects.Group
         //group name will be player name
         this.setName(prop.name || 'Keshav');
         this.playerId = prop.id;
+        this.type="PLAYER"
 
         //player property
         this.dataManager.set('resource', prop.resources);
@@ -35,11 +36,16 @@ class Player extends Phaser.GameObjects.Group
 
     //create a soldier game object and add it to this group as well as scene
     addSoldier(soldierObject){
+        soldierObject.playerId = this.playerId;
         this.add(soldierObject, true);
     }
 
     getSoldiers(){
         return this.getChildren();
+    }
+    getSoldier(id){
+        let soldier = this.getChildren().filter(child=>child.id===id);
+        return soldier;
     }
 
     //remove a soldier object from the group

@@ -162,6 +162,13 @@ function SoldierDeletedPacketAction(packetType, socket, io, stateManager, data){
     stateManager.cumulativeUpdates.push(deltaPacket);
 }
 
+function AttackRequestedPacketAction(packetType, socket, io, stateManager, data){
+    
+    var {soldiers, targetPlayerId, targetSoldierId} = data;
+    soldiers=soldiers.split(',');
+    stateManager.initiateAttack(socket.id, soldiers, targetPlayerId, targetSoldierId);
+}
+
 module.exports={
     PlayerInitPacketAction,
     PlayerReadyPacketAction,
@@ -170,5 +177,6 @@ module.exports={
     PlayerLeftPacketAction,
     SoldierMoveRequestedPacketAction,
     SoldierCreateRequestedPacketAction,
-    SoldierDeletedPacketAction
+    SoldierDeletedPacketAction,
+    AttackRequestedPacketAction
 }

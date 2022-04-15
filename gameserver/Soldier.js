@@ -58,20 +58,17 @@ class Soldier extends Circle {
         mag = (mag < 0.1)?0.1:mag;
         diffX /= mag;
         diffY /= mag;
-        if(mag <= 10)
+        if(mag <= 50)
         {
             //both units attack each other
             this.attackTarget.health -= delta*this.damage;
             this.health -= delta*this.attackTarget.damage;
-
             updateManager.queueServerEvent({
                 type: PacketType.ByServer.SOLDIER_ATTACKED,
                 a: this.getSnapshot(),
                 b: this.attackTarget.getSnapshot()
             });
         }
-        diffX = diffX/mag;
-        diffY = diffY/mag;
 
         this.setPosition(this.pos.x+this.speed*delta*diffX, this.pos.y+this.speed*delta*diffY);
         stateManager.scene.system.checkOne(this, (res)=>{
@@ -151,6 +148,11 @@ class Soldier extends Circle {
         this.targetPosition = {x,y};
         this.expectedPosition = {x,y};
         this.isAtDestination=false;
+        this.attackTarget=null;
+    }
+
+    attackUnit(unitReference){
+        this.attackTarget = unitReference;
     }
     //Returns a perfectly serializable object with no refs, this object can be shared between threads
     getSnapshot(){

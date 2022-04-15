@@ -56,12 +56,37 @@ export class GameScene extends BaseScene {
                 //if any soldier selected
                 if(this.scene.stateManager.selectedSoldiers.size > 0){
 
-                    //inform server
-                    socket.emit(PacketType.ByClient.SOLDIER_MOVE_REQUESTED, {
-                        soldiers: [...this.scene.stateManager.selectedSoldiers.values()].map(v=>v.id).join(','),
-                        expectedPositionX: pointer.position.x,
-                        expectedPositionY: pointer.position.y
-                    });
+                    //If enemy unit in nearby radius, randomly select 1 and send attack signal
+                    let searchAreaSize = 35;
+                    let rect = new Phaser.Geom.Rectangle(pointer.x-searchAreaSize/2, pointer.y-searchAreaSize/2, searchAreaSize, searchAreaSize);
+                    selectorGraphics.strokeRectShape(rect);
+                    let enemySoldiers = this.scene.stateManager.getOpponentSoldiers();
+                    
+                    let targetSoldier=null;
+                    for(let i=0; i<enemySoldiers.length; i++){
+                        let soldier = enemySoldiers[i]
+                        let bound = soldier.getBounds();
+                        if(Phaser.Geom.Intersects.RectangleToRectangle(bound, rect)){
+                            targetSoldier = soldier;
+                            break;
+                        }
+                    }
+
+                    //if wants to attack a soldier, mark it as target
+                    if(targetSoldier) {
+                        socket.emit(PacketType.ByClient.SOLDIER_ATTACK_REQUESTED, {
+                            soldiers: [...this.scene.stateManager.selectedSoldiers.values()].map(v=>v.id).join(','),
+                            targetPlayerId: targetSoldier.playerId,
+                            targetSoldierId: targetSoldier.id
+                        });
+                    }
+                    else {
+                        socket.emit(PacketType.ByClient.SOLDIER_MOVE_REQUESTED, {
+                            soldiers: [...this.scene.stateManager.selectedSoldiers.values()].map(v=>v.id).join(','),
+                            expectedPositionX: pointer.position.x,
+                            expectedPositionY: pointer.position.y
+                        });
+                    }
                 }   
                 
                 //this.scene.events.emit(GAMEEVENTS.RIGHT_CLICK, pointer.position);
@@ -142,6 +167,13 @@ export class GameScene extends BaseScene {
                 id: soldier.id
             }))
         });
+
+        this.events.on(PacketType.ByServer.SOLDIER_ATTACKED, (data)=>{
+            console.log('soldiers under attack ', data);
+            let {a, b} = data;
+            this.stateManager.updateSoldierFromServerSnapshot(a);
+            this.stateManager.updateSoldierFromServerSnapshot(b);
+        })
 
         this.input.on('wheel', (data)=>{
             console.log('wheel',data)

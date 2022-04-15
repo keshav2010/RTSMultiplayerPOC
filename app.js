@@ -127,4 +127,9 @@ io.on('connection', socket=>{
     socket.on(PacketType.ByClient.SOLDIER_DELETED, (data)=>{
         pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_DELETED, socket, data, PacketActions.SoldierDeletedPacketAction));
     });
+
+    //Client Requesting Attack on other.
+    socket.on(PacketType.ByClient.SOLDIER_ATTACK_REQUESTED, (data)=>{
+        pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_ATTACK_REQUESTED, socket, data, PacketActions.AttackRequestedPacketAction));
+    });
 });
