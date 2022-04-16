@@ -50,7 +50,7 @@ class Player extends Phaser.GameObjects.Group
 
     //remove a soldier object from the group
     removeSoldier(soldierObject){
-        this.remove(soldierObject, true, true);
+        soldierObject.destroy();
     }
 }
  module.exports = Player;

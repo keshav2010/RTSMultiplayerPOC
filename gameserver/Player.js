@@ -41,6 +41,8 @@ class Player
             var test = ()=>{return (i<soldiersIdArr.length)}
             var loop = ()=>{
                 let soldierObject = this.SoldierMap.get(soldiersIdArr[i++]);
+                if(!soldierObject)
+                    return true;
                 soldierObject.tick(delta, updateManager, stateManager);
                 return true; //continue
             }
@@ -85,8 +87,13 @@ class Player
     }
     removeSoldier(id, stateManager)
     {
-        this.SoldierMap.get(id).clearObject(stateManager);
-        this.SoldierMap.delete(id);
+        try{
+            this.SoldierMap.get(id).clearObject(stateManager);
+            this.SoldierMap.delete(id);
+        }
+        catch(err){
+            console.log(err);
+        }
     }
     clearObject(stateManager)
     {

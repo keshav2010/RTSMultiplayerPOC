@@ -218,6 +218,15 @@ export class GameScene extends BaseScene {
             this.stateManager.updateSoldierFromServerSnapshot(b);
         })
 
+        this.events.on(PacketType.ByServer.SOLDIER_KILLED, ({playerId, soldierId})=>{
+            
+            let soldier = this.stateManager.getPlayer(playerId).getSoldier(soldierId);
+            if(soldier.length < 1)
+                return;
+            soldier = soldier[0];
+            this.stateManager.getPlayer(playerId).removeSoldier(soldier);
+        });
+
         this.input.on('wheel', (pointer, gameobjects, deltaX, deltaY, deltaZ)=>{
             //this.cameras.main.setZoom(Math.max(0,this.cameras.main.zoom-deltaY*0.0001));
         });

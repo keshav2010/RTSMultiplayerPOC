@@ -70,6 +70,7 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
         this.hp = new HealthBar(scene, this);
         this.on('destroy', ()=>{
             this.hp.destroy();
+            this.scene.stateManager.selectedSoldiers.delete(this.id);
         })
     }
     setHealth(newHealth){

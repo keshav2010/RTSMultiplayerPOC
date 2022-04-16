@@ -113,7 +113,19 @@ class GameStateManager
     }
 
     removeSoldier(playerId, soldierId){
-        this.event.emit(ServerLocalEvents.SOLDIER_REMOVED, 'test');
+        try{
+            this.SocketToPlayerData.get(playerId).removeSoldier(soldierId, this);
+
+            const deltaUpdate = {
+                type: PacketType.ByServer.SOLDIER_KILLED,
+                playerId: playerId,
+                soldierId: soldierId
+            }
+            stateManager.cumulativeUpdates.push(deltaUpdate);
+        }
+        catch(err){
+
+        }
     }
 
     //give a target position to soldier so it can move towards it
@@ -129,7 +141,8 @@ class GameStateManager
             let b = this.SocketToPlayerData.get(bPlayerId);
             let targetSoldier = b.getSoldier(bSoldierId);
             aSoldierIdArr.forEach(soldierId=>{
-                a.getSoldier(soldierId).attackUnit(targetSoldier);
+                let attacker = a.getSoldier(soldierId);
+                attacker.attackUnit(targetSoldier);
             });
         }catch(err){
             console.log(err);

@@ -78,11 +78,30 @@ class Soldier extends Circle {
 
                 this.attackTarget.health = Math.max(0, this.attackTarget.health);
                 this.health = Math.max(0, this.health);
+                
                 updateManager.queueServerEvent({
                     type: PacketType.ByServer.SOLDIER_ATTACKED,
                     a: this.getSnapshot(),
                     b: this.attackTarget.getSnapshot()
                 });
+
+                if(this.attackTarget.health === 0){
+                    updateManager.queueServerEvent({
+                        type: PacketType.ByServer.SOLDIER_KILLED,
+                        playerId: this.attackTarget.playerId,
+                        soldierId: this.attackTarget.id
+                    });
+                    stateManager.removeSoldier(this.attackTarget.playerId, this.attackTarget.id);
+                }
+                if(this.health === 0){
+                    updateManager.queueServerEvent({
+                        type: PacketType.ByServer.SOLDIER_KILLED,
+                        playerId: this.playerId,
+                        soldierId: this.id
+                    });
+                    stateManager.removeSoldier(this.playerId, this.id);
+                    return;
+                }
             }
 
             this.setPosition(this.pos.x+this.speed*delta*diffX, this.pos.y+this.speed*delta*diffY);
