@@ -25,25 +25,29 @@ class Player
     }
     tick(delta, updateManager, stateManager)
     {
-        this.resources += Player.resourceMultiplier*delta;
-        this.resources = Math.min(this.resources, Player.maxResources);
+        try{
+            this.resources += Player.resourceMultiplier*delta;
+            this.resources = Math.min(this.resources, Player.maxResources);
 
-        //Queue delta update
-        updateManager.queueServerEvent({
-            type: PacketType.ByServer.PLAYER_RESOURCE_UPDATED,
-            playerId: this.id,
-            resources: this.resources
-        });
+            //Queue delta update
+            updateManager.queueServerEvent({
+                type: PacketType.ByServer.PLAYER_RESOURCE_UPDATED,
+                playerId: this.id,
+                resources: this.resources
+            });
 
-        let soldiersIdArr = [...this.SoldierMap.keys()];
-        var i=0;
-        var test = ()=>{return (i<soldiersIdArr.length)}
-        var loop = ()=>{
-            let soldierObject = this.SoldierMap.get(soldiersIdArr[i++]);
-            soldierObject.tick(delta, updateManager, stateManager);
-            return true; //continue
+            let soldiersIdArr = [...this.SoldierMap.keys()];
+            var i=0;
+            var test = ()=>{return (i<soldiersIdArr.length)}
+            var loop = ()=>{
+                let soldierObject = this.SoldierMap.get(soldiersIdArr[i++]);
+                soldierObject.tick(delta, updateManager, stateManager);
+                return true; //continue
+            }
+            nbLoop(test, loop);
+        }catch(err){
+            console.log(err);
         }
-        nbLoop(test, loop);
     }
     getSnapshot(){
         //get snapshot for each soldier
