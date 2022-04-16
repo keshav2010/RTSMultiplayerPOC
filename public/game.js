@@ -14,5 +14,6 @@ var game = new Phaser.Game({
         autoCenter: Phaser.Scale.CENTER_HORIZONTAL
     },
     parent:'app',
+    disableContextMenu: true,
     scene: [MenuScene, PlayerStatisticHUD, GameScene, ResultScene]
 });
