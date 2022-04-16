@@ -18,6 +18,7 @@ var selectorThickness = 2;
 var selectorDraw=false;
 
 var pointerDownWorldSpace=null;
+var cursors;
 $(()=>{
     $('#send-chat-btn').on('click', function(){
         SendChatMessage()
@@ -183,6 +184,8 @@ export class GameScene extends BaseScene {
     }
     create(){
         this.playerReadyStatus = new Column(this, 0, 120);
+        this.cameras.main.backgroundColor.setTo(50,150,25); 
+        cursors = this.input.keyboard.createCursorKeys();
         this.events.on(PacketType.ByServer.PLAYER_LEFT, (data)=>{
             let {playerId} = data;
             this.stateManager.removePlayer(playerId);
@@ -252,5 +255,19 @@ export class GameScene extends BaseScene {
     }
     update(time, delta){
         this.stateManager.update(time, delta);
+        if(cursors.up.isDown){
+            console.log(cursors)
+            this.cameras.main.y +=4;
+        }
+        if(cursors.down.isDown){
+            this.cameras.main.y -=4;
+        }
+        if(cursors.left.isDown){
+            this.cameras.main.x +=4;
+        }
+        if(cursors.right.isDown){
+            this.cameras.main.x -=4;
+        }
+
     }
 }
