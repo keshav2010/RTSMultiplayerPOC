@@ -144,6 +144,14 @@ export class GameScene extends BaseScene {
                 selectorGraphics.lineStyle(selectorThickness, selectorColor, 1);
 
                 let rect = new Phaser.Geom.Rectangle(pointerDownWorldSpace.x, pointerDownWorldSpace.y, pointer.worldX - pointerDownWorldSpace.x, pointer.worldY - pointerDownWorldSpace.y);
+                if(rect.width < 0){
+                    rect.x += rect.width;
+                    rect.width = Math.abs(rect.width);
+                }
+                if(rect.height < 0){
+                    rect.y += rect.height;
+                    rect.height = Math.abs(rect.height);
+                }
                 selectorGraphics.strokeRectShape(rect);
 
                 //for every sprite belonging to this player, check if it overlaps with rect
