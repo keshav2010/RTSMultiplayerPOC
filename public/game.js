@@ -5,7 +5,6 @@ import {MenuScene} from './scenes/MenuScene';
 import {ResultScene} from './scenes/ResultScene';
 import {PlayerStatisticHUD} from './scenes/PlayerStatisticHUD';
 
-
 var game = new Phaser.Game({
     type: Phaser.AUTO,
     width: 1200,

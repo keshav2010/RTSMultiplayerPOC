@@ -7,6 +7,8 @@ const SoldierType = require('../../common/SoldierType')
 const {Column, Viewport, Scrollbar} =  require('phaser-ui-tools');
 const ClientStateManager = require('../ClientStateManager');
 const Player = require('../Player');
+var $ = require('jquery')
+
 var buttonState=false;
 var socket;
 
@@ -15,6 +17,40 @@ var selectorColor = 0xffff00;
 var selectorThickness = 2;
 var selectorDraw=false;
 
+$(()=>{
+    $('#send-chat-btn').on('click', function(){
+        SendChatMessage()
+    })
+})
+
+function SendChatMessage()
+{
+    try{
+        var messageText = $('#chat-message').val();
+        console.log('message : ', messageText);
+        socket.emit(PacketType.ByClient.CLIENT_SENT_CHAT, {
+            message: messageText
+        });
+    }
+    catch(err){
+        console.error(err);
+    }
+}
+function addNewChatMessage(msg, sender){
+    let msgBlock = `<div>
+        <div class="d-flex justify-content-between">
+            <p class="small mb-1">${sender}</p>
+        </div>
+        <div class="d-flex flex-row justify-content-start">
+            <div>
+                <p style="background-color: #f5f6f7;">
+                    ${msg}
+                </p>
+            </div>
+        </div>
+    </div>`
+    $('.card-body').append(msgBlock);
+}
 export class GameScene extends BaseScene {
     constructor(){
         super(CONSTANT.SCENES.GAME)
@@ -145,6 +181,10 @@ export class GameScene extends BaseScene {
             let {playerId} = data;
             this.stateManager.removePlayer(playerId);
         })
+        this.events.on(PacketType.ByServer.NEW_CHAT_MESSAGE, (data)=>{
+            let {message, playerId} = data;
+            addNewChatMessage(message, playerId);
+        });
         this.events.on(PacketType.ByClient.PLAYER_JOINED, (data)=>{
             let player = data.player;
             this.stateManager.addPlayer(new Player(this, player));

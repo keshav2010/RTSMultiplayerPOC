@@ -222,6 +222,17 @@ function AttackRequestedPacketAction(packetType, socket, io, stateManager, data)
     stateManager.initiateAttack(socket.id, soldiers, targetPlayerId, targetSoldierId);
 }
 
+function ChatMessagePacketAction(packetType, socket, io, stateManager, data){
+    let {message} = data;
+    let senderId = socket.id;
+    //broadcast data to all the players.
+    const deltaPacket = {
+        type: PacketType.ByServer.NEW_CHAT_MESSAGE,
+        message,
+        playerId: senderId
+    }
+    stateManager.cumulativeUpdates.push(deltaPacket);
+}
 module.exports={
     PlayerInitPacketAction,
     PlayerReadyPacketAction,
@@ -231,5 +242,6 @@ module.exports={
     SoldierMoveRequestedPacketAction,
     SoldierCreateRequestedPacketAction,
     SoldierDeletedPacketAction,
-    AttackRequestedPacketAction
+    AttackRequestedPacketAction,
+    ChatMessagePacketAction
 }

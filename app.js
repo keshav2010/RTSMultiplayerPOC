@@ -135,4 +135,10 @@ io.on('connection', socket=>{
     socket.on(PacketType.ByClient.SOLDIER_ATTACK_REQUESTED, (data)=>{
         pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_ATTACK_REQUESTED, socket, data, PacketActions.AttackRequestedPacketAction));
     });
+
+
+    //Client sent a chat message
+    socket.on(PacketType.ByClient.CLIENT_SENT_CHAT, (data)=>{
+        pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.CLIENT_SENT_CHAT, socket, data, PacketActions.ChatMessagePacketAction));
+    })
 });
