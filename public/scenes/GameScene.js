@@ -17,6 +17,7 @@ var selectorColor = 0xffff00;
 var selectorThickness = 2;
 var selectorDraw=false;
 
+var pointerDownWorldSpace=null;
 $(()=>{
     $('#send-chat-btn').on('click', function(){
         SendChatMessage()
@@ -76,14 +77,18 @@ export class GameScene extends BaseScene {
                     soldier.markUnselected();
                 });
                 selectorDraw=true;
+                pointerDownWorldSpace = {
+                    x: pointer.worldX,
+                    y: pointer.worldY
+                }
             }
             else if(pointer.button === 1) //mmb
             {
                 //middle mouse btn press => create spearman
                 socket.emit(PacketType.ByClient.SOLDIER_CREATE_REQUESTED, {
                     soldierType: SoldierType.SPEARMAN,
-                    currentPositionX: pointer.position.x,
-                    currentPositionY: pointer.position.y
+                    currentPositionX: pointer.worldX,
+                    currentPositionY: pointer.worldY
                 });
             }
             else if(pointer.button === 2){
@@ -93,7 +98,7 @@ export class GameScene extends BaseScene {
 
                     //If enemy unit in nearby radius, randomly select 1 and send attack signal
                     let searchAreaSize = 35;
-                    let rect = new Phaser.Geom.Rectangle(pointer.x-searchAreaSize/2, pointer.y-searchAreaSize/2, searchAreaSize, searchAreaSize);
+                    let rect = new Phaser.Geom.Rectangle(pointer.worldX-searchAreaSize/2, pointer.worldY-searchAreaSize/2, searchAreaSize, searchAreaSize);
                     selectorGraphics.strokeRectShape(rect);
                     let enemySoldiers = this.scene.stateManager.getOpponentSoldiers();
                     
@@ -118,8 +123,8 @@ export class GameScene extends BaseScene {
                     else {
                         socket.emit(PacketType.ByClient.SOLDIER_MOVE_REQUESTED, {
                             soldiers: [...this.scene.stateManager.selectedSoldiers.values()].map(v=>v.id).join(','),
-                            expectedPositionX: pointer.position.x,
-                            expectedPositionY: pointer.position.y
+                            expectedPositionX: pointer.worldX,
+                            expectedPositionY: pointer.worldY
                         });
                     }
                 }   
@@ -130,13 +135,14 @@ export class GameScene extends BaseScene {
         this.input.on('pointerup', function(pointer){
             selectorDraw=false;
             selectorGraphics.clear();
+            pointerDownWorldSpace = null;
         })
         this.input.on('pointermove', function(pointer){
             if(selectorDraw && pointer.button === 0){
                 selectorGraphics.clear();
                 selectorGraphics.lineStyle(selectorThickness, selectorColor, 1);
 
-                let rect = new Phaser.Geom.Rectangle(pointer.downX, pointer.downY, pointer.x - pointer.downX, pointer.y - pointer.downY);
+                let rect = new Phaser.Geom.Rectangle(pointerDownWorldSpace.x, pointerDownWorldSpace.y, pointer.worldX - pointerDownWorldSpace.x, pointer.worldY - pointerDownWorldSpace.y);
                 selectorGraphics.strokeRectShape(rect);
 
                 //for every sprite belonging to this player, check if it overlaps with rect
@@ -228,7 +234,7 @@ export class GameScene extends BaseScene {
         });
 
         this.input.on('wheel', (pointer, gameobjects, deltaX, deltaY, deltaZ)=>{
-            //this.cameras.main.setZoom(Math.max(0,this.cameras.main.zoom-deltaY*0.0001));
+            this.cameras.main.setZoom(Math.max(0,this.cameras.main.zoom-deltaY*0.0003));
         });
 
         var ReadyButton = this.add.text(200, 220, "I'm Ready!").setInteractive().on('pointerdown', ()=>{
