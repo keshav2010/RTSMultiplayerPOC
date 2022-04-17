@@ -173,7 +173,7 @@ export class GameScene extends BaseScene {
                     }
                 });
             }
-            else if(pointer.button === 1 && pointer.isDown){
+            else if((pointer.button === 1 || pointer.button === 2 )&& pointer.isDown){
                 //mmb down
                 this.cameras.main.scrollX -= (pointer.x - pointer.prevPosition.x)/this.cameras.main.zoom;
                 this.cameras.main.scrollY -= (pointer.y - pointer.prevPosition.y)/this.cameras.main.zoom;
