@@ -141,7 +141,10 @@ export class GameScene extends BaseScene {
             pointerDownWorldSpace = null;
         })
         this.input.on('pointermove', function(pointer){
-            if(selectorDraw && pointer.button === 0){
+            if(!pointer.isDown){
+                selectorGraphics.clear();
+            }
+            else if(selectorDraw && pointer.button === 0){
                 selectorGraphics.clear();
                 selectorGraphics.lineStyle(selectorThickness, selectorColor, 1);
 
@@ -168,6 +171,9 @@ export class GameScene extends BaseScene {
                         soldier.markUnselected();
                     }
                 });
+            }
+            else if(pointer.button === 1 && pointer.isDown){
+                //mmb down
             }
         });
 
