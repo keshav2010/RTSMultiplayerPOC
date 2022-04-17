@@ -56,6 +56,8 @@ function addNewChatMessage(msg, sender){
 export class GameScene extends BaseScene {
     constructor(){
         super(CONSTANT.SCENES.GAME)
+        this.mapWidth=3500;
+        this.mapHeight=1500;
     }
 
     init()
@@ -189,11 +191,30 @@ export class GameScene extends BaseScene {
         this.load.image('playbutton', "../assets/playbutton.png");
         this.load.image('knight', "../assets/knight.png");
         this.load.image('spearman', "../assets/spearman.png");
+        this.load.image('map',"../assets/map.png");
     }
     create(){
+        this.cameras.main.setBounds(0, 0, this.mapWidth, this.mapHeight).setName('WorldCamera');
         this.playerReadyStatus = new Column(this, 0, 120);
-        this.cameras.main.backgroundColor.setTo(50,150,25); 
+
+        var mapGraphics = this.add.graphics();
+        mapGraphics.depth=-5;
+        mapGraphics.fillStyle(0x002200, 1);
+        mapGraphics.fillRect(0,0,this.mapWidth,this.mapHeight);
+
         cursors = this.input.keyboard.createCursorKeys();
+        const controlConfig = {
+            camera: this.cameras.main,
+            left: cursors.left,
+            right: cursors.right,
+            up: cursors.up,
+            down: cursors.down,
+            drag:0.001,
+            acceleration: 0.02,
+            maxSpeed: 1.0
+        };
+        this.controls = new Phaser.Cameras.Controls.SmoothedKeyControl(controlConfig);
+
         this.events.on(PacketType.ByServer.PLAYER_LEFT, (data)=>{
             let {playerId} = data;
             this.stateManager.removePlayer(playerId);
@@ -233,7 +254,7 @@ export class GameScene extends BaseScene {
             let {a, b} = data;
             this.stateManager.updateSoldierFromServerSnapshot(a);
             this.stateManager.updateSoldierFromServerSnapshot(b);
-        })
+        });
 
         this.events.on(PacketType.ByServer.SOLDIER_KILLED, ({playerId, soldierId})=>{
             
@@ -248,7 +269,7 @@ export class GameScene extends BaseScene {
             this.cameras.main.setZoom(Math.max(0,this.cameras.main.zoom-deltaY*0.0003));
         });
 
-        var ReadyButton = this.add.text(200, 220, "I'm Ready!").setInteractive().on('pointerdown', ()=>{
+        var ReadyButton = this.add.text(15, 220, "I'm Ready!").setInteractive().on('pointerdown', ()=>{
             buttonState=!buttonState;
             ReadyButton.setColor(buttonState ? 'green':'white');
             if(buttonState)
@@ -256,26 +277,13 @@ export class GameScene extends BaseScene {
             else
                 socket.emit(PacketType.ByClient.PLAYER_UNREADY,{});
         });
-        var QuitButton = this.add.text(700, 220, "Leave Server").setInteractive().on('pointerdown', ()=>{
+        var QuitButton = this.add.text(150, 220, "Leave Server").setInteractive().on('pointerdown', ()=>{
             console.log("Quit");
             socket.disconnect();
         });
     }
     update(time, delta){
+        this.controls.update(delta);
         this.stateManager.update(time, delta);
-        if(cursors.up.isDown){
-            console.log(cursors)
-            this.cameras.main.y +=4;
-        }
-        if(cursors.down.isDown){
-            this.cameras.main.y -=4;
-        }
-        if(cursors.left.isDown){
-            this.cameras.main.x +=4;
-        }
-        if(cursors.right.isDown){
-            this.cameras.main.x -=4;
-        }
-
     }
 }

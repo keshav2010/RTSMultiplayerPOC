@@ -7,7 +7,7 @@ import {PlayerStatisticHUD} from './scenes/PlayerStatisticHUD';
 
 var game = new Phaser.Game({
     type: Phaser.AUTO,
-    width: 1200,
+    width: 1500,
     height: 600,
     scale:{
         mode: Phaser.Scale.FIT,
