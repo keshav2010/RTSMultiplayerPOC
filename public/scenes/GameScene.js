@@ -143,8 +143,9 @@ export class GameScene extends BaseScene {
         this.input.on('pointermove', function(pointer){
             if(!pointer.isDown){
                 selectorGraphics.clear();
+                return;
             }
-            else if(selectorDraw && pointer.button === 0){
+            if(selectorDraw && pointer.button === 0){
                 selectorGraphics.clear();
                 selectorGraphics.lineStyle(selectorThickness, selectorColor, 1);
 
@@ -174,6 +175,8 @@ export class GameScene extends BaseScene {
             }
             else if(pointer.button === 1 && pointer.isDown){
                 //mmb down
+                this.cameras.main.scrollX -= (pointer.x - pointer.prevPosition.x)/this.cameras.main.zoom;
+                this.cameras.main.scrollY -= (pointer.y - pointer.prevPosition.y)/this.cameras.main.zoom;
             }
         });
 
