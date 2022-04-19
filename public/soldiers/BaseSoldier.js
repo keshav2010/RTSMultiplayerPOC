@@ -95,7 +95,6 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
         scene.events.on('update', this.update, this);
 
         this.initialParam = initialParam || {};
-        console.log('initial param',initialParam);
         if(this.initialParam.color){
             this.color = [...this.initialParam.color];
         }
@@ -123,7 +122,6 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     }
     update(){
         this.hp.draw();
-        console.log(this.color);
         this.highlightBackground.draw()
     }
     markSelected(){
