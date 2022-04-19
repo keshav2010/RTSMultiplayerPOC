@@ -14,7 +14,8 @@ class Player extends Phaser.GameObjects.Group
         //group name will be player name
         this.setName(prop.name || 'Keshav');
         this.playerId = prop.id;
-        this.type="PLAYER"
+        this.type="PLAYER";
+        this.color = [...prop.color];
 
         //player property
         this.dataManager.set('resource', prop.resources);

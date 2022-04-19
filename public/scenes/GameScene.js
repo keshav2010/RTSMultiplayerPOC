@@ -254,7 +254,8 @@ export class GameScene extends BaseScene {
                 speed: soldier.speed,
                 cost: soldier.cost,
                 damage: soldier.damage,
-                id: soldier.id
+                id: soldier.id,
+                color: this.stateManager.getPlayer(playerId).color
             }))
         });
 

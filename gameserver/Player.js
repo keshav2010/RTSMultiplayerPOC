@@ -18,6 +18,7 @@ class Player
         this.id = id;
         this.SoldierMap = new Map();
         this.resources = 100;
+        this.color = [Math.random()*255, Math.random()*255, Math.random()*255];
 
         //flag poss
         this.posX = 200+Math.random()*400;
@@ -60,7 +61,8 @@ class Player
             resources: this.resources,
             posX: this.posX,
             posY: this.posY,
-            soldiers: soldierSnapshots
+            soldiers: soldierSnapshots,
+            color: [...this.color]
         }
     }
     createSoldier(type, x, y){
