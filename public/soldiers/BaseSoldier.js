@@ -114,6 +114,7 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
         this.highlightBackground = new BackgroundHighlight(scene, this, this.color[0],this.color[1],this.color[2]);
         this.on('destroy', ()=>{
             this.hp.destroy();
+            this.highlightBackground.destroy();
             this.scene.stateManager.selectedSoldiers.delete(this.id);
         })
     }
