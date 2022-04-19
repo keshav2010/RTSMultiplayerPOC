@@ -54,7 +54,6 @@ class ClientStateManager
         return soldiers.flat();
     }
     addPlayer(player){
-        console.log('Adding Player : ', player);
         if(!this.ConnectedPlayers.has(player.playerId))
             this.ConnectedPlayers.set(player.playerId, player);
     }

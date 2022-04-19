@@ -110,7 +110,6 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
         this.setPosition(x,y);
         this.scale = 0.25;
         this.hp = new HealthBar(scene, this);
-        console.log(this.color);
         this.highlightBackground = new BackgroundHighlight(scene, this, this.color[0],this.color[1],this.color[2]);
         this.on('destroy', ()=>{
             this.hp.destroy();
