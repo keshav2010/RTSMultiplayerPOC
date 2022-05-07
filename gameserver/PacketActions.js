@@ -123,7 +123,7 @@ function PlayerLeftPacketAction(packetType, socket, io, stateManager){
         stateManager.SocketToPlayerData.get(socket.id).clearObject(stateManager);
 
         //update the collision detection part
-        stateManager.scene.system.update();
+        stateManager.scene.update();
 
         stateManager.SocketToPlayerData.delete(socket.id);
         stateManager.ReadyPlayers.delete(socket.id);
