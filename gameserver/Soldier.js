@@ -1,14 +1,36 @@
 
 const PacketType = require('../common/PacketType')
-const {Circle} = require('detect-collisions');
+const SAT = require('sat'); //(w,h)
 const StateMachine = require('javascript-state-machine');
 
-class Soldier extends Circle {
+/**
+ * SAT BOX Interface
+ * ---------
+ * pos {x,y}
+ * r
+ * offset
+ * ---------
+ * setOffset(offset)
+ * getAABB()
+ * getAABBAsBox()
+ * ---------
+ * 
+ * QUADTREE Object Interface
+ * {x, y, width, height}
+ */
+class Soldier extends SAT.Box {
     static sid=0;
     constructor(type, params, parentObject)
     {
-        super({x:params.x, y:params.y}, params.radius || 15);
+        // {pos:{x,y}}
+        super(new SAT.Vector(params.x, params.y), params.width || 35, params.height || 35);
 
+        //used by quadtrees
+        this.x = this.pos.x;
+        this.y = this.pos.y;
+        this.width=this.w;
+        this.height=this.h;
+        console.log(this.width, this.height)
         this.parent = parentObject;
         this.expectedPosition = {x:params.x, y:params.y};
 
@@ -36,6 +58,13 @@ class Soldier extends Circle {
 
         Soldier.sid++;
     }
+    
+    setPosition(x,y){
+        this.pos.x = x;
+        this.pos.y = y;
+        this.x = x;
+        this.y = y;
+    }
     hasReachedDestination(){
         let diffX = this.targetPosition.x - this.pos.x;
         let diffY = this.targetPosition.y - this.pos.y;
@@ -50,7 +79,6 @@ class Soldier extends Circle {
         else
             this.moveAtDesiredPosition(delta, updateManager, stateManager);        
     }
-
     chaseAndAttackTarget(delta, updateManager, stateManager)
     {
         try
@@ -105,7 +133,8 @@ class Soldier extends Circle {
             }
 
             this.setPosition(this.pos.x+this.speed*delta*diffX, this.pos.y+this.speed*delta*diffY);
-            stateManager.scene.system.checkOne(this, (res)=>{
+            
+            stateManager.scene.checkOne(this, (res)=>{
                 let a = res.a;
                 let b = res.b;
 
@@ -158,10 +187,10 @@ class Soldier extends Circle {
             diffY = diffY/mag;
         }
         this.setPosition(this.pos.x+this.speed*delta*diffX, this.pos.y+this.speed*delta*diffY);
-        stateManager.scene.system.checkOne(this, (res)=>{
+        stateManager.scene.checkOne(this, (res)=>{
             let a = res.a;
             let b = res.b;
-
+            
             var collisionBetweenGroupMembers = (a.targetPosition.x === b.targetPosition.x && a.targetPosition.y === b.targetPosition.y);
             var eitherReachedDest = a.hasReachedDestination() || b.hasReachedDestination();
             if(collisionBetweenGroupMembers && eitherReachedDest){
@@ -206,7 +235,10 @@ class Soldier extends Circle {
             expectedPositionY: this.expectedPosition.y,
 
             type: this.soldierType,
-            radius: this.r,
+
+            //Collider
+            width: this.w,
+            height: this.h,
 
             health: this.health,
             speed: this.speed,
@@ -225,7 +257,7 @@ class Soldier extends Circle {
             this.attackTarget=null;
             this.attackedBy=null;
             this.parent=null;
-            stateManager.scene.system.remove(this);
+            stateManager.scene.remove(this);
         }
         else
             console.log('Soldier failed to be cleared from Collision-System');

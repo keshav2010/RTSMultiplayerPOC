@@ -108,7 +108,9 @@ class GameStateManager
         if(status)
             this.scene.insertSoldier(soldier);
 
-        this.event.emit(ServerLocalEvents.SOLDIER_CREATED, 'test');
+        this.event.emit(ServerLocalEvents.SOLDIER_CREATED, {
+            x,y,type,playerId,soldierId
+        });
         return {status, soldierId, soldier}
     }
 
