@@ -247,8 +247,6 @@ export class GameScene extends BaseScene {
         this.events.on(PacketType.ByServer.SOLDIER_CREATE_ACK, ({isCreated, soldier, playerId, soldierType})=>{
             if(!isCreated)
                 return;
-            console.log(this.stateManager.ConnectedPlayers);
-            console.log('Created Soldier: ',soldier);
             this.stateManager.getPlayer(playerId).addSoldier(new Spearman(this, soldier.currentPositionX, soldier.currentPositionY, 'spearman', null, {
                 health: soldier.health,
                 speed: soldier.speed,
@@ -288,7 +286,6 @@ export class GameScene extends BaseScene {
                 socket.emit(PacketType.ByClient.PLAYER_UNREADY,{});
         });
         var QuitButton = this.add.text(150, 220, "Leave Server").setInteractive().on('pointerdown', ()=>{
-            console.log("Quit");
             socket.disconnect();
         });
     }
