@@ -68,8 +68,6 @@ export class GameScene extends BaseScene {
         });
         this.stateManager = new ClientStateManager(this);
 
-
-        //Lasso Selection Code
         selectorGraphics = this.add.graphics();
         this.input.on('pointerdown', function(pointer)
         {

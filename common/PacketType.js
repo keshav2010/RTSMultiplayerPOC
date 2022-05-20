@@ -26,6 +26,8 @@ const PacketType={
 
         'PLAYER_RESOURCE_UPDATED':'pru',
         'SOLDIER_POSITION_UPDATED':'spu',
+
+        'COUNTDOWN_TIME':'cdwn'
     }
 }
 module.exports = PacketType;
