@@ -4,6 +4,9 @@ const EventEmitter = require('events');
 const ServerLocalEvents = require('./ServerLocalEvents');
 const Scene = require('./Scene');
 const nbLoop = require('../common/nonBlockingLoop');
+const StateMachine = require('../common/StateMachine');
+const PendingUpdateManager = require('./PendingUpdateManager')
+const ServerStateMachineJSON = require('./stateMachines/ServerStateMachine.json');
 /**
  * Manages entire game state.
  */
@@ -24,6 +27,10 @@ class GameStateManager
         this.lastSimulateTime_ms =new Date().getTime();
         this.event = new EventEmitter();
         this.scene = new Scene(this);
+
+        this.countdown = 15; //seconds
+        this.stateMachine = new StateMachine(ServerStateMachineJSON);
+        this.pendingUpdates = new PendingUpdateManager();
     }
 
 
@@ -66,12 +73,60 @@ class GameStateManager
         }
     }
 
-    simulate(updateManager)
+    simulate()
     {
+        switch(this.stateMachine.currentState) {
+            case 'SpawnSelectionState':
+                this.SpawnSelectionState();
+                break;
+            case 'BattleState':
+                this.BattleState();
+                break;
+            case 'BattleEndState':
+                this.BattleEndState();
+                break;
+        }
+    }
+
+    SpawnSelectionState(){
+        try{
+            
+            //in seconds
+            var deltaTime = (new Date().getTime()-this.lastSimulateTime_ms)/1000;
+            this.lastSimulateTime_ms = new Date().getTime();
+
+            //countdown
+            this.countdown -= deltaTime;
+            this.countdown = Math.max(0, this.countdown);
+
+            console.log(this.countdown);
+            var i=0;
+            let playerIdArray = [...this.SocketToPlayerData.keys()];
+            var loop = ()=>{
+                let playerObject = this.SocketToPlayerData.get(playerIdArray[i++]);
+                playerObject.tick(deltaTime, this.pendingUpdates, this);
+                return true;
+            }
+            nbLoop(()=>{return (i<playerIdArray.length)}, loop, ()=>{
+                    this.pendingUpdates.queueServerEvent({
+                        type: PacketType.ByServer.COUNTDOWN_TIME,
+                        time: this.countdown
+                    });
+                }
+            );
+        }
+        catch(err){
+            console.log(err);
+        }
+    }
+
+    BattleState(updateManager){
         try{
             var deltaTime = (new Date().getTime()-this.lastSimulateTime_ms)/1000;
             this.lastSimulateTime_ms = new Date().getTime();
+
             let playerIdArray = [...this.SocketToPlayerData.keys()];
+
             var i=0;
             var test = ()=>{return (i<playerIdArray.length)};
             var loop = ()=>{
@@ -86,6 +141,9 @@ class GameStateManager
         catch(err){
             console.log(err);
         }
+    }
+    BattleEndState(updateManager){
+
     }
 
     //creates a new player object

@@ -7,7 +7,7 @@ class PendingUpdateManager
         this.pendingUpdates = new LinkedList();
         this.pendingServerEvents = new LinkedList();
 
-        this.limit = maxPackets || 1220;
+        this.limit = maxPackets || 2000;
     }
 
     //queue the new request
@@ -19,8 +19,10 @@ class PendingUpdateManager
     }
 
     queueServerEvent(data){
-        if(this.pendingServerEvents.getSize() === this.limit)
+        if(this.pendingServerEvents.getSize() === this.limit){
+            console.log('--SERVER QUEUE LIMIT REACHED, PACKET WILL BE DROPPED---');
             return false;
+        }
         this.pendingServerEvents.insert(data);
         return true;
     }

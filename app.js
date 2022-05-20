@@ -10,7 +10,6 @@ const PacketType = require('./common/PacketType');
 const Packet = require('./gameserver/Packet');
 const PacketActions = require('./gameserver/PacketActions');
 
-const PendingUpdateManager = require('./gameserver/PendingUpdateManager');
 const GameStateManager = require('./gameserver/GameStateManager');
 const cors = require('cors');
 
@@ -47,9 +46,6 @@ const io = socketIO(httpServer);
 
 const TICKRATE = 24;
 const MAX_MS_PER_TICK = 1000/TICKRATE;
-
-
-const pendingUpdates = new PendingUpdateManager();
 const gameState = new GameStateManager(io);
 
 /**
@@ -63,7 +59,7 @@ function processPendingUpdates()
 
     var loop = ()=>{
         //read pending packets and update state
-        var updatePacket = pendingUpdates.getClientRequest();
+        var updatePacket = gameState.pendingUpdates.getClientRequest();
         if(updatePacket)
             updatePacket.updateStateManager(gameState);
         timeUtilised = (new Date().getTime() - startTime);
@@ -71,14 +67,14 @@ function processPendingUpdates()
     };
     var test = ()=>{return timeUtilised < MAX_MS_PER_TICK};
     nbLoop(test, loop, ()=>{
-        gameState.simulate(pendingUpdates);
+        gameState.simulate();
 
         //Broadcast delta-changes to all connected clients
         gameState.broadcastClientInitUpdate();
         gameState.broadcastCumulativeUpdate();
         
         let serverEvent;
-        while(serverEvent = pendingUpdates.getServerEvent()){
+        while(serverEvent = gameState.pendingUpdates.getServerEvent()){
             if(serverEvent){
                 io.emit('tick', JSON.stringify({data: [serverEvent]}));
             }
@@ -99,46 +95,51 @@ io.on('connection', socket=>{
     Packet.io = io;
 
     //Initial packets
-    pendingUpdates.queueClientRequest(new Packet(PacketType.ByServer.PLAYER_INIT, socket, {}, PacketActions.PlayerInitPacketAction));
-    pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.PLAYER_JOINED, socket, {}, PacketActions.PlayerJoinedPacketAction));
+    gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByServer.PLAYER_INIT, socket, {}, PacketActions.PlayerInitPacketAction));
+    gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.PLAYER_JOINED, socket, {}, PacketActions.PlayerJoinedPacketAction));
 
     socket.on('disconnect', (reason)=>{
-        pendingUpdates.queueClientRequest(new Packet(PacketType.ByServer.PLAYER_LEFT, socket, {}, PacketActions.PlayerLeftPacketAction));
+        gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByServer.PLAYER_LEFT, socket, {}, PacketActions.PlayerLeftPacketAction));
     })
 
     //client marked ready
     socket.on(PacketType.ByClient.PLAYER_READY, (data)=>{
-        pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.PLAYER_READY, socket, data, PacketActions.PlayerReadyPacketAction));
+        if(gameState.stateMachine.currentState === 'SpawnSelectionState')
+        gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.PLAYER_READY, socket, data, PacketActions.PlayerReadyPacketAction));
     });
 
     //client is not ready
     socket.on(PacketType.ByClient.PLAYER_UNREADY, (data)=>{
-        pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.PLAYER_UNREADY, socket, data, PacketActions.PlayerUnreadyPacketAction));
+        if(gameState.stateMachine.currentState === 'SpawnSelectionState')
+        gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.PLAYER_UNREADY, socket, data, PacketActions.PlayerUnreadyPacketAction));
     });
 
     //Client Requesting to move a soldier
     socket.on(PacketType.ByClient.SOLDIER_MOVE_REQUESTED, (data)=>{
-        pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_MOVE_REQUESTED, socket, data, PacketActions.SoldierMoveRequestedPacketAction))
+        if(gameState.stateMachine.currentState === 'BattleState')
+        gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_MOVE_REQUESTED, socket, data, PacketActions.SoldierMoveRequestedPacketAction))
     });
 
     //Client requesting a new soldier
     socket.on(PacketType.ByClient.SOLDIER_CREATE_REQUESTED, (data)=>{
-        pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_CREATE_REQUESTED, socket, data, PacketActions.SoldierCreateRequestedPacketAction))
+        if(gameState.stateMachine.currentState === 'BattleState')
+        gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_CREATE_REQUESTED, socket, data, PacketActions.SoldierCreateRequestedPacketAction))
     });
 
     //Client deleted their soldier
     socket.on(PacketType.ByClient.SOLDIER_DELETED, (data)=>{
-        pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_DELETED, socket, data, PacketActions.SoldierDeletedPacketAction));
+        if(gameState.stateMachine.currentState === 'BattleState')
+        gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_DELETED, socket, data, PacketActions.SoldierDeletedPacketAction));
     });
 
     //Client Requesting Attack on other.
     socket.on(PacketType.ByClient.SOLDIER_ATTACK_REQUESTED, (data)=>{
-        pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_ATTACK_REQUESTED, socket, data, PacketActions.AttackRequestedPacketAction));
+        if(gameState.stateMachine.currentState === 'BattleState')
+        gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_ATTACK_REQUESTED, socket, data, PacketActions.AttackRequestedPacketAction));
     });
-
 
     //Client sent a chat message
     socket.on(PacketType.ByClient.CLIENT_SENT_CHAT, (data)=>{
-        pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.CLIENT_SENT_CHAT, socket, data, PacketActions.ChatMessagePacketAction));
+        gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.CLIENT_SENT_CHAT, socket, data, PacketActions.ChatMessagePacketAction));
     })
 });
