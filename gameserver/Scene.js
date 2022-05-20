@@ -1,63 +1,80 @@
-
 /**
-*/
-const Soldier = require('./Soldier');
-const PacketType = require('../common/PacketType');
-const SoldierType = require('../common/SoldierType');
-const ServerLocalEvents = require('./ServerLocalEvents');
-const Collision = require('detect-collisions');
-const Quadtree = require("quadtree-lib")
-const SAT = require('sat');
+ */
+const Soldier = require("./Soldier");
+const PacketType = require("../common/PacketType");
+const SoldierType = require("../common/SoldierType");
+const ServerLocalEvents = require("./ServerLocalEvents");
+const Collision = require("detect-collisions");
+const Quadtree = require("quadtree-lib");
+const SAT = require("sat");
 
-class Scene extends Quadtree
-{
-    constructor(stateManager, width, height){
-        width = width || 1600;
-        height = height || 1600;
-        super({width, height});
-        this.stateManager = stateManager;
-    }
-    removeSoldier(soldierObject){
-        this.remove(soldierObject);
-    }
-    insertSoldier(soldierObject){
-        this.push(soldierObject, true);
-    }
+class Scene extends Quadtree {
+  constructor(stateManager, width, height) {
+    width = width || 15;
+    height = height || 15;
+    super({ width, height });
+    this.stateManager = stateManager;
+  }
+  removeSoldier(soldierObject) {
+    this.remove(soldierObject);
+  }
+  insertSoldier(soldierObject) {
+    this.push(soldierObject, true);
+  }
 
-    //Check if soldier is colliding with other units/soldiers
-    checkOne(soldier, callback){
+  /**
+   * Gets units which are within the bounding box(square)
+   * @param {*} soldier
+   * @param {*} searchRadius
+   * @returns
+   */
+  getNearbyUnits({x,y}, searchRadius) {
+    let result = this.colliding({x,y}, function(a, b){
+      // a=> 1st arg, b => actual quadtree object
+      let aPos = new SAT.Vector(a.x, a.y)
+      let bPos = new SAT.Vector(b.x + b.w/2, b.y + b.h/2)
+      let distance = new SAT.Vector().copy(aPos).sub(bPos).len();
+      return (distance <= 2*searchRadius);
+    });
+    return result;
+  }
 
-        //fetch all bodies with which soldier is colliding in Quadtree
-        let collidingBodies = this.colliding({
-            x: soldier.x,
-            y: soldier.y,
-            width: soldier.w,
-            height: soldier.h
-        });
+  //Check if soldier is colliding with other units/soldiers
+  checkOne(soldier, callback) {
+    //fetch all bodies with which soldier is colliding in Quadtree
+    let collidingBodies = this.colliding({
+      x: soldier.pos.x,
+      y: soldier.pos.y,
+      width: soldier.w,
+      height: soldier.h
+    });
 
-        //Colliding Bodies will always have 1 element, which is the soldier itself.
-        if(collidingBodies.length < 2)
-            return;
-        
-        //Obtain "SAT.Response" for each collision.
-        var satBoxPolygons = collidingBodies;
-        satBoxPolygons.forEach( collidingSoldier => {
-            //skip collision with self
-            if(collidingSoldier.id === soldier.id){
-                return;
-            }
-            var res = new SAT.Response();
-            SAT.testPolygonPolygon(soldier.toPolygon(), collidingSoldier.toPolygon(), res);
-            
-            res.a = soldier;
-            res.b = collidingSoldier;
+    //Colliding Bodies will always have 1 element, which is the soldier itself.
+    if (collidingBodies.length < 2) 
+      return;
 
-            callback(res);
-        })
-    }
+    //Obtain "SAT.Response" for each collision.
+    var satBoxPolygons = collidingBodies;
+    satBoxPolygons.forEach((collidingSoldier) => {
+      //skip collision with self
+      if (collidingSoldier.id === soldier.id) {
+        return;
+      }
+      var res = new SAT.Response();
+      SAT.testPolygonPolygon(
+        soldier.toPolygon(),
+        collidingSoldier.toPolygon(),
+        res
+      );
 
-    update(){
-        //this.system.update();
-    }
+      res.a = soldier;
+      res.b = collidingSoldier;
+
+      callback(res, collidingBodies);
+    });
+  }
+  update() {
+    //this.system.update();
+  }
 }
-module.exports = Scene
+module.exports = Scene;

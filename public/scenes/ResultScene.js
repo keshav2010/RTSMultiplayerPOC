@@ -4,12 +4,14 @@ export class ResultScene extends BaseScene {
     constructor(){
         super(CONSTANT.SCENES.RESULT)
     }
-
-    init(){
-    }
     create(){
-    }
-    preload(){
-
+        this.AddSceneEvent('shutdown', (data)=>{
+            console.log('shutdown ', data.config.key);
+            this.Destroy();
+        });
+        this.AddSceneEvent("destroy", () => {
+            this.input.removeAllListeners();
+            this.events.removeAllListeners();
+        });
     }
 }

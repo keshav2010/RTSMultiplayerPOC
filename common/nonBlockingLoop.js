@@ -8,8 +8,9 @@
 function nbLoop(testConditionCallback, body, onEnd)
 {
     if(testConditionCallback()){
-        if(body()) 
+        if(body()) {
             setImmediate(nbLoop, testConditionCallback, body, onEnd);
+        }
         else if(onEnd)
             onEnd();
     }
