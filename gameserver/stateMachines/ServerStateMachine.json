@@ -1,0 +1,27 @@
+{
+    "id": "ServerState",
+    "initial": "SpawnSelectionState",
+    "description": "A ServerState ensures that only certain events are processed, those that are possible within that state.",
+    "states": {
+      "SpawnSelectionState": {
+        "description": "PlayerReady, Unready, Left, Joined, SpawnSelected, events are processed in this state.",
+        "on": {
+          "TIMEOUT": {
+            "target": "BattleState"
+          }
+        }
+      },
+      "BattleState": {
+        "description": "Events like soldier-created, soldier killed, etc are allowed in this state",
+        "on": {
+          "BattleEnd": {
+            "target": "BattleEndState"
+          }
+        }
+      },
+      "BattleEndState": {
+        "type": "final",
+        "description": "ServerCleanup and terminate connections, close destroy all the players, their data"
+      }
+    }
+  }

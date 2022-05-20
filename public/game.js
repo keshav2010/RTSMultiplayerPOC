@@ -3,10 +3,13 @@
 import {GameScene} from './scenes/GameScene';
 import {MenuScene} from './scenes/MenuScene';
 import {ResultScene} from './scenes/ResultScene';
+import {SpawnSelectionScene} from './scenes/SpawnSelectionScene';
+import {MatchmakingScene} from './scenes/MatchmakingScene';
 import {PlayerStatisticHUD} from './scenes/PlayerStatisticHUD';
+import {NetworkScene} from './scenes/NetworkScene';
 
 var game = new Phaser.Game({
-    type: Phaser.AUTO,
+    type: Phaser.CANVAS,
     width: 1500,
     height: 600,
     scale:{
@@ -15,5 +18,6 @@ var game = new Phaser.Game({
     },
     parent:'app',
     disableContextMenu: true,
-    scene: [MenuScene, PlayerStatisticHUD, GameScene, ResultScene]
+    scene: [MenuScene, PlayerStatisticHUD, MatchmakingScene, 
+        NetworkScene, SpawnSelectionScene, GameScene, ResultScene]
 });

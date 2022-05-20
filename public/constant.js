@@ -4,7 +4,10 @@ module.exports = {
         LOAD: "LOAD",
         GAME: "GAME",
         RESULT:"RESULT",
-        HUD_SCORE: "SCOREHUD"
+        SPAWNSELECTSCENE: "SPAWNSELECT",
+        MATCHMAKER: 'MATCHMAKER',
+        HUD_SCORE: "SCOREHUD",
+        NETWORKSCENE: 'NETWORK'
     },
     GAMEEVENTS:{
         SOLDIER_CREATED:'SC',
@@ -16,5 +19,7 @@ module.exports = {
 
         RIGHT_CLICK: 'RC',
         SOLDIER_MOVE_REQUESTED: 'SMR'
-    }
+    },
+    WIDTH:3500,
+    HEIGHT: 1500
 }

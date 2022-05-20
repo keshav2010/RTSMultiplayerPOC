@@ -8,6 +8,10 @@ export class ResultScene extends BaseScene {
     init(){
     }
     create(){
+        this.events.on('shutdown', (data)=>{
+            console.log('shutdown ', data.config.key);
+            this.events.removeAllListeners();
+        })
     }
     preload(){
 

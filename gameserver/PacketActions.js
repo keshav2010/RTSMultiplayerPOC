@@ -128,8 +128,6 @@ function PlayerLeftPacketAction(packetType, socket, io, stateManager){
         stateManager.SocketToPlayerData.delete(socket.id);
         stateManager.ReadyPlayers.delete(socket.id);
 
-        if(stateManager.SocketToPlayerData.size === 0)
-            stateManager.GameStarted=false;
 
         const deltaUpdate={
             type:packetType,
@@ -162,8 +160,9 @@ function SoldierMoveRequestedPacketAction(packetType, socket, io, stateManager, 
         soldiers.forEach(soldierId=>{
             soldierId=''+soldierId;
             let soldier = stateManager.SocketToPlayerData.get(playerId).getSoldier(soldierId);
-            if(soldier)
+            if(soldier){
                 soldier.setTargetPosition(expectedPositionX, expectedPositionY);
+            }
         });
     }catch(err){
         console.log(err);
@@ -216,10 +215,22 @@ function SoldierDeletedPacketAction(packetType, socket, io, stateManager, data){
 }
 
 function AttackRequestedPacketAction(packetType, socket, io, stateManager, data){
-    
-    var {soldiers, targetPlayerId, targetSoldierId} = data;
-    soldiers=soldiers.split(',');
-    stateManager.initiateAttack(socket.id, soldiers, targetPlayerId, targetSoldierId);
+    try{
+        console.log('attack requested')
+        var {soldiers, targetPlayerId, targetSoldierId} = data;
+        soldiers=soldiers.split(',');
+        let a = stateManager.SocketToPlayerData.get(socket.id);
+        let b = stateManager.SocketToPlayerData.get(targetPlayerId);
+        let targetSoldier = b.getSoldier(targetSoldierId);
+        if(!targetSoldier)
+            return;
+        soldiers.forEach(soldierId=>{
+            let attacker = a.getSoldier(soldierId);
+            attacker.attackUnit(targetSoldier);
+        });
+    }catch(err){
+        console.log(err);
+    }
 }
 
 function ChatMessagePacketAction(packetType, socket, io, stateManager, data){
@@ -233,6 +244,20 @@ function ChatMessagePacketAction(packetType, socket, io, stateManager, data){
     }
     stateManager.cumulativeUpdates.push(deltaPacket);
 }
+
+function SpawnPointRequestedAction(packetType, socket, io, stateManager, data){
+    let {spawnX, spawnY} = data;
+    let playerId = socket.id;
+    stateManager.SocketToPlayerData.get(playerId).setSpawnPosition(spawnX, spawnY);
+    const deltaPacket = {
+        type: PacketType.ByServer.SPAWN_POINT_ACK,
+        spawnX,
+        spawnY,
+        playerId
+    }
+    stateManager.cumulativeUpdates.push(deltaPacket);
+}
+
 module.exports={
     PlayerInitPacketAction,
     PlayerReadyPacketAction,
@@ -243,5 +268,6 @@ module.exports={
     SoldierCreateRequestedPacketAction,
     SoldierDeletedPacketAction,
     AttackRequestedPacketAction,
-    ChatMessagePacketAction
+    ChatMessagePacketAction,
+    SpawnPointRequestedAction
 }

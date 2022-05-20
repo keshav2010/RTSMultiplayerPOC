@@ -1,0 +1,87 @@
+{
+    "id": "Soldier",
+    "initial": "Idle",
+    "description": "SoldierUnitStateMachine",
+    "states": {
+      "Idle": {
+        "on": {
+          "Move": {
+            "target": "Move"
+          },
+          "Attack": {
+            "target": "Attack"
+          },
+          "PlayerAttacked": {
+            "target": "Defend"
+          }
+        }
+      },
+      "Move": {
+        "on": {
+          "ReachedPosition": {
+            "target": "Idle"
+          },
+          "UnitInRange": {
+            "target": "Avoidance"
+          }
+        }
+      },
+      "Attack": {
+        "on": {
+          "TargetNotInRange": {
+            "target": "ChaseTarget"
+          },
+          "TargetKilled": {
+            "target": "FindTarget"
+          },
+          "Killed": {
+            "target": "SoldierKilled"
+          },
+          "Move": {
+            "target": "Move"
+          }
+        }
+      },
+      "FindTarget": {
+        "on": {
+          "TargetFound": {
+            "target": "Attack"
+          },
+          "TargetNotFound": {
+            "target": "Idle"
+          }
+        }
+      },
+      "ChaseTarget": {
+        "on": {
+          "TargetInRange": {
+            "target": "Attack"
+          },
+          "TargetKilled": {
+            "target": "FindTarget"
+          },
+          "Move": {
+            "target": "Move"
+          }
+        }
+      },
+      "Defend": {
+        "on": {
+          "AttackerUnitNearby": {
+            "target": "Attack"
+          },
+          "NoAttackerUnitNearby": {
+            "target": "Idle"
+          }
+        }
+      },
+      "Avoidance": {
+        "on": {
+          "UnitNotInRange": {
+            "target": "Move"
+          }
+        }
+      },
+      "SoldierKilled": {}
+    }
+  }
