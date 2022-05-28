@@ -1,6 +1,7 @@
 class LoadingBar extends Phaser.GameObjects.Graphics {
     constructor (scene, parent, args)
     {
+        args = args || {};
         super(scene, {
             x: args.x || parent.x,
             y: args.y || parent.y
