@@ -263,8 +263,8 @@ export class GameScene extends BaseScene {
             this.cameras.main.setZoom(Math.max(0,this.cameras.main.zoom-deltaY*0.0003));
         });
         var QuitButton = this.add.text(150, 220, "Leave Game").setInteractive().on('pointerdown', ()=>{
-            this.scene.stop(CONSTANT.SCENES.HUD_SCORE)
             socket.disconnect();
+            this.scene.stop(CONSTANT.SCENES.HUD_SCORE)
         });
     }
     update(time, delta){

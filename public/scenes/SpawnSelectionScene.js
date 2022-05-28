@@ -17,6 +17,7 @@ var selectorThickness = 2;
 var selectorDraw=false;
 
 var pointerDownWorldSpace=null;
+var buttonState=false;
 var cursors;
 
 export class SpawnSelectionScene extends BaseScene {
@@ -35,7 +36,7 @@ export class SpawnSelectionScene extends BaseScene {
 
         selectorGraphics = this.add.graphics();
 
-        this.timerBar = new LoadingBar(this, this, {x:250, y:150, maxValue:15, currentValue:15, width:800, height:50});
+        this.timerBar = new LoadingBar(this, this, {x:250, y:150, maxValue:15, currentValue:15, width:800, height:30});
 
         this.input.on('pointerdown', function(pointer)
         {
