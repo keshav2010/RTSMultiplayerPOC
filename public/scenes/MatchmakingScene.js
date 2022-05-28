@@ -17,7 +17,7 @@ export class MatchmakingScene extends BaseScene {
 
         socket.on('connect', ()=>{
             this.currentActiveScene = CONSTANT.SCENES.NETWORKSCENE;
-            this.scene.launch(this.currentActiveScene);
+            this.scene.start(this.currentActiveScene);
         });
     }
     preload(){

@@ -128,8 +128,6 @@ function PlayerLeftPacketAction(packetType, socket, io, stateManager){
         stateManager.SocketToPlayerData.delete(socket.id);
         stateManager.ReadyPlayers.delete(socket.id);
 
-        if(stateManager.SocketToPlayerData.size === 0)
-            stateManager.GameStarted=false;
 
         const deltaUpdate={
             type:packetType,

@@ -33,6 +33,7 @@ export class NetworkScene extends BaseScene {
             this.scene.stop(CONSTANT.SCENES.SPAWNSELECTSCENE);
             StateManager = null;
             this.registry.set('socket', null);
+            this.scene.start(CONSTANT.SCENES.MENU);
         });
 
         socket.on('tick',(d)=>{

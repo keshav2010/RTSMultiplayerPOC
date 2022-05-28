@@ -46,7 +46,7 @@ const io = socketIO(httpServer);
 
 const TICKRATE = 24;
 const MAX_MS_PER_TICK = 1000/TICKRATE;
-const gameState = new GameStateManager(io);
+var gameState;
 
 /**
  * Executed at frequency of TickRate
@@ -81,17 +81,25 @@ function processPendingUpdates()
         }
         const newTickAfterMS = Math.abs(MAX_MS_PER_TICK - timeUtilised);
 
-        //reschedule
-        setTimeout(processPendingUpdates, newTickAfterMS);
+        //run server loop only if connections exist
+        if(io.of('/').sockets.size > 0){
+            console.log('ServerLoop scheduled, connected clients = ', io.of('/').sockets.size)
+            setTimeout(processPendingUpdates, newTickAfterMS);
+        }
+        else{
+            console.log('ServerLoop not scheduled, clients = ',io.of('/').sockets.size);
+        }
     });
 }
-setImmediate(processPendingUpdates);
 
-
-
-
+//whenever a client is connected
 io.on('connection', socket=>{
 
+    console.log('***clients connected : ', io.of('/').sockets.size);
+    if(io.of('/').sockets.size === 1){
+        gameState = new GameStateManager(io);
+        setImmediate(processPendingUpdates);
+    }
     Packet.io = io;
 
     //Initial packets
