@@ -8,7 +8,8 @@ const PacketType={
         'SOLDIER_MOVE_REQUESTED': 'slmovreq',
         'PLAYER_JOINED':'pljoin',
         'SOLDIER_ATTACK_REQUESTED': 'sldierattkreq',
-        'CLIENT_SENT_CHAT':'clientchat'
+        'CLIENT_SENT_CHAT':'clientchat',
+        'SPAWN_POINT_SELECTED': 'spwnpntslct'
     },
     ByServer:{
         'NEW_CHAT_MESSAGE':'newcm',
@@ -27,7 +28,8 @@ const PacketType={
         'PLAYER_RESOURCE_UPDATED':'pru',
         'SOLDIER_POSITION_UPDATED':'spu',
 
-        'COUNTDOWN_TIME':'cdwn'
+        'COUNTDOWN_TIME':'cdwn',
+        'SPAWN_POINT_ACK': 'spwnpntack'
     }
 }
 module.exports = PacketType;

@@ -1,54 +1,38 @@
-const {v4} = require('uuid');
-const uuidv = v4;
 
 /**
- * Player gameobject holds resources and flag position (mostly static for now)
+ * Pure Player Class
  */
-class Player extends Phaser.GameObjects.Group
+const SAT = require('sat');
+class Player
 {
-    constructor(scene, prop){
-        super(scene);
-
-        this.dataManager = new Phaser.Data.DataManager(this);
+    constructor(prop)
+    {
+        this.type="PLAYER";
+        this.soldiers = new Set();
+        this.spawnPosVec = null;
 
         //group name will be player name
-        this.setName(prop.name || 'Keshav');
+        this.name = prop.name || 'TempName';
         this.playerId = prop.id;
-        this.type="PLAYER";
         this.color = [...prop.color];
-
-        //player property
-        this.dataManager.set('resource', prop.resources);
-        this.dataManager.set('flagpos', {x: prop.posX, y: prop.posY});
-        this.dataManager.set('health', prop.health || 100);
     }
-    
-    //called when other client tries to hit the flag
-    hitFlag()
-    {
-        this.dataManager.set('health', Math.max(0, this.dataManager.get('health')-10));
+    setSpawnPosition(x,y){
+        this.spawnPosVec = new SAT.Vector(x,y);
     }
-
     update(time, deltaTime) {
-
-        //update each soldier
-        this.getChildren().forEach(child => child.update(time, deltaTime));
+        this.soldiers.forEach(child => child.update(time, deltaTime));
     }
-
-    //create a soldier game object and add it to this group as well as scene
+    //create a soldier game object and add it to this group
     addSoldier(soldierObject){
         soldierObject.playerId = this.playerId;
-        this.add(soldierObject, true);
+        this.soldiers.add(soldierObject);
     }
-
     getSoldiers(){
-        return this.getChildren();
+        return [...this.soldiers];
     }
     getSoldier(id){
-        let soldier = this.getChildren().filter(child=>child.id===id);
-        return soldier;
+        return this.getSoldiers().filter(child=>child.id===id);
     }
-
     //remove a soldier object from the group
     removeSoldier(soldierObject){
         soldierObject.destroy();

@@ -49,7 +49,7 @@ class Player
             }
             nbLoop(test, loop);
         }catch(err){
-            console.log(err);
+            console.error(err);
         }
     }
     getSnapshot(){

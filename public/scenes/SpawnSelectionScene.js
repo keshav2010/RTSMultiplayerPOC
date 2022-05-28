@@ -7,10 +7,10 @@ const SoldierType = require('../../common/SoldierType')
 const {Column, Viewport, Scrollbar} =  require('phaser-ui-tools');
 const Player = require('../Player');
 var $ = require('jquery')
+const LoadingBar = require('../LoadingBar')
 
-var buttonState=false;
 var socket;
-
+var StateManager;
 var selectorGraphics;
 var selectorColor = 0xffff00;
 var selectorThickness = 2;
@@ -19,45 +19,9 @@ var selectorDraw=false;
 var pointerDownWorldSpace=null;
 var cursors;
 
-var StateManager=null;
-$(()=>{
-    $('#send-chat-btn').on('click', function(){
-        SendChatMessage()
-    })
-})
-
-function SendChatMessage()
-{
-    try{
-        var messageText = $('#chat-message').val();
-        console.log('message : ', messageText);
-        socket.emit(PacketType.ByClient.CLIENT_SENT_CHAT, {
-            message: messageText
-        });
-    }
-    catch(err){
-        console.error(err);
-    }
-}
-function addNewChatMessage(msg, sender){
-    let msgBlock = `<div>
-        <div class="d-flex justify-content-between">
-            <p class="small mb-1">${sender}</p>
-        </div>
-        <div class="d-flex flex-row justify-content-start">
-            <div>
-                <p style="background-color: #f5f6f7;">
-                    ${msg}
-                </p>
-            </div>
-        </div>
-    </div>`
-    $('.card-body').append(msgBlock);
-}
-
-export class GameScene extends BaseScene {
+export class SpawnSelectionScene extends BaseScene {
     constructor(){
-        super(CONSTANT.SCENES.GAME)
+        super(CONSTANT.SCENES.SPAWNSELECTSCENE)
         this.mapWidth=3500;
         this.mapHeight=1500;
     }
@@ -66,26 +30,13 @@ export class GameScene extends BaseScene {
     {
         StateManager = this.registry.get('stateManager');
         socket = this.registry.get('socket');
-
-        console.log('GameScene started');
-
-        this.events.on(PacketType.ByServer.SOLDIER_POSITION_UPDATED, (data)=>{
-            var {soldier, type} = data;
-            StateManager.ConnectedPlayers.get(soldier.playerId).getSoldiers().forEach(s =>{
-                if(s.id === soldier.id){
-                    //no interpolation applied for now
-                    s.x = soldier.currentPositionX;
-                    s.y = soldier.currentPositionY;
-                    s.expectedPositionX = soldier.currentPositionX;
-                    s.expectedPositionY = soldier.currentPositionY;
-                }
-            });
-        })
-        this.events.on(GAMEEVENTS.SOLDIER_SELECTED, (d)=>{
-            StateManager.selectedSoldiers.set(d.id, d);
-        });
+        console.log('SpawnSelectionScene Started');
+        this.playerReadyStatus = new Column(this, 0, 120);
 
         selectorGraphics = this.add.graphics();
+
+        this.timerBar = new LoadingBar(this, this, {x:250, y:150, maxValue:15, currentValue:15, width:800, height:50});
+
         this.input.on('pointerdown', function(pointer)
         {
             if(pointer.button === 0){
@@ -194,7 +145,33 @@ export class GameScene extends BaseScene {
                 this.cameras.main.scrollY -= (pointer.y - pointer.prevPosition.y)/this.cameras.main.zoom;
             }
         });
-        this.scene.launch(CONSTANT.SCENES.HUD_SCORE, StateManager);
+        
+        this.events.on(PacketType.ByServer.PLAYER_INIT, (data)=>{
+            const {playerId, players, _} = data;
+            StateManager.playerId = playerId;
+            players.forEach(player=>{
+                StateManager.addPlayer(new Player(player));
+            })
+        });
+
+        this.events.on(PacketType.ByClient.PLAYER_JOINED, (data)=>{
+            let player = data.player;
+            StateManager.addPlayer(new Player(player));
+            this.playerReadyStatus.addNode(this.add.text(150, 150, `${player.id} Joined`))
+        });
+        this.events.on(PacketType.ByServer.COUNTDOWN_TIME, (data)=>{
+            let {time} = data;
+            console.log('time remaining ', time);
+            if(this.timerBar)
+                this.timerBar.decrease(this.timerBar.currentValue - time)
+        })
+        
+        this.events.on(PacketType.ByClient.PLAYER_READY, (data)=>{
+            this.playerReadyStatus.addNode(this.add.text(150, 150, `${data.playerId} Ready`))
+        });
+        this.events.on(PacketType.ByClient.PLAYER_UNREADY, (data)=>{
+            this.playerReadyStatus.addNode(this.add.text(150, 150, `${data.playerId} Marked UnReady`))
+        });
     }
     preload(){
         this.load.image('playbutton', "../assets/playbutton.png");
@@ -205,10 +182,10 @@ export class GameScene extends BaseScene {
     }
     create(){
         this.cameras.main.setBounds(0, 0, this.mapWidth, this.mapHeight).setName('WorldCamera');
-        
         var mapGraphics = this.add.graphics();
+
         mapGraphics.depth=-5;
-        mapGraphics.fillStyle(0x002200, 1);
+        mapGraphics.fillStyle(0x221200, 1);
         mapGraphics.fillRect(0,0,this.mapWidth,this.mapHeight);
 
         cursors = this.input.keyboard.createCursorKeys();
@@ -223,51 +200,21 @@ export class GameScene extends BaseScene {
             maxSpeed: 1.0
         };
         this.controls = new Phaser.Cameras.Controls.SmoothedKeyControl(controlConfig);
-
-        this.events.on(PacketType.ByServer.PLAYER_LEFT, (data)=>{
-            let {playerId} = data;
-            StateManager.removePlayer(playerId);
-        })
-        this.events.on(PacketType.ByServer.NEW_CHAT_MESSAGE, (data)=>{
-            let {message, playerId} = data;
-            addNewChatMessage(message, playerId);
-        });
-        this.events.on(PacketType.ByServer.SOLDIER_CREATE_ACK, ({isCreated, soldier, playerId, soldierType})=>{
-            if(!isCreated)
-                return;
-            StateManager.getPlayer(playerId).addSoldier(new Spearman(this, soldier.currentPositionX, soldier.currentPositionY, 'spearman', null, {
-                health: soldier.health,
-                speed: soldier.speed,
-                cost: soldier.cost,
-                damage: soldier.damage,
-                id: soldier.id,
-                color: StateManager.getPlayer(playerId).color
-            }))
-        });
-        this.events.on(PacketType.ByServer.SOLDIER_ATTACKED, (data)=>{
-
-            let {a, b} = data;
-            StateManager.updateSoldierFromServerSnapshot(a);
-            StateManager.updateSoldierFromServerSnapshot(b);
-        });
-        this.events.on(PacketType.ByServer.SOLDIER_KILLED, ({playerId, soldierId})=>{
-            
-            let soldier = StateManager.getPlayer(playerId).getSoldier(soldierId);
-            if(soldier.length < 1)
-                return;
-            soldier = soldier[0];
-            StateManager.getPlayer(playerId).removeSoldier(soldier);
-        });
-
         this.input.on('wheel', (pointer, gameobjects, deltaX, deltaY, deltaZ)=>{
             this.cameras.main.setZoom(Math.max(0,this.cameras.main.zoom-deltaY*0.0003));
         });
-        var QuitButton = this.add.text(150, 220, "Leave Game").setInteractive().on('pointerdown', ()=>{
-            socket.disconnect();
+        var ReadyButton = this.add.text(15, 220, "I'm Ready!").setInteractive().on('pointerdown', ()=>{
+            buttonState=!buttonState;
+            ReadyButton.setColor(buttonState ? 'green':'white');
+            if(buttonState)
+                socket.emit(PacketType.ByClient.PLAYER_READY, {});
+            else
+                socket.emit(PacketType.ByClient.PLAYER_UNREADY,{});
         });
     }
     update(time, delta){
         this.controls.update(delta);
         StateManager.update(time, delta);
+        this.timerBar.draw();
     }
 }

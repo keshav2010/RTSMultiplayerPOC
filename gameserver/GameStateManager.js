@@ -75,7 +75,8 @@ class GameStateManager
 
     simulate()
     {
-        switch(this.stateMachine.currentState) {
+        switch(this.stateMachine.currentState) 
+        {
             case 'SpawnSelectionState':
                 this.SpawnSelectionState();
                 break;
@@ -98,8 +99,6 @@ class GameStateManager
             //countdown
             this.countdown -= deltaTime;
             this.countdown = Math.max(0, this.countdown);
-
-            console.log(this.countdown);
             var i=0;
             let playerIdArray = [...this.SocketToPlayerData.keys()];
             var loop = ()=>{
@@ -107,34 +106,36 @@ class GameStateManager
                 playerObject.tick(deltaTime, this.pendingUpdates, this);
                 return true;
             }
-            nbLoop(()=>{return (i<playerIdArray.length)}, loop, ()=>{
+            nbLoop(()=>{return (i<playerIdArray.length)}, 
+            loop,
+            ()=>{
                     this.pendingUpdates.queueServerEvent({
                         type: PacketType.ByServer.COUNTDOWN_TIME,
                         time: this.countdown
                     });
                 }
             );
+            if(this.countdown <= 0){
+                console.log('countdown completed for spawn-selection');
+                this.stateMachine.controller.send('TIMEOUT')
+            }
         }
         catch(err){
             console.log(err);
         }
     }
 
-    BattleState(updateManager){
+    BattleState(){
         try{
             var deltaTime = (new Date().getTime()-this.lastSimulateTime_ms)/1000;
             this.lastSimulateTime_ms = new Date().getTime();
-
             let playerIdArray = [...this.SocketToPlayerData.keys()];
-
             var i=0;
             var test = ()=>{return (i<playerIdArray.length)};
             var loop = ()=>{
-                //simulate each player
-                //console.log(1/deltaTime);
                 let playerObject = this.SocketToPlayerData.get(playerIdArray[i++]);
-                playerObject.tick(deltaTime, updateManager, this);
-                return true;//continue loop
+                playerObject.tick(deltaTime, this.pendingUpdates, this);
+                return true;
             }
             nbLoop(test, loop);
         }
