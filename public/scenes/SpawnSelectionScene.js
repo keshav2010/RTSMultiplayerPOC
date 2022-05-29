@@ -42,10 +42,6 @@ export class SpawnSelectionScene extends BaseScene {
         {
             if(pointer.button === 0){
                 selectorGraphics.clear();
-                let soldiers = StateManager.getPlayer().getSoldiers();
-                soldiers.forEach(soldier=>{
-                    soldier.markUnselected();
-                });
                 selectorDraw=true;
                 pointerDownWorldSpace = {
                     x: pointer.worldX,
@@ -54,52 +50,11 @@ export class SpawnSelectionScene extends BaseScene {
             }
             else if(pointer.button === 1) //mmb
             {
-                //middle mouse btn press => create spearman
-                socket.emit(PacketType.ByClient.SOLDIER_CREATE_REQUESTED, {
-                    soldierType: SoldierType.SPEARMAN,
-                    currentPositionX: pointer.worldX,
-                    currentPositionY: pointer.worldY
+                //middle mouse btn press => create spawn point
+                socket.emit(PacketType.ByClient.SPAWN_POINT_REQUESTED, {
+                    spawnX: pointer.worldX,
+                    spawnY: pointer.worldY
                 });
-            }
-            else if(pointer.button === 2){
-                
-                //if any soldier selected
-                if(StateManager.selectedSoldiers.size > 0){
-
-                    //If enemy unit in nearby radius, randomly select 1 and send attack signal
-                    let searchAreaSize = 35;
-                    let rect = new Phaser.Geom.Rectangle(pointer.worldX-searchAreaSize/2, pointer.worldY-searchAreaSize/2, searchAreaSize, searchAreaSize);
-                    selectorGraphics.strokeRectShape(rect);
-                    let enemySoldiers = StateManager.getOpponentSoldiers();
-                    
-                    let targetSoldier=null;
-                    for(let i=0; i<enemySoldiers.length; i++){
-                        let soldier = enemySoldiers[i]
-                        let bound = soldier.getBounds();
-                        if(Phaser.Geom.Intersects.RectangleToRectangle(bound, rect)){
-                            targetSoldier = soldier;
-                            break;
-                        }
-                    }
-
-                    //if wants to attack a soldier, mark it as target
-                    if(targetSoldier) {
-                        socket.emit(PacketType.ByClient.SOLDIER_ATTACK_REQUESTED, {
-                            soldiers: [...StateManager.selectedSoldiers.values()].map(v=>v.id).join(','),
-                            targetPlayerId: targetSoldier.playerId,
-                            targetSoldierId: targetSoldier.id
-                        });
-                    }
-                    else {
-                        socket.emit(PacketType.ByClient.SOLDIER_MOVE_REQUESTED, {
-                            soldiers: [...StateManager.selectedSoldiers.values()].map(v=>v.id).join(','),
-                            expectedPositionX: pointer.worldX,
-                            expectedPositionY: pointer.worldY
-                        });
-                    }
-                }   
-                
-                //this.scene.events.emit(GAMEEVENTS.RIGHT_CLICK, pointer.position);
             }
         })
         this.input.on('pointerup', function(pointer){
@@ -154,11 +109,13 @@ export class SpawnSelectionScene extends BaseScene {
                 StateManager.addPlayer(new Player(player));
             })
         });
-
         this.events.on(PacketType.ByClient.PLAYER_JOINED, (data)=>{
             let player = data.player;
             StateManager.addPlayer(new Player(player));
             this.playerReadyStatus.addNode(this.add.text(150, 150, `${player.id} Joined`))
+        });
+        this.events.on(PacketType.ByServer.SPAWN_POINT_ACK, ({spawnX, spawnY, playerId})=>{
+            this.add.image(spawnX, spawnY, 'flag');
         });
         this.events.on(PacketType.ByServer.COUNTDOWN_TIME, (data)=>{
             let {time} = data;

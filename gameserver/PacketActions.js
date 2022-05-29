@@ -231,6 +231,20 @@ function ChatMessagePacketAction(packetType, socket, io, stateManager, data){
     }
     stateManager.cumulativeUpdates.push(deltaPacket);
 }
+
+function SpawnPointRequestedAction(packetType, socket, io, stateManager, data){
+    let {spawnX, spawnY} = data;
+    let playerId = socket.id;
+    stateManager.SocketToPlayerData.get(playerId).setSpawnPosition(spawnX, spawnY);
+    const deltaPacket = {
+        type: PacketType.ByServer.SPAWN_POINT_ACK,
+        spawnX,
+        spawnY,
+        playerId
+    }
+    stateManager.cumulativeUpdates.push(deltaPacket);
+}
+
 module.exports={
     PlayerInitPacketAction,
     PlayerReadyPacketAction,
@@ -241,5 +255,6 @@ module.exports={
     SoldierCreateRequestedPacketAction,
     SoldierDeletedPacketAction,
     AttackRequestedPacketAction,
-    ChatMessagePacketAction
+    ChatMessagePacketAction,
+    SpawnPointRequestedAction
 }

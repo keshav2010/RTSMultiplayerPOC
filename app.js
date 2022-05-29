@@ -109,41 +109,46 @@ io.on('connection', socket=>{
     //client marked ready
     socket.on(PacketType.ByClient.PLAYER_READY, (data)=>{
         if(gameState.stateMachine.currentState === 'SpawnSelectionState')
-        gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.PLAYER_READY, socket, data, PacketActions.PlayerReadyPacketAction));
+            gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.PLAYER_READY, socket, data, PacketActions.PlayerReadyPacketAction));
     });
 
     //client is not ready
     socket.on(PacketType.ByClient.PLAYER_UNREADY, (data)=>{
         if(gameState.stateMachine.currentState === 'SpawnSelectionState')
-        gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.PLAYER_UNREADY, socket, data, PacketActions.PlayerUnreadyPacketAction));
+            gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.PLAYER_UNREADY, socket, data, PacketActions.PlayerUnreadyPacketAction));
     });
 
     //Client Requesting to move a soldier
     socket.on(PacketType.ByClient.SOLDIER_MOVE_REQUESTED, (data)=>{
         if(gameState.stateMachine.currentState === 'BattleState')
-        gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_MOVE_REQUESTED, socket, data, PacketActions.SoldierMoveRequestedPacketAction))
+            gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_MOVE_REQUESTED, socket, data, PacketActions.SoldierMoveRequestedPacketAction))
     });
 
     //Client requesting a new soldier
     socket.on(PacketType.ByClient.SOLDIER_CREATE_REQUESTED, (data)=>{
         if(gameState.stateMachine.currentState === 'BattleState')
-        gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_CREATE_REQUESTED, socket, data, PacketActions.SoldierCreateRequestedPacketAction))
+            gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_CREATE_REQUESTED, socket, data, PacketActions.SoldierCreateRequestedPacketAction))
     });
 
     //Client deleted their soldier
     socket.on(PacketType.ByClient.SOLDIER_DELETED, (data)=>{
         if(gameState.stateMachine.currentState === 'BattleState')
-        gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_DELETED, socket, data, PacketActions.SoldierDeletedPacketAction));
+            gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_DELETED, socket, data, PacketActions.SoldierDeletedPacketAction));
     });
 
     //Client Requesting Attack on other.
     socket.on(PacketType.ByClient.SOLDIER_ATTACK_REQUESTED, (data)=>{
         if(gameState.stateMachine.currentState === 'BattleState')
-        gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_ATTACK_REQUESTED, socket, data, PacketActions.AttackRequestedPacketAction));
+            gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SOLDIER_ATTACK_REQUESTED, socket, data, PacketActions.AttackRequestedPacketAction));
     });
 
     //Client sent a chat message
     socket.on(PacketType.ByClient.CLIENT_SENT_CHAT, (data)=>{
         gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.CLIENT_SENT_CHAT, socket, data, PacketActions.ChatMessagePacketAction));
+    })
+
+    socket.on(PacketType.ByClient.SPAWN_POINT_REQUESTED, (data)=>{
+        if(gameState.stateMachine.currentState === 'SpawnSelectionState')
+            gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.SPAWN_POINT_REQUESTED, socket, data, PacketActions.SpawnPointRequestedAction));
     })
 });

@@ -4,6 +4,7 @@ const PacketType={
         'PLAYER_READY':'plr',
         'PLAYER_UNREADY':'plur',
         'SOLDIER_CREATE_REQUESTED':'slcrreq',
+        'SPAWN_POINT_REQUESTED': 'spwnpntreq',
         'SOLDIER_DELETED': 'sldel',
         'SOLDIER_MOVE_REQUESTED': 'slmovreq',
         'PLAYER_JOINED':'pljoin',
@@ -16,6 +17,7 @@ const PacketType={
         'SOLDIER_KILLED':'sk',
         'GAME_STARTED':'gs',
         'SOLDIER_CREATE_ACK':'sca',
+        'SPAWN_POINT_ACK':'spnpntack',
 
         'GAME_STATE_SYNC':'gss',
 

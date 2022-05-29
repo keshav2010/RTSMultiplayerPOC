@@ -24,6 +24,10 @@ class Player
         this.posX = 200+Math.random()*400;
         this.posY = 200+Math.random()*400;
     }
+    setSpawnPosition(x,y){
+        this.posX = x;
+        this.posY = y;
+    }
     tick(delta, updateManager, stateManager)
     {
         try{
