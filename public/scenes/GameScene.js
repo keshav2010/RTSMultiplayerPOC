@@ -65,6 +65,7 @@ export class GameScene extends BaseScene {
     init()
     {
         StateManager = this.registry.get('stateManager');
+        this.stateManager = StateManager;
         socket = this.registry.get('socket');
 
         console.log('GameScene started');
@@ -88,7 +89,7 @@ export class GameScene extends BaseScene {
         selectorGraphics = this.add.graphics();
         this.input.on('pointerdown', function(pointer)
         {
-            if(pointer.button === 0){
+            if(pointer.button === 0){ //lmb
                 selectorGraphics.clear();
                 let soldiers = StateManager.getPlayer().getSoldiers();
                 soldiers.forEach(soldier=>{
@@ -194,7 +195,7 @@ export class GameScene extends BaseScene {
                 this.cameras.main.scrollY -= (pointer.y - pointer.prevPosition.y)/this.cameras.main.zoom;
             }
         });
-        this.scene.launch(CONSTANT.SCENES.HUD_SCORE, StateManager);
+        this.scene.launch(CONSTANT.SCENES.HUD_SCORE);
     }
     preload(){
         this.load.image('playbutton', "../assets/playbutton.png");

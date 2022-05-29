@@ -83,11 +83,7 @@ function processPendingUpdates()
 
         //run server loop only if connections exist
         if(io.of('/').sockets.size > 0){
-            console.log('ServerLoop scheduled, connected clients = ', io.of('/').sockets.size)
             setTimeout(processPendingUpdates, newTickAfterMS);
-        }
-        else{
-            console.log('ServerLoop not scheduled, clients = ',io.of('/').sockets.size);
         }
     });
 }

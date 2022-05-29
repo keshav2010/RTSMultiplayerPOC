@@ -18,6 +18,8 @@ export class NetworkScene extends BaseScene {
         super(CONSTANT.SCENES.NETWORKSCENE)
         this.mapWidth=CONSTANT.WIDTH;
         this.mapHeight=CONSTANT.HEIGHT;
+
+        //all events are forwarded to active scene
         this.currentActiveScene=null;
     }
 
@@ -39,14 +41,28 @@ export class NetworkScene extends BaseScene {
         socket.on('tick',(d)=>{
             let deltaChanges = JSON.parse(d).data;
             deltaChanges.forEach(deltaUpdate=>{
-                
+
+                //forward event to all active scenes
+                this.game.scene.getScenes().forEach( activeScene => {
+                    if(activeScene !== this)
+                        activeScene.events.emit(deltaUpdate.type, deltaUpdate);
+                    else
+                        console.log('NetworkScene skipping sending event to itself');
+                })
+                /*
                 if(this.currentActiveScene)
                     this.scene.get(this.currentActiveScene).events
                     .emit(deltaUpdate.type, deltaUpdate);
                 else
                     this.events.emit(deltaUpdate.type, deltaUpdate);
+                */
             });
         });
+        /*
+        this.scene.events.on('switchActiveScene', (data)=>{
+            this.currentActiveScene = data.activeScene
+        })
+        */
         this.scene.launch(this.currentActiveScene);
     }
 }

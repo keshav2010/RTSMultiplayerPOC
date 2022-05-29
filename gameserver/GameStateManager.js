@@ -95,26 +95,12 @@ class GameStateManager
             //in seconds
             var deltaTime = (new Date().getTime()-this.lastSimulateTime_ms)/1000;
             this.lastSimulateTime_ms = new Date().getTime();
-
-            //countdown
             this.countdown -= deltaTime;
             this.countdown = Math.max(0, this.countdown);
-            var i=0;
-            let playerIdArray = [...this.SocketToPlayerData.keys()];
-            var loop = ()=>{
-                let playerObject = this.SocketToPlayerData.get(playerIdArray[i++]);
-                playerObject.tick(deltaTime, this.pendingUpdates, this);
-                return true;
-            }
-            nbLoop(()=>{return (i<playerIdArray.length)}, 
-            loop,
-            ()=>{
-                    this.pendingUpdates.queueServerEvent({
-                        type: PacketType.ByServer.COUNTDOWN_TIME,
-                        time: this.countdown
-                    });
-                }
-            );
+            this.pendingUpdates.queueServerEvent({
+                type: PacketType.ByServer.COUNTDOWN_TIME,
+                time: this.countdown
+            });
             if(this.countdown <= 0){
                 console.log('countdown completed for spawn-selection');
                 this.stateMachine.controller.send('TIMEOUT')
