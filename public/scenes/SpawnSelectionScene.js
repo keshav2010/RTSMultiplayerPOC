@@ -29,15 +29,23 @@ export class SpawnSelectionScene extends BaseScene {
 
     init()
     {
+        console.log('spawn-selection scene init()');
+
         StateManager = this.registry.get('stateManager');
         socket = this.registry.get('socket');
-        console.log('SpawnSelectionScene Started');
+
         this.playerReadyStatus = new Column(this, 0, 120);
-
         selectorGraphics = this.add.graphics();
+        selectorGraphics.clear();
 
-        this.timerBar = new LoadingBar(this, this, {x:250, y:150, maxValue:15, currentValue:15, width:800, height:30});
-
+        this.timerBar = new LoadingBar(this, this, {
+            x:250, 
+            y:150, 
+            maxValue:15, 
+            currentValue:15, 
+            width:800, 
+            height:30
+        });
         this.input.on('pointerdown', function(pointer)
         {
             if(pointer.button === 0){
@@ -119,7 +127,7 @@ export class SpawnSelectionScene extends BaseScene {
         });
         this.events.on(PacketType.ByServer.COUNTDOWN_TIME, (data)=>{
             let {time} = data;
-            console.log('time remaining ', time);
+
             if(this.timerBar)
                 this.timerBar.decrease(this.timerBar.currentValue - time)
             if(time === 0){
@@ -174,6 +182,11 @@ export class SpawnSelectionScene extends BaseScene {
             else
                 socket.emit(PacketType.ByClient.PLAYER_UNREADY,{});
         });
+        this.events.on('shutdown', (data)=>{
+            console.log('shutdown ', data.config.key);
+            this.input.removeAllListeners();
+            this.events.removeAllListeners();
+        })
     }
     update(time, delta){
         this.controls.update(delta);

@@ -1,28 +1,34 @@
 const CONSTANT = require('../constant');
 import {BaseScene} from './BaseScene';
-var socket=null;
 export class MatchmakingScene extends BaseScene {
     constructor(){
         super(CONSTANT.SCENES.MATCHMAKER)
     }
 
     init(){
-        console.log('Matchmaking Scene started');
-        if(this.registry.get('socket')){
-            this.registry.get('socket').disconnect();
-            this.registry.set('socket', null);
-        } 
+        var socket = this.registry.get('socket');
+        if(socket)
+        {
+            socket.disconnect();
+            socket = null;
+            console.log('matchmaking disconnecting old socket')
+        }
         socket = io();
         this.registry.set('socket', socket);
-
         socket.on('connect', ()=>{
-            this.currentActiveScene = CONSTANT.SCENES.NETWORKSCENE;
-            this.scene.start(this.currentActiveScene);
+            this.scene.start(CONSTANT.SCENES.NETWORKSCENE);
         });
+        console.log('matchmaker started ' , this.registry);
     }
     preload(){
     }
     create(){
+        this.events.on('shutdown', (data)=>{
+            console.log('shutdown ', data.config.key);
+            this.input.removeAllListeners();
+            this.registry.get('socket').off('connect');
+            this.events.removeAllListeners();
+        })
         this.add.text(100, 120, "MATCHMAKING SCREEN");
     }
 }

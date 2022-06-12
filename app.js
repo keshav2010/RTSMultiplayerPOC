@@ -98,9 +98,15 @@ io.on('connection', socket=>{
     }
     Packet.io = io;
 
-    //Initial packets
-    gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByServer.PLAYER_INIT, socket, {}, PacketActions.PlayerInitPacketAction));
-    gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.PLAYER_JOINED, socket, {}, PacketActions.PlayerJoinedPacketAction));
+    if(gameState.stateMachine.currentState === 'SpawnSelectionState'){
+        //Initial packets
+        gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByServer.PLAYER_INIT, socket, {}, PacketActions.PlayerInitPacketAction));
+        gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByClient.PLAYER_JOINED, socket, {}, PacketActions.PlayerJoinedPacketAction));
+    }
+    else{
+        console.log('player connected but game not accepting connection at this point');
+        socket.disconnect();
+    }
 
     socket.on('disconnect', (reason)=>{
         gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByServer.PLAYER_LEFT, socket, {}, PacketActions.PlayerLeftPacketAction));

@@ -6,10 +6,7 @@ import {BaseScene} from './BaseScene';
 const SoldierType = require('../../common/SoldierType')
 const {Column, Viewport, Scrollbar} =  require('phaser-ui-tools');
 const Player = require('../Player');
-var $ = require('jquery')
-
-var buttonState=false;
-var socket;
+var $ = require('jquery');
 
 var selectorGraphics;
 var selectorColor = 0xffff00;
@@ -18,8 +15,6 @@ var selectorDraw=false;
 
 var pointerDownWorldSpace=null;
 var cursors;
-
-var StateManager=null;
 $(()=>{
     $('#send-chat-btn').on('click', function(){
         SendChatMessage()
@@ -29,6 +24,7 @@ $(()=>{
 function SendChatMessage()
 {
     try{
+        var socket = this.registry.get('socket');
         var messageText = $('#chat-message').val();
         console.log('message : ', messageText);
         socket.emit(PacketType.ByClient.CLIENT_SENT_CHAT, {
@@ -64,9 +60,9 @@ export class GameScene extends BaseScene {
 
     init()
     {
-        StateManager = this.registry.get('stateManager');
+        var StateManager = this.registry.get('stateManager');
         this.stateManager = StateManager;
-        socket = this.registry.get('socket');
+        var socket = this.registry.get('socket');
 
         console.log('GameScene started');
 
@@ -205,6 +201,9 @@ export class GameScene extends BaseScene {
         this.load.image('flag',"../assets/flag.jpg");
     }
     create(){
+        var socket = this.registry.get('socket');
+        var StateManager = this.registry.get('stateManager');
+
         this.cameras.main.setBounds(0, 0, this.mapWidth, this.mapHeight).setName('WorldCamera');
         
         var mapGraphics = this.add.graphics();
@@ -267,8 +266,14 @@ export class GameScene extends BaseScene {
             socket.disconnect();
             this.scene.stop(CONSTANT.SCENES.HUD_SCORE)
         });
+        this.events.on('shutdown', (data)=>{
+            console.log('shutdown ', data.config.key);
+            this.input.removeAllListeners();
+            this.events.removeAllListeners();
+        })
     }
     update(time, delta){
+        var StateManager = this.registry.get('stateManager');
         this.controls.update(delta);
         StateManager.update(time, delta);
     }
