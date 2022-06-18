@@ -79,7 +79,7 @@ class Player
             x, 
             y,
             health:100,
-            speed:60,
+            speed:5,
             cost:5,
             damage:5,
             playerId: this.id

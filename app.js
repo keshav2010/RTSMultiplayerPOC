@@ -90,7 +90,6 @@ function processPendingUpdates()
 
 //whenever a client is connected
 io.on('connection', socket=>{
-
     console.log('***clients connected : ', io.of('/').sockets.size);
     if(io.of('/').sockets.size === 1){
         gameState = new GameStateManager(io);
@@ -109,6 +108,7 @@ io.on('connection', socket=>{
     }
 
     socket.on('disconnect', (reason)=>{
+        console.log('***clients disconnected, active atm : ', io.of('/').sockets.size);
         gameState.pendingUpdates.queueClientRequest(new Packet(PacketType.ByServer.PLAYER_LEFT, socket, {}, PacketActions.PlayerLeftPacketAction));
     })
 

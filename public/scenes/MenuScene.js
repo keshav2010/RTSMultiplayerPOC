@@ -10,7 +10,7 @@ export class MenuScene extends BaseScene {
     init(){
 
         //if previous connection exist, disconnect
-        if(this.registry.get('socket')){
+        if(this.registry.get('socket') && this.registry.get('socket').connected){
             console.log('menu removing old socket connection');
             this.registry.get('socket').disconnect();
             this.registry.set('socket', null);
@@ -26,11 +26,17 @@ export class MenuScene extends BaseScene {
     }
     preload(){
         console.log('preload');
+        this.scene.bringToTop();
         this.load.image('playbutton', "../assets/playbutton.png");
+        var mapGraphics = this.add.graphics();
+        mapGraphics.depth=-5;
+        mapGraphics.fillStyle(0x002200, 1);
+        mapGraphics.fillRect(0,0,1500,1500);
     }
     create(){
-        this.add.text(100, 20, "War.IO");
-        this.add.image(500, 220, 'playbutton').setInteractive().on('pointerdown', ()=>{
+        let text = this.add.text(100, 20, "War.IO");
+        let playBtn = this.add.image(500, 220, 'playbutton');
+        playBtn.setInteractive().on('pointerdown', ()=>{
             console.log('start game');
             this.scene.start(CONSTANT.SCENES.MATCHMAKER);
         })

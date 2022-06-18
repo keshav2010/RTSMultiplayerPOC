@@ -7,7 +7,7 @@ export class MatchmakingScene extends BaseScene {
 
     init(){
         var socket = this.registry.get('socket');
-        if(socket)
+        if(socket && socket.connected)
         {
             socket.disconnect();
             socket = null;
@@ -26,7 +26,6 @@ export class MatchmakingScene extends BaseScene {
         this.events.on('shutdown', (data)=>{
             console.log('shutdown ', data.config.key);
             this.input.removeAllListeners();
-            this.registry.get('socket').off('connect');
             this.events.removeAllListeners();
         })
         this.add.text(100, 120, "MATCHMAKING SCREEN");

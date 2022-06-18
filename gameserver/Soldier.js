@@ -33,10 +33,10 @@ class Soldier extends SAT.Box {
         this.senseRadius = 50;
 
         //compromised position possible for agent
-        this.expectedPosition = {x:params.x, y:params.y}; 
+        this.expectedPosition = new SAT.Vector(params.x, params.y);
 
         //actual position requested by client
-        this.targetPosition = {x:params.x, y:params.y}; 
+        this.targetPosition = new SAT.Vector(params.x, params.y); 
 
         //Soldier whom we need to attack
         this.attackTarget = null;
@@ -55,50 +55,123 @@ class Soldier extends SAT.Box {
 
         Soldier.sid++;
         this.stateMachine = new StateMachine(SoldierStateMachineJSON);
+        
+        //Boid
+        this.steeringVector = new SAT.Vector(0, 0);
+        this.accelerationVector = new SAT.Vector(0, 0);
+        this.velocityVector = new SAT.Vector(0, 0);
+        //this.pos => current location
     }
-    
+
+    //get steering force
+    setTargetVector(targetVector){
+        this.targetVector = targetVector;
+    }
+
+    getSteerVector(targetVector){
+        var desiredVector = new SAT.Vector().copy(targetVector);
+        desiredVector.sub(this.pos);
+        if(desiredVector.len() > this.speed){
+            desiredVector.normalize().scale(this.speed)
+        }
+        var steerVector = new SAT.Vector().copy(desiredVector);
+        steerVector.sub(this.velocityVector);
+        return steerVector.normalize();
+    }
+    applyForce(forceVector){
+        this.accelerationVector.add(forceVector);
+    }
     setPosition(x,y){
-        this.pos.x = x;
-        this.pos.y = y;
+        this.pos = new SAT.Vector(x,y);
         this.x = x;
         this.y = y;
     }
     hasReachedDestination(){
-        let diffX = this.targetPosition.x - this.pos.x;
-        let diffY = this.targetPosition.y - this.pos.y;
-        let mag = Math.sqrt(diffX*diffX + diffY*diffY);
+        let diffVector = new SAT.Vector(this.targetPosition.x - this.pos.x, this.targetPosition.y - this.pos.y);
+        let mag = diffVector.len();
         return (mag < 15  || this.isAtDestination);
     }
+
     setTargetPosition(x,y){
-        this.targetPosition = {x,y};
-        this.expectedPosition = {x,y};
+        this.targetPosition = new SAT.Vector(x,y);
+        this.expectedPosition = new SAT.Vector(x,y);
         this.isAtDestination=false;
         this.attackTarget=null;
+        this.stateMachine.controller.send('Move');
     }
 
     tick(delta, updateManager, stateManager){
+
+        //get forces
+        this.applyForce(this.getSteerVector(this.expectedPosition));
+
+        //move object
+        let lastPos = new SAT.Vector().copy(this.pos);
+        if(this.velocityVector.len() > this.speed){
+            this.velocityVector.normalize().scale(this.speed);
+        }
+        this.pos.add(this.velocityVector);
+        this.x = this.pos.x;
+        this.y = this.pos.y;
+        this.velocityVector = new SAT.Vector().copy(this.pos).sub(lastPos).add(this.accelerationVector);
+
+        //check collision
+        stateManager.scene.checkOne(this, (res)=>{
+            let a = res.a;
+            let b = res.b;
+            
+            var collisionBetweenGroupMembers = (a.targetPosition.x === b.targetPosition.x && a.targetPosition.y === b.targetPosition.y);
+            var eitherReachedDest = a.hasReachedDestination() || b.hasReachedDestination();
+            if(collisionBetweenGroupMembers && eitherReachedDest){
+                a.isAtDestination = b.isAtDestination = true;
+            }
+
+            a.setPosition(a.pos.x - res.overlapV.x, a.pos.y - res.overlapV.y);
+
+            var eitherAtDestination = a.hasReachedDestination() || b.hasReachedDestination();
+            var bodiesInSameGroup = a.targetPosition.x === b.targetPosition.x && a.targetPosition.y === b.targetPosition.y;
+
+            if(bodiesInSameGroup && eitherAtDestination){
+                a.expectedPosition.copy(a);
+                b.expectedPosition.copy(b);
+            }
+        });
+
         //if attack target set, chase them and/or attack
         switch(this.stateMachine.currentState){
             case 'Idle': this.Idle(delta, updateManager, stateManager); break;
             case 'Move': this.Move(delta, updateManager, stateManager); break;
+            case 'ChaseTarget': this.ChaseTarget(delta, updateManager, stateManager); break;
             case 'Attack': this.Attack(delta, updateManager, stateManager); break;
             case 'FindTarget': this.FindTarget(delta, updateManager, stateManager); break;
             case 'Defend': this.Defend(delta, updateManager, stateManager); break;
-            case 'ChaseTarget': this.ChaseTarget(delta, updateManager, stateManager); break;
         }
-        if(this.attackTarget)
-            this.chaseAndAttackTarget(delta, updateManager, stateManager);
-        else
-            this.moveAtDesiredPosition(delta, updateManager, stateManager);
+        this.accelerationVector.scale(0);
     }
 
     Idle(delta, updateManager, stateManager){
         //in idle state
     }
+
+    //this method is called when object is moving toward a target.
     Move(delta, updateManager, stateManager){
-        moveAtDesiredPosition(delta, updateManager, stateManager);
+        let diffVector = new SAT.Vector(this.pos.x, this.pos.y).sub(this.expectedPosition);
+        updateManager.queueServerEvent({
+            type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
+            soldier: this.getSnapshot()
+        });
+        if(diffVector.len() < 5){
+            this.velocityVector.scale(0);
+            this.stateMachine.controller.send('ReachedPosition')
+        }
     }
     Attack(delta, updateManager, stateManager){
+        let diffVector = new SAT.Vector().copy(this.attackTarget.pos).sub(this.pos);
+        if(diffVector.len() > this.width){
+            this.stateMachine.controller.send('TargetNotInRange');
+            return;
+        }
+        console.log('attack ', this.attackTarget)
         this.attackTarget.health -= delta*this.damage;
         this.health -= delta*this.attackTarget.damage;
 
@@ -143,199 +216,38 @@ class Soldier extends SAT.Box {
     ChaseTarget(delta, updateManager, stateManager){
         try
         {
-            if(!stateManager.SocketToPlayerData.get(this.attackTarget.playerId).getSoldier(this.attackTarget.id)){
-                this.targetPosition.x = this.attackTarget.pos.x;
-                this.targetPosition.x = this.attackTarget.pos.y;
-                this.expectedPosition.x = this.targetPosition.x;
-                this.expectedPosition.y = this.targetPosition.y;
-                this.attackTarget=null;
+            if(!this.attackTarget){
+                console.log('attackTarget is not defined, current state = ', this.stateMachine.currentState)
                 return;
             }
-            let diffX = this.attackTarget.pos.x - this.pos.x;
-            let diffY = this.attackTarget.pos.y - this.pos.y;
-            let mag = Math.sqrt(diffX*diffX + diffY*diffY);
-            mag = (mag < 0.1)?0.1:mag;
-            diffX /= mag;
-            diffY /= mag;
-            this.setPosition(this.pos.x+this.speed*delta*diffX, this.pos.y+this.speed*delta*diffY);
-            stateManager.scene.checkOne(this, (res)=>{
-                let a = res.a;
-                let b = res.b;
-
-                var collisionBetweenGroupMembers = (a.targetPosition.x === b.targetPosition.x && a.targetPosition.y === b.targetPosition.y);
-                var eitherReachedDest = a.hasReachedDestination() || b.hasReachedDestination();
-                if(collisionBetweenGroupMembers && eitherReachedDest){
-                    a.isAtDestination = b.isAtDestination = true;
-                }
-
-                a.setPosition(a.pos.x - res.overlapV.x, a.pos.y - res.overlapV.y);
-
-                var eitherAtDestination = a.hasReachedDestination() || b.hasReachedDestination();
-                var bodiesInSameGroup = a.targetPosition.x === b.targetPosition.x && a.targetPosition.y === b.targetPosition.y;
-
-                if(bodiesInSameGroup && eitherAtDestination){
-                    a.expectedPosition = {x: a.pos.x, y: a.pos.y};
-                    b.expectedPosition = {x: b.pos.x, y: b.pos.y};
-                }
-            });
-
-            //this.parent.stateManager.scene.updateBody(this);
-            updateManager.queueServerEvent({
-                type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
-                soldier: this.getSnapshot()
-            });
-        }catch(err){
-            this.targetPosition.x = this.attackTarget.pos.x;
-            this.targetPosition.x = this.attackTarget.pos.y;
-            this.expectedPosition.x = this.targetPosition.x;
-            this.expectedPosition.y = this.targetPosition.y;
-            this.attackTarget=null;
-            console.log(err);
-        }
-    }
-
-
-    chaseAndAttackTarget(delta, updateManager, stateManager)
-    {
-        try
-        {
-            //check if attackTarget unit exists
-            if(!stateManager.SocketToPlayerData.get(this.attackTarget.playerId).getSoldier(this.attackTarget.id)){
-                this.targetPosition.x = this.attackTarget.pos.x;
-                this.targetPosition.x = this.attackTarget.pos.y;
-                this.expectedPosition.x = this.targetPosition.x;
-                this.expectedPosition.y = this.targetPosition.y;
-                this.attackTarget=null;
-                return;
-            }
-            let diffX = this.attackTarget.pos.x - this.pos.x;
-            let diffY = this.attackTarget.pos.y - this.pos.y;
-            let mag = Math.sqrt(diffX*diffX + diffY*diffY);
-            mag = (mag < 0.1)?0.1:mag;
-            diffX /= mag;
-            diffY /= mag;
-            if(mag <= 50)
+            //if target-soldier not found, cancel the hunt
+            if(!stateManager.SocketToPlayerData.get(this.attackTarget.playerId).getSoldier(this.attackTarget.id))
             {
-                //both units attack each other
-                this.attackTarget.health -= delta*this.damage;
-                this.health -= delta*this.attackTarget.damage;
-
-                this.attackTarget.health = Math.max(0, this.attackTarget.health);
-                this.health = Math.max(0, this.health);
-                
-                updateManager.queueServerEvent({
-                    type: PacketType.ByServer.SOLDIER_ATTACKED,
-                    a: this.getSnapshot(),
-                    b: this.attackTarget.getSnapshot()
-                });
-
-                if(this.attackTarget.health === 0){
-                    updateManager.queueServerEvent({
-                        type: PacketType.ByServer.SOLDIER_KILLED,
-                        playerId: this.attackTarget.playerId,
-                        soldierId: this.attackTarget.id
-                    });
-                    stateManager.removeSoldier(this.attackTarget.playerId, this.attackTarget.id);
-                }
-                if(this.health === 0){
-                    updateManager.queueServerEvent({
-                        type: PacketType.ByServer.SOLDIER_KILLED,
-                        playerId: this.playerId,
-                        soldierId: this.id
-                    });
-                    stateManager.removeSoldier(this.playerId, this.id);
-                    return;
-                }
+                this.targetPosition.copy(this.pos);
+                this.expectedPosition.copy(this.pos);
+                this.attackTarget=null;
+                return;
             }
-
-            this.setPosition(this.pos.x+this.speed*delta*diffX, this.pos.y+this.speed*delta*diffY);
-            
-            stateManager.scene.checkOne(this, (res)=>{
-                let a = res.a;
-                let b = res.b;
-
-                var collisionBetweenGroupMembers = (a.targetPosition.x === b.targetPosition.x && a.targetPosition.y === b.targetPosition.y);
-                var eitherReachedDest = a.hasReachedDestination() || b.hasReachedDestination();
-                if(collisionBetweenGroupMembers && eitherReachedDest){
-                    a.isAtDestination = b.isAtDestination = true;
-                }
-
-                a.setPosition(a.pos.x - res.overlapV.x, a.pos.y - res.overlapV.y);
-
-                var eitherAtDestination = a.hasReachedDestination() || b.hasReachedDestination();
-                var bodiesInSameGroup = a.targetPosition.x === b.targetPosition.x && a.targetPosition.y === b.targetPosition.y;
-
-                if(bodiesInSameGroup && eitherAtDestination){
-                    a.expectedPosition = {x: a.pos.x, y: a.pos.y};
-                    b.expectedPosition = {x: b.pos.x, y: b.pos.y};
-                }
-            });
+            this.targetPosition.copy(this.attackTarget.pos);
+            this.expectedPosition.copy(this.attackTarget.pos);
 
             //this.parent.stateManager.scene.updateBody(this);
             updateManager.queueServerEvent({
                 type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
                 soldier: this.getSnapshot()
             });
-        }catch(err){
-            this.targetPosition.x = this.attackTarget.pos.x;
-            this.targetPosition.x = this.attackTarget.pos.y;
-            this.expectedPosition.x = this.targetPosition.x;
-            this.expectedPosition.y = this.targetPosition.y;
-            this.attackTarget=null;
+        }
+        catch(err)
+        {
             console.log(err);
+            this.targetPosition.copy(this.attackTarget.pos);
+            this.expectedPosition.copy(this.targetPosition);
+            this.attackTarget=null;
         }
     }
-    moveAtDesiredPosition(delta, updateManager, stateManager){
-
-        //get unit vector pointing toward desired point
-        let diffX = this.expectedPosition.x - this.pos.x;
-        let diffY = this.expectedPosition.y - this.pos.y;
-        let mag = Math.sqrt(diffX*diffX + diffY*diffY);
-        if(mag === 0){
-            this.isAtDestination=true;
-            return;
-        }
-        else if(mag <= 1){
-            diffX = diffY = 0;
-            this.setPosition(this.expectedPosition.x, this.expectedPosition.y);
-            this.isAtDestination=true;
-        } 
-        else {
-            diffX = diffX/mag;
-            diffY = diffY/mag;
-        }
-        this.setPosition(this.pos.x+this.speed*delta*diffX, this.pos.y+this.speed*delta*diffY);
-        stateManager.scene.checkOne(this, (res)=>{
-            let a = res.a;
-            let b = res.b;
-            
-            var collisionBetweenGroupMembers = (a.targetPosition.x === b.targetPosition.x && a.targetPosition.y === b.targetPosition.y);
-            var eitherReachedDest = a.hasReachedDestination() || b.hasReachedDestination();
-            if(collisionBetweenGroupMembers && eitherReachedDest){
-                a.isAtDestination = b.isAtDestination = true;
-            }
-
-            a.setPosition(a.pos.x - res.overlapV.x, a.pos.y - res.overlapV.y);
-
-            var eitherAtDestination = a.hasReachedDestination() || b.hasReachedDestination();
-            var bodiesInSameGroup = a.targetPosition.x === b.targetPosition.x && a.targetPosition.y === b.targetPosition.y;
-
-            if(bodiesInSameGroup && eitherAtDestination){
-                a.expectedPosition = {x: a.pos.x, y: a.pos.y};
-                b.expectedPosition = {x: b.pos.x, y: b.pos.y};
-            }
-        });
-
-        //this.parent.stateManager.scene.updateBody(this);
-        updateManager.queueServerEvent({
-            type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
-            soldier: this.getSnapshot()
-        });
-    }
-
-
     attackUnit(unitReference){
         this.attackTarget = unitReference;
+        this.stateMachine.controller.send('Attack')
     }
 
     //Returns a perfectly serializable object with no refs, this object can be shared between threads

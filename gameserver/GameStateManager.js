@@ -28,7 +28,7 @@ class GameStateManager
         this.event = new EventEmitter();
         this.scene = new Scene(this);
 
-        this.countdown = 15; //seconds
+        this.countdown = 10 ; //seconds
         this.stateMachine = new StateMachine(ServerStateMachineJSON);
         this.pendingUpdates = new PendingUpdateManager();
     }
@@ -91,7 +91,6 @@ class GameStateManager
 
     SpawnSelectionState(){
         try{
-            
             //in seconds
             var deltaTime = (new Date().getTime()-this.lastSimulateTime_ms)/1000;
             this.lastSimulateTime_ms = new Date().getTime();
@@ -130,7 +129,6 @@ class GameStateManager
         }
     }
     BattleEndState(updateManager){
-
     }
 
     //creates a new player object
@@ -172,27 +170,6 @@ class GameStateManager
         }
         catch(err){
 
-        }
-    }
-
-    //give a target position to soldier so it can move towards it
-    setSoldierTargetPosition(playerId, soldierId, x, y){
-
-    }
-
-    //This method is called when Player-A initiate attack over Player-B
-    //Note that A can attack only single unit at a time for now.
-    initiateAttack(aPlayerId, aSoldierIdArr, bPlayerId, bSoldierId){
-        try{
-            let a = this.SocketToPlayerData.get(aPlayerId);
-            let b = this.SocketToPlayerData.get(bPlayerId);
-            let targetSoldier = b.getSoldier(bSoldierId);
-            aSoldierIdArr.forEach(soldierId=>{
-                let attacker = a.getSoldier(soldierId);
-                attacker.attackUnit(targetSoldier);
-            });
-        }catch(err){
-            console.log(err);
         }
     }
 }
