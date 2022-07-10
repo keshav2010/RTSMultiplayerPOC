@@ -71,8 +71,8 @@ class Soldier extends SAT.Box {
   }
   applyForce(forceVector) {
     this.accelerationVector.add(forceVector);
-    if (this.accelerationVector.len() > 1.5) {
-      this.accelerationVector.normalize().scale(1.5);
+    if (this.accelerationVector.len() > 1.4) {
+      this.accelerationVector.normalize().scale(1.4);
     }
   }
   setPosition(vec) {
@@ -106,8 +106,8 @@ class Soldier extends SAT.Box {
     return steerVector;
   }
   getSeperationVector(stateManager) {
-    let desiredSeperation = this.width;
-    const searchRadius = 130;
+    let desiredSeperation = this.width*2;
+    const searchRadius = 45;
     let nearbyUnits = stateManager.scene.getNearbyUnits(this, searchRadius);
     let sumVec = new SAT.Vector(0);
     if (nearbyUnits.length < 2) {
@@ -122,7 +122,7 @@ class Soldier extends SAT.Box {
 
       if (distanceBetweenUnits > 0) {
         let repelUnitVector = new SAT.Vector().copy(this.pos).sub(unit.pos);
-        repelUnitVector.scale(desiredSeperation / distanceBetweenUnits);
+        repelUnitVector.scale(desiredSeperation/distanceBetweenUnits);
         sumVec.add(repelUnitVector);
       }
     });
@@ -134,7 +134,7 @@ class Soldier extends SAT.Box {
     let steerForce = this.getSteerVector(this.expectedPosition);
 
     this.applyForce(steerForce);
-    this.applyForce(seperationForce);
+    this.applyForce(seperationForce.scale(0.01));
 
     //recompute new velocity.
     this.velocityVector.add(this.accelerationVector);
@@ -144,6 +144,8 @@ class Soldier extends SAT.Box {
     //move
     this.setPosition(new SAT.Vector().copy(this.pos).add(this.velocityVector));
 
+    /*
+    TODO: Fix this
     //check if nearby unit is sharing same destination and has reached there => stop
     var nearbyUnits = stateManager.scene.getNearbyUnits(this, 50);
     nearbyUnits.forEach((unit) => {
@@ -162,6 +164,8 @@ class Soldier extends SAT.Box {
       unit.expectedPosition.copy(unit.pos);
       this.expectedPosition.copy(this.pos);
     });
+    */
+    
 
     //check hard collisions (hitbox touches)
     stateManager.scene.checkOne(this, (res, collidingBodies) => {

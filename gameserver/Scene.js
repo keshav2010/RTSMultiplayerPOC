@@ -30,17 +30,13 @@ class Scene extends Quadtree {
    */
   getNearbyUnits(soldier, searchRadius) {
     let result = this.colliding({
-      x: soldier.pos.x - searchRadius / 2,
-      y: soldier.pos.y - searchRadius / 2,
-      width: searchRadius,
-      height: searchRadius,
+      x: soldier.pos.x,
+      y: soldier.pos.y
+    }, function(a, b){
+      let noCollisionXAxis = a.x+searchRadius < b.x-searchRadius || a.x-searchRadius > b.x+searchRadius;
+      let noCollisionYAxis = a.y+searchRadius < b.y-searchRadius || a.y-searchRadius > b.y+searchRadius;
+      return !(noCollisionXAxis || noCollisionYAxis)
     });
-    if (soldier.id == "0") {
-      console.log(
-        result.map((v) => v.id),
-        soldier.id
-      );
-    }
     return result;
   }
 
@@ -48,8 +44,8 @@ class Scene extends Quadtree {
   checkOne(soldier, callback) {
     //fetch all bodies with which soldier is colliding in Quadtree
     let collidingBodies = this.colliding({
-      x: soldier.x,
-      y: soldier.y,
+      x: soldier.x - soldier.w/2,
+      y: soldier.y - soldier.h/2,
       width: soldier.w,
       height: soldier.h,
     });
