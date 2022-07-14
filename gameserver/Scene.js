@@ -10,8 +10,8 @@ const SAT = require("sat");
 
 class Scene extends Quadtree {
   constructor(stateManager, width, height) {
-    width = width || 1600;
-    height = height || 1600;
+    width = width || 15;
+    height = height || 15;
     super({ width, height });
     this.stateManager = stateManager;
   }
@@ -33,9 +33,10 @@ class Scene extends Quadtree {
       x: soldier.pos.x,
       y: soldier.pos.y
     }, function(a, b){
-      let noCollisionXAxis = a.x+searchRadius < b.x-searchRadius || a.x-searchRadius > b.x+searchRadius;
-      let noCollisionYAxis = a.y+searchRadius < b.y-searchRadius || a.y-searchRadius > b.y+searchRadius;
-      return !(noCollisionXAxis || noCollisionYAxis)
+      let aPos = new SAT.Vector(a.x, a.y)
+      let bPos = new SAT.Vector(b.x, b.y)
+      let distance = new SAT.Vector().copy(aPos).sub(bPos).len();
+      return (distance <= 2*searchRadius);
     });
     return result;
   }
@@ -44,14 +45,20 @@ class Scene extends Quadtree {
   checkOne(soldier, callback) {
     //fetch all bodies with which soldier is colliding in Quadtree
     let collidingBodies = this.colliding({
-      x: soldier.x - soldier.w/2,
-      y: soldier.y - soldier.h/2,
-      width: soldier.w,
-      height: soldier.h,
+      x: soldier.pos.x - soldier.w/2,
+      y: soldier.pos.y - soldier.h/2,
+      w: soldier.w,
+      h: soldier.h
+    }, function(a,b) {
+      let aPos = new SAT.Vector(a.x, a.y)
+      let bPos = new SAT.Vector(b.x, b.y)
+      let distance = new SAT.Vector().copy(aPos).sub(bPos).len();
+      return distance <= 2*Math.max(a.w, a.h)
     });
 
     //Colliding Bodies will always have 1 element, which is the soldier itself.
-    if (collidingBodies.length < 2) return;
+    if (collidingBodies.length < 2) 
+      return;
 
     //Obtain "SAT.Response" for each collision.
     var satBoxPolygons = collidingBodies;
