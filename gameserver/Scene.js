@@ -33,8 +33,9 @@ class Scene extends Quadtree {
       x: soldier.pos.x,
       y: soldier.pos.y
     }, function(a, b){
+      // a=> 1st arg, b => actual quadtree object
       let aPos = new SAT.Vector(a.x, a.y)
-      let bPos = new SAT.Vector(b.x, b.y)
+      let bPos = new SAT.Vector(b.x + b.w/2, b.y + b.h/2)
       let distance = new SAT.Vector().copy(aPos).sub(bPos).len();
       return (distance <= 2*searchRadius);
     });
@@ -45,15 +46,10 @@ class Scene extends Quadtree {
   checkOne(soldier, callback) {
     //fetch all bodies with which soldier is colliding in Quadtree
     let collidingBodies = this.colliding({
-      x: soldier.pos.x - soldier.w/2,
-      y: soldier.pos.y - soldier.h/2,
-      w: soldier.w,
-      h: soldier.h
-    }, function(a,b) {
-      let aPos = new SAT.Vector(a.x, a.y)
-      let bPos = new SAT.Vector(b.x, b.y)
-      let distance = new SAT.Vector().copy(aPos).sub(bPos).len();
-      return distance <= 2*Math.max(a.w, a.h)
+      x: soldier.pos.x,
+      y: soldier.pos.y,
+      width: soldier.w,
+      height: soldier.h
     });
 
     //Colliding Bodies will always have 1 element, which is the soldier itself.
