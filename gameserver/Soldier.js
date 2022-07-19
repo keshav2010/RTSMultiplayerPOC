@@ -4,6 +4,7 @@ const SAT = require("sat"); //(w,h)
 const SoldierStateMachineJSON = require("./stateMachines/SoldierStateMachine.json");
 const { createMachine, interpret } = require("xstate");
 const StateMachine = require("../common/StateMachine");
+const SoldierConstants = require('./unitConstants');
 
 /**
  * SAT BOX Interface    |   * QUADTREE Object Interface
@@ -32,8 +33,6 @@ class Soldier extends SAT.Box {
     this.width = this.w;
     this.height = this.h;
 
-    this.senseRadius = 50;
-
     //compromised position possible for agent
     this.expectedPosition = new SAT.Vector(params.x, params.y);
 
@@ -61,12 +60,6 @@ class Soldier extends SAT.Box {
     this.steeringVector = new SAT.Vector(0, 0);
     this.accelerationVector = new SAT.Vector(0, 0);
     this.velocityVector = new SAT.Vector(0, 0);
-    //this.pos => current location
-
-    //constants
-    this.MAX_ACCELERATION = 1.5;
-    this.MAX_DESTINATION_SCAN_RADIUS = 100;
-    this.MIN_SEPERATION_DIST = 55;
   }
 
   //get steering force
@@ -75,8 +68,10 @@ class Soldier extends SAT.Box {
   }
   applyForce(forceVector) {
     this.accelerationVector.add(forceVector);
-    if (this.accelerationVector.len() > this.MAX_ACCELERATION) {
-      this.accelerationVector.normalize().scale(this.MAX_ACCELERATION);
+    if (this.accelerationVector.len() > SoldierConstants.MAX_ACCELERATION) {
+      this.accelerationVector
+        .normalize()
+        .scale(SoldierConstants.MAX_ACCELERATION);
     }
   }
   setPosition(vec) {
@@ -87,11 +82,12 @@ class Soldier extends SAT.Box {
 
   //check if reached dest, if not, then perform check to ensure it
   hasReachedDestination() {
-    if(this.isAtDestination)
-      return this.isAtDestination;
 
-    let distanceToExpectedPos = new SAT.Vector().copy(this.expectedPosition).sub(this.pos).len();
-    if(distanceToExpectedPos <= 45){
+    let distanceToExpectedPos = new SAT.Vector()
+      .copy(this.expectedPosition)
+      .sub(this.pos)
+      .len();
+    if (distanceToExpectedPos <= SoldierConstants.DESIRED_DIST_FROM_TARGET) {
       this.expectedPosition.copy(this.pos);
       this.isAtDestination = true;
     }
@@ -102,45 +98,63 @@ class Soldier extends SAT.Box {
     this.targetPosition = new SAT.Vector(x, y);
     this.expectedPosition = new SAT.Vector(x, y);
     this.isAtDestination =
-      new SAT.Vector().copy(this.pos).sub(new SAT.Vector(x, y)).len() < this.MAX_DESTINATION_SCAN_RADIUS;
+      new SAT.Vector().copy(this.pos).sub(new SAT.Vector(x, y)).len() <= SoldierConstants.DESIRED_DIST_FROM_TARGET;
     this.attackTarget = null;
     this.stateMachine.controller.send("Move");
   }
 
-  //Returns a vector
-  getSteerVector(expectedPos) 
-  {
+  //Returns steer force
+  getSteerVector(expectedPos) {
     var desiredVector = new SAT.Vector().copy(expectedPos).sub(this.pos);
     //if velocity is 0, then steer vector is same as desired.
     var steerVector = new SAT.Vector()
       .copy(desiredVector)
       .sub(this.velocityVector);
+    if (steerVector.len() > SoldierConstants.MAX_STEER_FORCE)
+      steerVector.normalize().scale(SoldierConstants.MAX_STEER_FORCE);
     return steerVector;
   }
 
-  getSeperationVector(stateManager) {
-    let desiredSeperation = this.width;
-    let nearbyUnits = stateManager.scene.getNearbyUnits({
-      pos:{x: this.pos.x + this.width/2, y: this.pos.y + this.height/2}
-    }, desiredSeperation);
+  getSeperationVector(stateManager, excludeUnitPredicate) {
+    let nearbyUnits = stateManager.scene.getNearbyUnits(
+      {
+        x: this.pos.x + this.width / 2,
+        y: this.pos.y + this.height / 2,
+      },
+      SoldierConstants.NEARBY_SEARCH_RADI
+    );
+
     let sumVec = new SAT.Vector(0);
-    if (nearbyUnits.length < 2) {
-      return sumVec;
-    }
+    if (nearbyUnits.length < 2) return sumVec;
+
     nearbyUnits.forEach((unit) => {
       if (this === unit) return;
+      if (
+        excludeUnitPredicate &&
+        typeof excludeUnitPredicate === "function" &&
+        excludeUnitPredicate(this, unit)
+      )
+        return;
       let distanceBetweenUnits = new SAT.Vector()
         .copy(this.pos)
         .sub(unit.pos)
         .len();
 
-      if (distanceBetweenUnits > 0) {
+      if (
+        distanceBetweenUnits > 0 &&
+        distanceBetweenUnits <= SoldierConstants.DESIRED_SEPERATION_DIST
+      ) {
         let repelUnitVector = new SAT.Vector().copy(this.pos).sub(unit.pos);
-        repelUnitVector.scale(desiredSeperation/distanceBetweenUnits);
+        repelUnitVector.scale(
+          SoldierConstants.DESIRED_SEPERATION_DIST / distanceBetweenUnits
+        );
         sumVec.add(repelUnitVector);
       }
     });
-    var steer = new SAT.Vector().copy(sumVec).sub(this.velocityVector);
+    var steer = new SAT.Vector().copy(sumVec);
+    if (sumVec.len() > 0) steer.sub(this.velocityVector);
+    if (steer.len() > SoldierConstants.MAX_REPEL_FORCE)
+      steer.normalize().scale(SoldierConstants.MAX_REPEL_FORCE);
     return steer;
   }
 
@@ -151,23 +165,29 @@ class Soldier extends SAT.Box {
     this.accelerationVector.scale(0);
     this.setPosition(new SAT.Vector().copy(this.pos).add(this.velocityVector));
 
-    //check hard collisions (hitbox touches)
+    //hard collisions
     stateManager.scene.checkOne(this, (res, collidingBodies) => {
       let a = res.a;
       let b = res.b;
-      a.setPosition(new SAT.Vector(a.pos.x - res.overlapV.x, a.pos.y - res.overlapV.y));
+      a.setPosition(
+        new SAT.Vector(a.pos.x - res.overlapV.x, a.pos.y - res.overlapV.y)
+      );
 
-      let overlappingTargetPos = new SAT.Vector().copy(a.expectedPosition)
-      .sub(b.expectedPosition).len() < 55;
+      let overlappingTargetPos =
+        new SAT.Vector()
+          .copy(a.expectedPosition)
+          .sub(b.expectedPosition)
+          .len() <= SoldierConstants.DESIRED_SEPERATION_DIST;
 
-      var eitherReachedDest = a.hasReachedDestination() || b.hasReachedDestination();
+      var eitherReachedDest =
+        a.hasReachedDestination() || b.hasReachedDestination();
       if (overlappingTargetPos && eitherReachedDest) {
         a.isAtDestination = b.isAtDestination = true;
         a.expectedPosition.copy(a.pos);
         b.expectedPosition.copy(b.pos);
       }
     });
-    //if attack target set, chase them and/or attack
+
     switch (this.stateMachine.currentState) {
       case "Idle":
         this.Idle(delta, updateManager, stateManager);
@@ -191,54 +211,66 @@ class Soldier extends SAT.Box {
         this.Idle(delta, updateManager, stateManager);
         break;
     }
+
     updateManager.queueServerEvent({
       type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
       soldier: this.getSnapshot(),
     });
   }
 
+  /**
+   * Always scan for seperation force
+   */
   Idle(delta, updateManager, stateManager) {
-    let seperationForce = this.getSeperationVector(stateManager);
+    let seperationForce = this.getSeperationVector(stateManager, (a, b) => {
+      //no seperation force if both units reached destination.
+      return a.hasReachedDestination() && b.hasReachedDestination();
+    });
     this.applyForce(seperationForce);
-    if(this.velocityVector.len() > 0)
-      this.stateMachine.controller.send("Move");  
+    if (this.velocityVector.len() > 0)
+      this.stateMachine.controller.send("Move");
   }
-
   Move(delta, updateManager, stateManager) {
+
     //while in moving state (chase expected position)
     let seperationForce = this.getSeperationVector(stateManager);
-    this.applyForce(seperationForce);
     let steerForce = this.getSteerVector(this.expectedPosition);
+    this.applyForce(seperationForce);
     this.applyForce(steerForce);
 
     let stateMachineTrigged = false;
-    if(this.hasReachedDestination()){
+    if (this.hasReachedDestination()) {
       this.stateMachine.controller.send("ReachedPosition");
       stateMachineTrigged = true;
     }
 
     //get units nearby,
-      //if any same-group unit reached dest => stop, 
-      //or if self reached dest and same-group nearby => alert
-    var nearbyUnits = stateManager.scene.getNearbyUnits({
-      pos: {x:this.pos.x + this.width/2, y: this.pos.y + this.height/2}
-    }, 55);
-    if(nearbyUnits.length < 2)
-      return;
+    //if any same-group unit reached dest => stop,
+    //or if self reached dest and same-group nearby => alert
+    var nearbyUnits = stateManager.scene.getNearbyUnits(
+      {
+        x: this.pos.x + this.width / 2,
+        y: this.pos.y + this.height / 2,
+      },
+      SoldierConstants.NEARBY_SEARCH_RADI
+    );
+    if (nearbyUnits.length < 2) return;
 
     nearbyUnits.forEach((unit) => {
-      if (unit === this)
-        return;
+      if (unit === this) return;
 
-      let overlappingTargetPos = new SAT.Vector()
-        .copy(unit.expectedPosition)
-        .sub(this.expectedPosition).len() < this.width*2;
-      let eitherAtDest = unit.hasReachedDestination() || this.hasReachedDestination();
+      let overlappingTargetPos =
+        new SAT.Vector()
+          .copy(unit.expectedPosition)
+          .sub(this.expectedPosition)
+          .len() <= SoldierConstants.DESIRED_SEPERATION_DIST;
+      let eitherAtDest =
+        unit.hasReachedDestination() || this.hasReachedDestination();
 
       if (eitherAtDest && overlappingTargetPos) {
         unit.isAtDestination = this.isAtDestination = true;
         this.expectedPosition.copy(this.pos);
-        if(!stateMachineTrigged)
+        if (!stateMachineTrigged)
           this.stateMachine.controller.send("ReachedPosition");
       }
     });
@@ -308,7 +340,6 @@ class Soldier extends SAT.Box {
       this.targetPosition.copy(this.attackTarget.pos);
       this.expectedPosition.copy(this.attackTarget.pos);
 
-      //this.parent.stateManager.scene.updateBody(this);
       updateManager.queueServerEvent({
         type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
         soldier: this.getSnapshot(),

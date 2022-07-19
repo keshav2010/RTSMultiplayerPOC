@@ -28,11 +28,8 @@ class Scene extends Quadtree {
    * @param {*} searchRadius
    * @returns
    */
-  getNearbyUnits(soldier, searchRadius) {
-    let result = this.colliding({
-      x: soldier.pos.x,
-      y: soldier.pos.y
-    }, function(a, b){
+  getNearbyUnits({x,y}, searchRadius) {
+    let result = this.colliding({x,y}, function(a, b){
       // a=> 1st arg, b => actual quadtree object
       let aPos = new SAT.Vector(a.x, a.y)
       let bPos = new SAT.Vector(b.x + b.w/2, b.y + b.h/2)
