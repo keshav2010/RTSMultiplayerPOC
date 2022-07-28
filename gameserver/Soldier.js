@@ -189,7 +189,7 @@ class Soldier extends SAT.Box {
         new SAT.Vector()
           .copy(a.expectedPosition)
           .sub(b.expectedPosition)
-          .len() <= SoldierConstants.DESIRED_SEPERATION_DIST;
+          .len() <= SoldierConstants.MAX_TARGETPOS_OVERLAP_DIST;
 
       var eitherReachedDest =
         a.hasReachedDestination() || b.hasReachedDestination();
@@ -273,7 +273,7 @@ class Soldier extends SAT.Box {
         new SAT.Vector()
           .copy(unit.expectedPosition)
           .sub(this.expectedPosition)
-          .len() <= SoldierConstants.DESIRED_SEPERATION_DIST;
+          .len() <= SoldierConstants.MAX_TARGETPOS_OVERLAP_DIST;
 
       let eitherAtDest =
         unit.hasReachedDestination() || this.hasReachedDestination();

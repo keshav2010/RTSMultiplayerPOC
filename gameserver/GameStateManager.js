@@ -26,7 +26,7 @@ class GameStateManager {
     this.event = new EventEmitter();
     this.scene = new Scene(this);
 
-    this.countdown = 0.2; //seconds
+    this.countdown = 1; //seconds
     this.stateMachine = new StateMachine(ServerStateMachineJSON);
     this.pendingUpdates = new PendingUpdateManager();
   }
