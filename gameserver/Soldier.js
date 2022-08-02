@@ -201,7 +201,6 @@ class Soldier extends SAT.Box {
         b.expectedPosition.copy(b.pos);
       }
     });
-
     switch (this.stateMachine.currentState) {
       case "Idle":
         this.Idle(delta, updateManager, stateManager);
@@ -290,11 +289,13 @@ class Soldier extends SAT.Box {
     });
   }
   Attack(delta, updateManager, stateManager) {
-    let diffVector = new SAT.Vector().copy(this.attackTarget.pos).sub(this.pos);
-    if (diffVector.len() > this.width) {
+
+    let distToTarget = new SAT.Vector().copy(this.attackTarget.pos).sub(this.pos).len();
+    if (distToTarget > SoldierConstants.DESIRED_DIST_FROM_TARGET) {
       this.stateMachine.controller.send("TargetNotInRange");
       return;
     }
+
     this.attackTarget.health -= delta * this.damage;
     this.health -= delta * this.attackTarget.damage;
 
@@ -397,6 +398,12 @@ class Soldier extends SAT.Box {
         type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
         soldier: this.getSnapshot(),
       });
+
+      let distToTarget = new SAT.Vector().copy(this.attackTarget.pos).sub(this.pos).len();
+      if(distToTarget <= SoldierConstants.DESIRED_DIST_FROM_TARGET) {
+        this.stateMachine.controller.send("TargetInRange");
+      }
+
     } catch (err) {
       console.log(err);
       this.targetPosition.copy(this.attackTarget.pos);
