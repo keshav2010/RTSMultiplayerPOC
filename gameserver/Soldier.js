@@ -5,6 +5,7 @@ const SoldierStateMachineJSON = require("./stateMachines/SoldierStateMachine.jso
 const { createMachine, interpret } = require("xstate");
 const StateMachine = require("../common/StateMachine");
 const SoldierConstants = require('./unitConstants');
+const {AllianceTypes, AllianceTracker} = require("./AllianceTracker");
 
 function mapRange(val, mapRangeStart, mapRangeEnd, targetRangeStart, targetRangeEnd)
 {
@@ -25,6 +26,8 @@ function mapRange(val, mapRangeStart, mapRangeEnd, targetRangeStart, targetRange
  */
 class Soldier extends SAT.Box {
   static sid = 0;
+  static alliances = new AllianceTracker();
+
   constructor(type, params, parentObject) {
     // {pos:{x,y}}
     super(
@@ -327,7 +330,50 @@ class Soldier extends SAT.Box {
   }
   FindTarget(delta, updateManager, stateManager) {
     try {
-    } catch (err) {}
+      this.attackTarget = null;
+      var nearbyUnits = stateManager.scene.getNearbyUnits(
+        {
+          x: this.pos.x + this.width / 2,
+          y: this.pos.y + this.height / 2,
+        },
+        SoldierConstants.ENEMY_SEARCH_RADIUS
+      );
+      if (nearbyUnits.length < 2) return;
+  
+      //Go to unit with least distance instead of random unit.
+      let minDist = Math.infinity;
+      let nearestUnit = null;
+      nearbyUnits.forEach((unit) => {
+
+        //consider only if unit belongs to enemy team
+        if ( unit === this ||
+          Soldier.alliances.getAlliance(this.playerId, unit.playerId) !==
+            AllianceTypes.ENEMIES )
+          return;
+  
+        let distBetweenUnits = new SAT.Vector()
+            .copy(unit.pos)
+            .sub(this.pos)
+            .len();
+        if(distBetweenUnits < minDist){
+          minDist = distBetweenUnits;
+          unit = nearestUnit;
+        }
+      });
+      
+      if(nearestUnit) {
+        this.attackTarget = nearestUnit;
+        this.stateMachine.controller.send("TargetFound");
+      }
+      else {
+        //TODO: what about expectedPosition / targetPosition
+        this.stateMachine.controller.send("TargetNotFound");
+      }
+    }
+    catch (err) {
+      console.error(err);
+      this.stateMachine.controller.send("TargetNotFound");
+    }
   }
   Defend(delta, updateManager, stateManager) {
     //also same as attack
@@ -335,19 +381,15 @@ class Soldier extends SAT.Box {
   ChaseTarget(delta, updateManager, stateManager) {
     try {
       if (!this.attackTarget) {
+        this.stateMachine.controller.send("TargetKilled");
         return;
       }
-      //if target-soldier not found, cancel the hunt
-      if (
-        !stateManager.SocketToPlayerData.get(
-          this.attackTarget.playerId
-        ).getSoldier(this.attackTarget.id)
-      ) {
-        this.targetPosition.copy(this.pos);
-        this.expectedPosition.copy(this.pos);
-        this.attackTarget = null;
-        return;
-      }
+
+      let seperationForce = this.getSeperationVector(stateManager);
+      let steerForce = this.getSteerVector(this.attackTarget.pos);
+      this.applyForce(seperationForce);
+      this.applyForce(steerForce);
+
       this.targetPosition.copy(this.attackTarget.pos);
       this.expectedPosition.copy(this.attackTarget.pos);
 
@@ -362,8 +404,10 @@ class Soldier extends SAT.Box {
       this.attackTarget = null;
     }
   }
+
   attackUnit(unitReference) {
     this.attackTarget = unitReference;
+    Soldier.alliances.setAlliance(this.playerId, unitReference?.playerId, AllianceTypes.ENEMIES);
     this.stateMachine.controller.send("Attack");
   }
 
