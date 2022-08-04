@@ -216,12 +216,11 @@ function SoldierDeletedPacketAction(packetType, socket, io, stateManager, data){
 
 function AttackRequestedPacketAction(packetType, socket, io, stateManager, data){
     try{
-        console.log('attack requested')
         var {soldiers, targetPlayerId, targetSoldierId} = data;
         soldiers=soldiers.split(',');
         let a = stateManager.SocketToPlayerData.get(socket.id);
         let b = stateManager.SocketToPlayerData.get(targetPlayerId);
-        let targetSoldier = b.getSoldier(targetSoldierId);
+        let targetSoldier = b?.getSoldier(targetSoldierId);
         if(!targetSoldier)
             return;
         soldiers.forEach(soldierId=>{

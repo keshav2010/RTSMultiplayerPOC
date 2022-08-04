@@ -28,8 +28,10 @@ class ClientStateManager
     }
     removePlayer(playerId){
         if(this.ConnectedPlayers.has(playerId)){
-            //destroy group and all units
-            this.ConnectedPlayers.get(playerId).destroy(true);
+            console.log(this.ConnectedPlayers.get(playerId));
+            this.ConnectedPlayers.get(playerId).getSoldiers().forEach(soldier => {
+                this.ConnectedPlayers.get(playerId).removeSoldier(soldier);
+            });
             this.ConnectedPlayers.delete(playerId);
         }
     }

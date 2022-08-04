@@ -26,7 +26,6 @@ function SendChatMessage()
     try{
         var socket = this.registry.get('socket');
         var messageText = $('#chat-message').val();
-        console.log('message : ', messageText);
         socket.emit(PacketType.ByClient.CLIENT_SENT_CHAT, {
             message: messageText
         });
@@ -64,11 +63,12 @@ export class GameScene extends BaseScene {
         this.stateManager = StateManager;
         var socket = this.registry.get('socket');
 
-        console.log('GameScene started');
-
         this.events.on(PacketType.ByServer.SOLDIER_POSITION_UPDATED, (data)=>{
             var {soldier, type} = data;
-            StateManager.ConnectedPlayers.get(soldier.playerId).getSoldiers().forEach(s =>{
+            let player = StateManager.ConnectedPlayers.get(soldier.playerId);
+            if(!player)
+                return;
+            player.getSoldiers().forEach(s =>{
                 if(s.id === soldier.id){
                     //no interpolation applied for now
                     s.x = soldier.currentPositionX;
@@ -77,6 +77,7 @@ export class GameScene extends BaseScene {
                     s.expectedPositionY = soldier.currentPositionY;
                 }
             });
+
         })
         this.events.on(GAMEEVENTS.SOLDIER_SELECTED, (d)=>{
             StateManager.selectedSoldiers.set(d.id, d);
@@ -267,7 +268,6 @@ export class GameScene extends BaseScene {
             this.scene.stop(CONSTANT.SCENES.HUD_SCORE)
         });
         this.events.on('shutdown', (data)=>{
-            console.log('shutdown ', data.config.key);
             this.input.removeAllListeners();
             this.events.removeAllListeners();
         })

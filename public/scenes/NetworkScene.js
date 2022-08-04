@@ -44,7 +44,7 @@ export class NetworkScene extends BaseScene {
                 //forward event to all active scenes
                 this.game.scene.getScenes().forEach( activeScene => {
                     if(activeScene !== this){
-                        console.log(`${activeScene.scene.key} emitting event : ${deltaUpdate.type} to itself`);
+                        //console.log(`${activeScene.scene.key} emitting event : ${deltaUpdate.type} to itself`);
                         activeScene.events.emit(deltaUpdate.type, deltaUpdate);
                     }
                 })
@@ -54,7 +54,7 @@ export class NetworkScene extends BaseScene {
     }
     create(){
         this.events.on('shutdown', (data)=>{
-            console.log('shutdown ', data.config.key);
+            //console.log('shutdown ', data.config.key);
             if(this.registry.get('socket')){
                 this.registry.get('socket').off('tick');
                 this.registry.get('socket').off('disconnect');
