@@ -4,7 +4,7 @@ Multiplayer RTS Dedicated Game Server written in NodeJS for a small-scale game.
 Approach
 
 1. Client send their Inputs/State
-2. Server pushes client requests in a stack/LIFO approach
+2. Server pushes client requests in a FIFO approach
 3. Server update game state in each tick (gameserver may ideally have a tick rate of say 10, i.e 100ms are allocated for each tick)
 4. Server also builds a cumulativeUpdate packet (delta updates)
 5. Server send back delta updates (stored in cumulativeUpdate array) back to all clients
