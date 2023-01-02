@@ -23,7 +23,7 @@ class ClientStateManager
         if(!this.ConnectedPlayers.has(player.playerId))
             this.ConnectedPlayers.set(player.playerId, player);
     }
-    getPlayer(id){
+    getPlayer(id = null){
         return this.ConnectedPlayers.get(id || this.playerId);
     }
     removePlayer(playerId){

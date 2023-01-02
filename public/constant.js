@@ -6,8 +6,7 @@ module.exports = {
         RESULT:"RESULT",
         SPAWNSELECTSCENE: "SPAWNSELECT",
         MATCHMAKER: 'MATCHMAKER',
-        HUD_SCORE: "SCOREHUD",
-        NETWORKSCENE: 'NETWORK'
+        HUD_SCORE: "SCOREHUD"
     },
     GAMEEVENTS:{
         SOLDIER_CREATED:'SC',

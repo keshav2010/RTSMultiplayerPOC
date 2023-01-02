@@ -1,3 +1,4 @@
+require('dotenv').config()
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -44,8 +45,7 @@ let httpServer = app.listen(PORT,()=>{console.log('Live @ ',PORT)});
 //Init support for Websocket
 const io = socketIO(httpServer);
 
-const TICKRATE = 24;
-const MAX_MS_PER_TICK = 1000/TICKRATE;
+const MAX_MS_PER_TICK = 1000/process.env.TICKRATE;
 var gameState;
 
 /**
@@ -54,38 +54,35 @@ var gameState;
 function processPendingUpdates()
 {
     //tick start time
-    var startTime = new Date().getTime();
+    var startTime = Date.now();
     var timeUtilised=0;
 
     var loop = ()=>{
-        //read pending packets and update state
         var updatePacket = gameState.pendingUpdates.getClientRequest();
         if(updatePacket)
             updatePacket.updateStateManager(gameState);
-        timeUtilised = (new Date().getTime() - startTime);
+        timeUtilised = (Date.now() - startTime);
         return true;
     };
-    var test = ()=>{return timeUtilised < MAX_MS_PER_TICK};
-    nbLoop(test, loop, ()=>{
+    var test = ()=>{
+        return (timeUtilised < MAX_MS_PER_TICK) && (io.of('/').sockets.size > 0)
+    };
+    var onEnd = () => {
         gameState.simulate();
-
         //Broadcast delta-changes to all connected clients
-        gameState.broadcastClientInitUpdate();
-        gameState.broadcastCumulativeUpdate();
-        
+        gameState.broadcastUpdates();
         let serverEvent;
         while(serverEvent = gameState.pendingUpdates.getServerEvent()){
-            if(serverEvent){
+            if(serverEvent)
                 io.emit('tick', JSON.stringify({data: [serverEvent]}));
-            }
         }
         const newTickAfterMS = Math.abs(MAX_MS_PER_TICK - timeUtilised);
-
         //run server loop only if connections exist
         if(io.of('/').sockets.size > 0){
             setTimeout(processPendingUpdates, newTickAfterMS);
         }
-    });
+    }
+    nbLoop(test, loop, onEnd);
 }
 
 //whenever a client is connected

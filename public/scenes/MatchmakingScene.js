@@ -1,33 +1,31 @@
 const CONSTANT = require('../constant');
 import {BaseScene} from './BaseScene';
 export class MatchmakingScene extends BaseScene {
-    constructor(){
+    constructor() {
         super(CONSTANT.SCENES.MATCHMAKER)
     }
 
-    init(){
-        var socket = this.registry.get('socket');
-        if(socket && socket.connected)
-        {
-            socket.disconnect();
-            socket = null;
-            console.log('matchmaking disconnecting old socket')
+    init() {
+        var networkManager = this.registry.get('networkManager');
+        if(networkManager.isSocketConnected()) {
+            console.log(`[NetworkManager - socket already connected, disconnecting.]`);
+            networkManager.disconnectPreviousSession();
+            return;
         }
-        socket = io();
-        this.registry.set('socket', socket);
-        socket.on('connect', ()=>{
-            this.scene.start(CONSTANT.SCENES.NETWORKSCENE);
-        });
-        console.log('matchmaker started ' , this.registry);
     }
-    preload(){
+
+    preload() {
     }
-    create(){
+
+    create() {
+        console.log(`Matchmaking Scene Created`);
         this.events.on('shutdown', (data)=>{
             console.log('shutdown ', data.config.key);
             this.input.removeAllListeners();
             this.events.removeAllListeners();
         })
         this.add.text(100, 120, "MATCHMAKING SCREEN");
+
+        this.registry.get('networkManager').connectGameServer();
     }
 }

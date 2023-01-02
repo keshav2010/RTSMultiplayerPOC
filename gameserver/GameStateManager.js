@@ -22,11 +22,11 @@ class GameStateManager {
     this.GameStarted = false;
     this.SocketToPlayerData = new Map();
     this.ReadyPlayers = new Map();
-    this.lastSimulateTime_ms = new Date().getTime();
+    this.lastSimulateTime_ms = Date.now();
     this.event = new EventEmitter();
     this.scene = new Scene(this);
 
-    this.countdown = 1; //seconds
+    this.countdown = process.env.COUNTDOWN; //seconds
     this.stateMachine = new StateMachine(ServerStateMachineJSON);
     this.pendingUpdates = new PendingUpdateManager();
   }
@@ -70,6 +70,11 @@ class GameStateManager {
     }
   }
 
+  broadcastUpdates() {
+    this.broadcastClientInitUpdate();
+    this.broadcastCumulativeUpdate();
+  }
+
   simulate() {
     switch (this.stateMachine.currentState) {
       case "SpawnSelectionState":
@@ -87,8 +92,8 @@ class GameStateManager {
   SpawnSelectionState() {
     try {
       //in seconds
-      var deltaTime = (new Date().getTime() - this.lastSimulateTime_ms) / 1000;
-      this.lastSimulateTime_ms = new Date().getTime();
+      var deltaTime = (Date.now() - this.lastSimulateTime_ms) / 1000;
+      this.lastSimulateTime_ms = Date.now();
       this.countdown -= deltaTime;
       this.countdown = Math.max(0, this.countdown);
       this.pendingUpdates.queueServerEvent({
@@ -106,8 +111,8 @@ class GameStateManager {
 
   BattleState() {
     try {
-      var deltaTime = (new Date().getTime() - this.lastSimulateTime_ms) / 1000;
-      this.lastSimulateTime_ms = new Date().getTime();
+      var deltaTime = (Date.now() - this.lastSimulateTime_ms) / 1000;
+      this.lastSimulateTime_ms = Date.now();
       let playerIdArray = [...this.SocketToPlayerData.keys()];
       var i = 0;
       var test = () => {
@@ -123,24 +128,21 @@ class GameStateManager {
       console.log(err);
     }
   }
+
   BattleEndState(updateManager) {}
 
-  //creates a new player object
   createPlayer(id) {
     if (!this.SocketToPlayerData.has(id))
       this.SocketToPlayerData.set(id, new Player(id, null, this));
   }
 
-  //remove player and all related soldiers.
   removePlayer(id) {
     this.event.emit(ServerLocalEvents.SOLDIER_REMOVED, "test");
   }
 
-  //create soldier (type) for player
   createSoldier(x, y, type, playerId) {
     let player = this.SocketToPlayerData.get(playerId);
 
-    //create soldier and insert into scene also (for collision detection)
     let { status, soldierId, soldier } = player.createSoldier(type, x, y);
     if (status) this.scene.insertSoldier(soldier);
 

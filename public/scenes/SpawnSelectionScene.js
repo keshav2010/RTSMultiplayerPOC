@@ -59,7 +59,7 @@ export class SpawnSelectionScene extends BaseScene {
             else if(pointer.button === 1) //mmb
             {
                 //middle mouse btn press => create spawn point
-                socket.emit(PacketType.ByClient.SPAWN_POINT_REQUESTED, {
+                StateManager.sendEventToServer(PacketType.ByClient.SPAWN_POINT_REQUESTED, {
                     spawnX: pointer.worldX,
                     spawnY: pointer.worldY
                 });
@@ -111,6 +111,7 @@ export class SpawnSelectionScene extends BaseScene {
         });
         
         this.events.on(PacketType.ByServer.PLAYER_INIT, (data)=>{
+            console.log(`[PLAYER_INIT]:`, data);
             const {playerId, players, _} = data;
             StateManager.playerId = playerId;
             players.forEach(player=>{
@@ -118,6 +119,7 @@ export class SpawnSelectionScene extends BaseScene {
             })
         });
         this.events.on(PacketType.ByClient.PLAYER_JOINED, (data)=>{
+            console.log(`[PLAYER_JOINED]:`, data);
             let player = data.player;
             StateManager.addPlayer(new Player(player));
             this.playerReadyStatus.addNode(this.add.text(150, 150, `${player.id} Joined`))
@@ -127,7 +129,7 @@ export class SpawnSelectionScene extends BaseScene {
         });
         this.events.on(PacketType.ByServer.COUNTDOWN_TIME, (data)=>{
             let {time} = data;
-
+            console.log(`[COUNTDOWN_TIME]:`, time);
             if(this.timerBar)
                 this.timerBar.decrease(this.timerBar.currentValue - time)
             if(time === 0){
@@ -178,9 +180,9 @@ export class SpawnSelectionScene extends BaseScene {
             buttonState=!buttonState;
             ReadyButton.setColor(buttonState ? 'green':'white');
             if(buttonState)
-                socket.emit(PacketType.ByClient.PLAYER_READY, {});
+                StateManager.sendEventToServer(PacketType.ByClient.PLAYER_READY, {});
             else
-                socket.emit(PacketType.ByClient.PLAYER_UNREADY,{});
+                StateManager.sendEventToServer(PacketType.ByClient.PLAYER_UNREADY,{});
         });
         this.events.on('shutdown', (data)=>{
             console.log('shutdown ', data.config.key);
