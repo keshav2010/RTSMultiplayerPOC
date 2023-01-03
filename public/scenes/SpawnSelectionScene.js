@@ -11,6 +11,7 @@ const LoadingBar = require('../LoadingBar')
 
 var socket;
 var StateManager;
+var NetworkManager;
 var selectorGraphics;
 var selectorColor = 0xffff00;
 var selectorThickness = 2;
@@ -32,6 +33,7 @@ export class SpawnSelectionScene extends BaseScene {
         console.log('spawn-selection scene init()');
 
         StateManager = this.registry.get('stateManager');
+        NetworkManager = this.registry.get('networkManager');
         socket = this.registry.get('socket');
 
         this.playerReadyStatus = new Column(this, 0, 120);
@@ -59,7 +61,7 @@ export class SpawnSelectionScene extends BaseScene {
             else if(pointer.button === 1) //mmb
             {
                 //middle mouse btn press => create spawn point
-                StateManager.sendEventToServer(PacketType.ByClient.SPAWN_POINT_REQUESTED, {
+                NetworkManager.sendEventToServer(PacketType.ByClient.SPAWN_POINT_REQUESTED, {
                     spawnX: pointer.worldX,
                     spawnY: pointer.worldY
                 });
@@ -179,10 +181,11 @@ export class SpawnSelectionScene extends BaseScene {
         var ReadyButton = this.add.text(15, 220, "I'm Ready!").setInteractive().on('pointerdown', ()=>{
             buttonState=!buttonState;
             ReadyButton.setColor(buttonState ? 'green':'white');
+            console.log(StateManager);
             if(buttonState)
-                StateManager.sendEventToServer(PacketType.ByClient.PLAYER_READY, {});
+                NetworkManager.sendEventToServer(PacketType.ByClient.PLAYER_READY, {});
             else
-                StateManager.sendEventToServer(PacketType.ByClient.PLAYER_UNREADY,{});
+                NetworkManager.sendEventToServer(PacketType.ByClient.PLAYER_UNREADY,{});
         });
         this.events.on('shutdown', (data)=>{
             console.log('shutdown ', data.config.key);
