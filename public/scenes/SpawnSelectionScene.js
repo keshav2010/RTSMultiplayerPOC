@@ -28,9 +28,14 @@ export class SpawnSelectionScene extends BaseScene {
         this.mapHeight=1500;
     }
 
-    init()
-    {
-        console.log('spawn-selection scene init()');
+    preload(){
+        this.load.image('playbutton', "../assets/playbutton.png");
+        this.load.image('knight', "../assets/knight.png");
+        this.load.image('spearman', "../assets/spearman.png");
+        this.load.image('map',"../assets/map.png");
+        this.load.image('flag',"../assets/flag.jpg");
+    }
+    create(){
 
         StateManager = this.registry.get('stateManager');
         NetworkManager = this.registry.get('networkManager');
@@ -131,7 +136,6 @@ export class SpawnSelectionScene extends BaseScene {
         });
         this.events.on(PacketType.ByServer.COUNTDOWN_TIME, (data)=>{
             let {time} = data;
-            console.log(`[COUNTDOWN_TIME]:`, time);
             if(this.timerBar)
                 this.timerBar.decrease(this.timerBar.currentValue - time)
             if(time === 0){
@@ -147,15 +151,8 @@ export class SpawnSelectionScene extends BaseScene {
         this.events.on(PacketType.ByClient.PLAYER_UNREADY, (data)=>{
             this.playerReadyStatus.addNode(this.add.text(150, 150, `${data.playerId} Marked UnReady`))
         });
-    }
-    preload(){
-        this.load.image('playbutton', "../assets/playbutton.png");
-        this.load.image('knight', "../assets/knight.png");
-        this.load.image('spearman', "../assets/spearman.png");
-        this.load.image('map',"../assets/map.png");
-        this.load.image('flag',"../assets/flag.jpg");
-    }
-    create(){
+
+        
         this.cameras.main.setBounds(0, 0, this.mapWidth, this.mapHeight).setName('WorldCamera');
         var mapGraphics = this.add.graphics();
 
@@ -187,11 +184,24 @@ export class SpawnSelectionScene extends BaseScene {
             else
                 NetworkManager.sendEventToServer(PacketType.ByClient.PLAYER_UNREADY,{});
         });
+
         this.events.on('shutdown', (data)=>{
             console.log('shutdown ', data.config.key);
+            this.events.removeListener("shutdown");
+            this.events.removeListener(PacketType.ByClient.PLAYER_UNREADY);
+            this.events.removeListener(PacketType.ByClient.PLAYER_READY);
+            this.events.removeListener(PacketType.ByServer.COUNTDOWN_TIME);
+            this.events.removeListener(PacketType.ByServer.SPAWN_POINT_ACK);
+            this.events.removeListener(PacketType.ByClient.PLAYER_JOINED);
+            this.events.removeListener(PacketType.ByServer.PLAYER_INIT);
+            this.input.removeListener("pointerdown");
+            this.input.removeListener("pointerup");
+            this.input.removeListener("pointermove");
+        });
+        this.events.on("destroy", () => {
             this.input.removeAllListeners();
             this.events.removeAllListeners();
-        })
+        });
     }
     update(time, delta){
         this.controls.update(delta);

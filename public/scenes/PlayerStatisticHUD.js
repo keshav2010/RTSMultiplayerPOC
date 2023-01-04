@@ -10,12 +10,9 @@ export class PlayerStatisticHUD extends BaseScene {
     this.load.image("playbutton", "../assets/playbutton.png");
     this.scene.bringToTop();
   }
-  init() {}
   create() {
     var gameScene = this.scene.get(CONSTANT.SCENES.GAME);
     var StateManager = this.registry.get("stateManager");
-    console.log(`StateManager: ${StateManager}`);
-    
     const resourceText = this.add.text(50, 50, "Resources: 0");
     const soldierCount = this.add.text(50, 100, "Soldiers: 0");
     const Controls = this.add.text(
@@ -25,8 +22,7 @@ export class PlayerStatisticHUD extends BaseScene {
     );
 
     var count = 0;
-    gameScene.events.on(
-      PacketType.ByServer.SOLDIER_CREATE_ACK,
+    gameScene.events.on(PacketType.ByServer.SOLDIER_CREATE_ACK,
       ({ isCreated }) => {
         soldierCount.setText(`Soldiers: ${++count}`);
       }
@@ -36,13 +32,12 @@ export class PlayerStatisticHUD extends BaseScene {
       console.log("player left", data);
     });
 
-    gameScene.events.on(
-      PacketType.ByServer.PLAYER_RESOURCE_UPDATED,
+    gameScene.events.on(PacketType.ByServer.PLAYER_RESOURCE_UPDATED,
       ({ type, playerId, resources }) => {
         try {
           if (StateManager.getPlayer()?.playerId === playerId)
             resourceText.setText(`Resources: ${resources.toFixed(2)}`);
-          else if(!StateManager.getPlayer()) {
+          else if (!StateManager.getPlayer()) {
             resourceText.setText(`Resources: ---N/A--`);
           }
         } catch (err) {
@@ -53,8 +48,14 @@ export class PlayerStatisticHUD extends BaseScene {
 
     this.events.on("shutdown", (data) => {
       console.log("shutdown ", data.config.key);
-      gameScene.events.removeAllListeners();
-      this.events.removeAllListeners();
+      this.events.removeListener("shutdown");
+      this.events.removeListener(PacketType.ByServer.PLAYER_LEFT);
+      this.events.removeListener(PacketType.ByServer.SOLDIER_CREATE_ACK);
+      this.events.removeListener(PacketType.ByServer.PLAYER_RESOURCE_UPDATED);
+    });
+    this.events.on("destroy", () => {
+        this.input.removeAllListeners();
+        this.events.removeAllListeners();
     });
   }
 }

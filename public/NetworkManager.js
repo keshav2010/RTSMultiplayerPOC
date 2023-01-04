@@ -10,7 +10,6 @@ class NetworkManager {
 
         this.cb_OnDisconnect = OnDisconnect;
         this.cb_OnConnect = OnConnect;
-        this.bindEventHandlers();
         this.eventHandlersBinded = false;
     }
 
@@ -37,6 +36,7 @@ class NetworkManager {
     }
 
     disconnectGameServer() {
+        this.eventHandlersBinded = false;
         if(!this.socket) {
             console.log(`[disconnectGameServer]: socket is null already!`);
             return;
@@ -67,18 +67,21 @@ class NetworkManager {
             if(this.cb_OnConnect)
                 this.cb_OnConnect();
             this.scene.start(CONSTANT.SCENES.SPAWNSELECTSCENE);
-            //this.scene.start(CONSTANT.SCENES.GAME);
         });
         this.socket.on('disconnect', reason => {
             console.log(`[NetworkManager] Socket Disconnect (Reason: ${reason})`);
-            //shutdown all active scenes except network scene.
+
+            console.log(`Active Scenes : ${this.game.scene.getScenes().map(v => v.scene.key).join(',')}`);
             this.game.scene.getScenes().forEach(activeScene => {
                 console.log(`Closing Scene : ${activeScene.scene.key}`);
                 this.scene.stop(activeScene.scene.key);
+                activeScene.events.emit("shutdown", activeScene.scene);
             })
             this.registry.get('stateManager').clearState();
             if(this.cb_OnDisconnect)
                 this.cb_OnDisconnect();
+
+            console.log('Launching Menu Scene since socket disconnected.', this.socket);
             this.scene.start(CONSTANT.SCENES.MENU);
         });
     }

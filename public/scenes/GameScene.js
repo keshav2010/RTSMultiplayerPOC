@@ -20,7 +20,6 @@ $(() => {
     SendChatMessage();
   });
 });
-
 function SendChatMessage() {
   try {
     var networkManager = this.registry.get("networkManager");
@@ -54,9 +53,14 @@ export class GameScene extends BaseScene {
     this.mapWidth = 3500;
     this.mapHeight = 1500;
   }
-
-  init() {
-    console.log("game-scene init");
+  preload() {
+    this.load.image("playbutton", "../assets/playbutton.png");
+    this.load.image("knight", "../assets/knight.png");
+    this.load.image("spearman", "../assets/spearman.png");
+    this.load.image("map", "../assets/map.png");
+    this.load.image("flag", "../assets/flag.jpg");
+  }
+  create() {
     var StateManager = this.registry.get("stateManager");
     var networkManager = this.registry.get("networkManager");
 
@@ -188,17 +192,7 @@ export class GameScene extends BaseScene {
       }
     });
     this.scene.launch(CONSTANT.SCENES.HUD_SCORE);
-  }
-  preload() {
-    this.load.image("playbutton", "../assets/playbutton.png");
-    this.load.image("knight", "../assets/knight.png");
-    this.load.image("spearman", "../assets/spearman.png");
-    this.load.image("map", "../assets/map.png");
-    this.load.image("flag", "../assets/flag.jpg");
-  }
-  create() {
-    var StateManager = this.registry.get("stateManager");
-    var networkManager = this.registry.get("networkManager");
+
     this.cameras.main
       .setBounds(0, 0, this.mapWidth, this.mapHeight)
       .setName("WorldCamera");
@@ -231,8 +225,7 @@ export class GameScene extends BaseScene {
       let { message, playerId } = data;
       addNewChatMessage(message, playerId);
     });
-    this.events.on(
-      PacketType.ByServer.SOLDIER_CREATE_ACK,
+    this.events.on(PacketType.ByServer.SOLDIER_CREATE_ACK,
       ({ isCreated, soldier, playerId, soldierType }) => {
         if (!isCreated) return;
         StateManager.getPlayer(playerId).addSoldier(
@@ -259,8 +252,7 @@ export class GameScene extends BaseScene {
       StateManager.updateSoldierFromServerSnapshot(a);
       StateManager.updateSoldierFromServerSnapshot(b);
     });
-    this.events.on(
-      PacketType.ByServer.SOLDIER_KILLED,
+    this.events.on(PacketType.ByServer.SOLDIER_KILLED,
       ({ playerId, soldierId }) => {
         let soldier = StateManager.getPlayer(playerId).getSoldier(soldierId);
         if (soldier.length < 1) return;
@@ -298,9 +290,22 @@ export class GameScene extends BaseScene {
       .on("pointerdown", () => {
         networkManager.disconnectGameServer();
       });
-    this.events.on("shutdown", (data) => {
-      this.input.removeAllListeners();
-      this.events.removeAllListeners();
+    this.events.on('shutdown', (data)=>{
+        console.log('shutdown ', data.config.key);
+        this.events.removeListener("shutdown");
+        this.input.removeListener("pointerdown");
+        this.input.removeListener("pointerup");
+        this.input.removeListener("pointermove");
+        this.events.removeListener(PacketType.ByServer.SOLDIER_POSITION_UPDATED);
+        this.events.removeListener(PacketType.ByServer.SOLDIER_KILLED);
+        this.events.removeListener(PacketType.ByServer.SOLDIER_ATTACKED);
+        this.events.removeListener(PacketType.ByServer.SOLDIER_CREATE_ACK);
+        this.events.removeListener(PacketType.ByServer.NEW_CHAT_MESSAGE);
+        this.events.removeListener(PacketType.ByServer.PLAYER_LEFT);
+    });
+    this.events.on("destroy", () => {
+        this.input.removeAllListeners();
+        this.events.removeAllListeners();
     });
   }
   update(time, delta) {
