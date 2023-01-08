@@ -64,8 +64,8 @@ export class GameScene extends BaseScene {
     var StateManager = this.registry.get("stateManager");
     var networkManager = this.registry.get("networkManager");
 
-    selectorGraphics = this.add.graphics();
-    this.input.on("pointerdown", function (pointer) {
+    selectorGraphics = this.AddObject(this.add.graphics());
+    this.AddInputEvent("pointerdown", function (pointer) {
       if (pointer.button === 0) {
         //lmb
         selectorGraphics.clear();
@@ -142,12 +142,12 @@ export class GameScene extends BaseScene {
         //this.scene.events.emit(GAMEEVENTS.RIGHT_CLICK, pointer.position);
       }
     });
-    this.input.on("pointerup", function (pointer) {
+    this.AddInputEvent("pointerup", function (pointer) {
       selectorDraw = false;
       selectorGraphics.clear();
       pointerDownWorldSpace = null;
     });
-    this.input.on("pointermove", function (pointer) {
+    this.AddInputEvent("pointermove", function (pointer) {
       if (!pointer.isDown) {
         selectorGraphics.clear();
         return;
@@ -191,13 +191,14 @@ export class GameScene extends BaseScene {
           (pointer.y - pointer.prevPosition.y) / this.cameras.main.zoom;
       }
     });
+
     this.scene.launch(CONSTANT.SCENES.HUD_SCORE);
 
     this.cameras.main
       .setBounds(0, 0, this.mapWidth, this.mapHeight)
       .setName("WorldCamera");
 
-    var mapGraphics = this.add.graphics();
+    var mapGraphics = this.AddObject(this.add.graphics());
     mapGraphics.depth = -5;
     mapGraphics.fillStyle(0x002200, 1);
     mapGraphics.fillRect(0, 0, this.mapWidth, this.mapHeight);
@@ -217,15 +218,15 @@ export class GameScene extends BaseScene {
       controlConfig
     );
 
-    this.events.on(PacketType.ByServer.PLAYER_LEFT, (data) => {
+    this.AddSceneEvent(PacketType.ByServer.PLAYER_LEFT, (data) => {
       let { playerId } = data;
       StateManager.removePlayer(playerId);
     });
-    this.events.on(PacketType.ByServer.NEW_CHAT_MESSAGE, (data) => {
+    this.AddSceneEvent(PacketType.ByServer.NEW_CHAT_MESSAGE, (data) => {
       let { message, playerId } = data;
       addNewChatMessage(message, playerId);
     });
-    this.events.on(PacketType.ByServer.SOLDIER_CREATE_ACK,
+    this.AddSceneEvent(PacketType.ByServer.SOLDIER_CREATE_ACK,
       ({ isCreated, soldier, playerId, soldierType }) => {
         if (!isCreated) return;
         StateManager.getPlayer(playerId).addSoldier(
@@ -247,12 +248,12 @@ export class GameScene extends BaseScene {
         );
       }
     );
-    this.events.on(PacketType.ByServer.SOLDIER_ATTACKED, (data) => {
+    this.AddSceneEvent(PacketType.ByServer.SOLDIER_ATTACKED, (data) => {
       let { a, b } = data;
       StateManager.updateSoldierFromServerSnapshot(a);
       StateManager.updateSoldierFromServerSnapshot(b);
     });
-    this.events.on(PacketType.ByServer.SOLDIER_KILLED,
+    this.AddSceneEvent(PacketType.ByServer.SOLDIER_KILLED,
       ({ playerId, soldierId }) => {
         let soldier = StateManager.getPlayer(playerId).getSoldier(soldierId);
         if (soldier.length < 1) return;
@@ -260,7 +261,7 @@ export class GameScene extends BaseScene {
         StateManager.getPlayer(playerId).removeSoldier(soldier);
       }
     );
-    this.events.on(PacketType.ByServer.SOLDIER_POSITION_UPDATED, (data) => {
+    this.AddSceneEvent(PacketType.ByServer.SOLDIER_POSITION_UPDATED, (data) => {
       var { soldier, type } = data;
       let player = StateManager.ConnectedPlayers.get(soldier.playerId);
       if (!player) return;
@@ -275,35 +276,24 @@ export class GameScene extends BaseScene {
       });
     });
 
-    this.events.on(GAMEEVENTS.SOLDIER_SELECTED, (d) => {
+    this.AddSceneEvent(GAMEEVENTS.SOLDIER_SELECTED, (d) => {
       StateManager.selectedSoldiers.set(d.id, d);
     });
 
-    this.input.on("wheel", (pointer, gameobjects, deltaX, deltaY, deltaZ) => {
+    this.AddInputEvent("wheel", (pointer, gameobjects, deltaX, deltaY, deltaZ) => {
       this.cameras.main.setZoom(
         Math.max(0, this.cameras.main.zoom - deltaY * 0.0003)
       );
     });
-    var QuitButton = this.add
-      .text(150, 220, "Leave Game")
-      .setInteractive()
+    var QuitButton = this.AddObject(this.add.text(150, 220, "Leave Game")).setInteractive()
       .on("pointerdown", () => {
         networkManager.disconnectGameServer();
       });
-    this.events.on('shutdown', (data)=>{
+    this.AddSceneEvent('shutdown', (data)=>{
         console.log('shutdown ', data.config.key);
-        this.events.removeListener("shutdown");
-        this.input.removeListener("pointerdown");
-        this.input.removeListener("pointerup");
-        this.input.removeListener("pointermove");
-        this.events.removeListener(PacketType.ByServer.SOLDIER_POSITION_UPDATED);
-        this.events.removeListener(PacketType.ByServer.SOLDIER_KILLED);
-        this.events.removeListener(PacketType.ByServer.SOLDIER_ATTACKED);
-        this.events.removeListener(PacketType.ByServer.SOLDIER_CREATE_ACK);
-        this.events.removeListener(PacketType.ByServer.NEW_CHAT_MESSAGE);
-        this.events.removeListener(PacketType.ByServer.PLAYER_LEFT);
+        this.Destroy();
     });
-    this.events.on("destroy", () => {
+    this.AddSceneEvent("destroy", () => {
         this.input.removeAllListeners();
         this.events.removeAllListeners();
     });

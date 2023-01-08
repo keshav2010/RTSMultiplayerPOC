@@ -13,26 +13,25 @@ export class PlayerStatisticHUD extends BaseScene {
   create() {
     var gameScene = this.scene.get(CONSTANT.SCENES.GAME);
     var StateManager = this.registry.get("stateManager");
-    const resourceText = this.add.text(50, 50, "Resources: 0");
-    const soldierCount = this.add.text(50, 100, "Soldiers: 0");
-    const Controls = this.add.text(
-      10,
-      10,
+
+    const resourceText = this.AddObject(this.add.text(50, 50, "Resources: 0"));
+    const soldierCount = this.AddObject(this.add.text(50, 100, "Soldiers: 0"));
+    const Controls = this.AddObject(this.add.text(10, 10,
       "Dev Testing [MMB => spawn soldier, drag n select units, RightClick for move/attack"
-    );
+    ));
 
     var count = 0;
-    gameScene.events.on(PacketType.ByServer.SOLDIER_CREATE_ACK,
+    gameScene.AddSceneEvent(PacketType.ByServer.SOLDIER_CREATE_ACK,
       ({ isCreated }) => {
         soldierCount.setText(`Soldiers: ${++count}`);
       }
     );
 
-    gameScene.events.on(PacketType.ByServer.PLAYER_LEFT, (data) => {
+    gameScene.AddSceneEvent(PacketType.ByServer.PLAYER_LEFT, (data) => {
       console.log("player left", data);
     });
 
-    gameScene.events.on(PacketType.ByServer.PLAYER_RESOURCE_UPDATED,
+    gameScene.AddSceneEvent(PacketType.ByServer.PLAYER_RESOURCE_UPDATED,
       ({ type, playerId, resources }) => {
         try {
           if (StateManager.getPlayer()?.playerId === playerId)
@@ -46,14 +45,11 @@ export class PlayerStatisticHUD extends BaseScene {
       }
     );
 
-    this.events.on("shutdown", (data) => {
+    this.AddSceneEvent("shutdown", (data) => {
       console.log("shutdown ", data.config.key);
-      this.events.removeListener("shutdown");
-      this.events.removeListener(PacketType.ByServer.PLAYER_LEFT);
-      this.events.removeListener(PacketType.ByServer.SOLDIER_CREATE_ACK);
-      this.events.removeListener(PacketType.ByServer.PLAYER_RESOURCE_UPDATED);
+      this.Destroy();
     });
-    this.events.on("destroy", () => {
+    this.AddSceneEvent("destroy", () => {
         this.input.removeAllListeners();
         this.events.removeAllListeners();
     });

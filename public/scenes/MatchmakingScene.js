@@ -12,16 +12,15 @@ export class MatchmakingScene extends BaseScene {
             networkManager.disconnectPreviousSession();
             return;
         }
-        
-        this.events.on('shutdown', (data)=>{
+        let text = this.AddObject(this.add.text(100, 120, "MATCHMAKING SCREEN"));
+        this.AddSceneEvent('shutdown', (data)=>{
             console.log('shutdown ', data.config.key);
-            this.events.removeListener("shutdown");
+            this.Destroy();
         });
-        this.events.on("destroy", () => {
+        this.AddSceneEvent("destroy", () => {
             this.input.removeAllListeners();
             this.events.removeAllListeners();
         });
-        this.add.text(100, 120, "MATCHMAKING SCREEN");
         this.registry.get('networkManager').connectGameServer();
         this.scene.stop();
     }

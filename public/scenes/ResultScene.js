@@ -5,11 +5,11 @@ export class ResultScene extends BaseScene {
         super(CONSTANT.SCENES.RESULT)
     }
     create(){
-        this.events.on('shutdown', (data)=>{
+        this.AddSceneEvent('shutdown', (data)=>{
             console.log('shutdown ', data.config.key);
-            this.events.removeListener("shutdown");
+            this.Destroy();
         });
-        this.events.on("destroy", () => {
+        this.AddSceneEvent("destroy", () => {
             this.input.removeAllListeners();
             this.events.removeAllListeners();
         });

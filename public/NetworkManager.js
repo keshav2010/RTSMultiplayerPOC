@@ -52,8 +52,8 @@ class NetworkManager {
         }
         this.eventHandlersBinded = true;
         this.socket.on('tick', (d) => {
-            console.log(`tick received`);
             let deltaChanges = JSON.parse(d).data;
+            console.log(`tick received`);
             deltaChanges.forEach(deltaUpdate => {
                 this.game.scene.getScenes().forEach(activeScene => {
                     if (activeScene !== this) {

@@ -9,7 +9,7 @@ export class MenuScene extends BaseScene {
   }
 
   init() {
-    this.mapGraphics = this.add.graphics();
+    this.mapGraphics = this.AddObject(this.add.graphics());
   }
   preload() {
     this.scene.bringToTop();
@@ -37,26 +37,17 @@ export class MenuScene extends BaseScene {
         "networkManager",
         new NetworkManager(this.game, this.registry)
       );
-
-    let text = this.add.text(100, 20, "War.IO");
-    let playBtn = this.add.image(500, 220, "playbutton");
-
-    playBtn.setInteractive().on("pointerdown", () => {
+    let text = this.AddObject(this.add.text(100, 20, "War.IO"));
+    let playBtn = this.AddObject(this.add.image(500, 220, "playbutton")).setInteractive();
+    playBtn.on("pointerdown", () => {
       console.log("start game");
       this.scene.start(CONSTANT.SCENES.MATCHMAKER);
     });
-    this.events.on("shutdown", (data) => {
+    this.AddSceneEvent("shutdown", (data) => {
       console.log("shutdown ", data.config.key);
-      /*
-      removeAllListeners removes all event listeners that have been added 
-      to the current scene, including shutdown, start, preload, create, 
-      update, render, and resize. 
-      It does not remove listeners for events that have been added to 
-      game objects in the scene, such as sprites or text.
-      */
-      this.events.removeListener("shutdown");
+      this.Destroy();
     });
-    this.events.on("destroy", () => {
+    this.AddSceneEvent("destroy", () => {
       this.input.removeAllListeners();
       this.events.removeAllListeners();
     });
