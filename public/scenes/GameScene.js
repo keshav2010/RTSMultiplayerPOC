@@ -287,6 +287,7 @@ export class GameScene extends BaseScene {
     });
     var QuitButton = this.AddObject(this.add.text(150, 220, "Leave Game")).setInteractive()
       .on("pointerdown", () => {
+        StateManager.clearState();
         networkManager.disconnectGameServer();
       });
     this.AddSceneEvent('shutdown', (data)=>{
