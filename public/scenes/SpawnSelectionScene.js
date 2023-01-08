@@ -147,9 +147,7 @@ export class SpawnSelectionScene extends BaseScene {
       if (this.timerBar)
         this.timerBar.decrease(this.timerBar.currentValue - time);
       if (time === 0) {
-        this.events.shutdown();
-        this.scene.launch(CONSTANT.SCENES.GAME);
-        this.scene.stop();
+        this.scene.start(CONSTANT.SCENES.GAME);
       }
     });
 
