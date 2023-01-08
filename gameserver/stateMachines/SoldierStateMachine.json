@@ -1,0 +1,82 @@
+{
+  "id": "Soldier",
+  "initial": "Idle",
+  "description": "SoldierUnitStateMachine",
+  "states": {
+    "Idle": {
+      "description": "Avoidance",
+      "on": {
+        "Move": {
+          "description": "whenever velocity > 0",
+          "target": "Move"
+        },
+        "Attack": {
+          "target": "Attack"
+        },
+        "PlayerAttacked": {
+          "target": "Defend"
+        }
+      }
+    },
+    "Move": {
+      "description": "Steer and Avoidance",
+      "on": {
+        "ReachedPosition": {
+          "target": "Idle"
+        }
+      }
+    },
+    "Attack": {
+      "on": {
+        "TargetNotInRange": {
+          "target": "ChaseTarget"
+        },
+        "TargetLost": {
+          "target": "FindTarget"
+        },
+        "Killed": {
+          "target": "SoldierKilled"
+        },
+        "Move": {
+          "target": "Move"
+        }
+      }
+    },
+    "FindTarget": {
+      "on": {
+        "TargetFound": {
+          "target": "Attack"
+        },
+        "TargetNotFound": {
+          "target": "Idle"
+        }
+      }
+    },
+    "ChaseTarget": {
+      "description": "Steer and Avoidance",
+      "on": {
+        "TargetInRange": {
+          "target": "Attack"
+        },
+        "TargetLost": {
+          "target": "FindTarget"
+        },
+        "Move": {
+          "description": "When user wants to cancel attack and force-move unit to specific position",
+          "target": "Move"
+        }
+      }
+    },
+    "Defend": {
+      "on": {
+        "AttackerUnitNearby": {
+          "target": "Attack"
+        },
+        "NoAttackerUnitNearby": {
+          "target": "Idle"
+        }
+      }
+    },
+    "SoldierKilled": {}
+  }
+}

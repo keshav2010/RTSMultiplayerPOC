@@ -24,6 +24,10 @@ class Player
         this.posX = 200+Math.random()*400;
         this.posY = 200+Math.random()*400;
     }
+    setSpawnPosition(x,y){
+        this.posX = x;
+        this.posY = y;
+    }
     tick(delta, updateManager, stateManager)
     {
         try{
@@ -49,7 +53,7 @@ class Player
             }
             nbLoop(test, loop);
         }catch(err){
-            console.log(err);
+            console.error(err);
         }
     }
     getSnapshot(){
@@ -75,7 +79,7 @@ class Player
             x, 
             y,
             health:100,
-            speed:60,
+            speed:5,
             cost:5,
             damage:5,
             playerId: this.id
