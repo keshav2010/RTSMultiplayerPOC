@@ -12,7 +12,7 @@ const PacketType = require("../common/PacketType")
 
 function PlayerInitPacketAction(packetType, socket, io, stateManager){
     try{
-        console.log(`Player ${socket.id} just joined and a packet is scheduled for it.`)
+        console.log(`Player ${socket.id} just joined and a packet is scheduled for it.`);
         if(!stateManager.SocketToPlayerData.has(socket.id))
             stateManager.SocketToPlayerData.set(socket.id, new Player(socket.id));
 
@@ -51,7 +51,7 @@ function PlayerInitPacketAction(packetType, socket, io, stateManager){
 
 function PlayerJoinedPacketAction(packetType, socket, io, stateManager){
     try{
-        console.log(`Player ${socket.id} Joined.`)
+        console.log(`Player ${socket.id} Joined.`);
         if(stateManager.GameStarted){
             socket.disconnect();
             return;
@@ -73,7 +73,7 @@ function PlayerJoinedPacketAction(packetType, socket, io, stateManager){
 
 function PlayerReadyPacketAction(packetType, socket, io, stateManager){
     try{
-        console.log(`Player ${socket.id} Marked ready.`)
+        console.log(`Player ${socket.id} Marked ready.`);
         stateManager.ReadyPlayers.set(socket.id, true);
         if(stateManager.ReadyPlayers.size === stateManager.SocketToPlayerData.size)
             stateManager.GameStarted = true;
@@ -93,7 +93,7 @@ function PlayerReadyPacketAction(packetType, socket, io, stateManager){
 
 function PlayerUnreadyPacketAction(packetType, socket, io, stateManager){
     try{
-        console.log(`Player ${socket.id} Marked Unready.`)
+        console.log(`Player ${socket.id} Marked Unready.`);
         if(stateManager.GameStarted || stateManager.ReadyPlayers.size === stateManager.SocketToPlayerData.size){
             stateManager.GameStarted = true;
             return;
@@ -117,17 +117,14 @@ function PlayerUnreadyPacketAction(packetType, socket, io, stateManager){
 
 function PlayerLeftPacketAction(packetType, socket, io, stateManager){
     try{
-        console.log(`Player ${socket.id} Left/Disconnected.`)
-
-        console.log(`ClearObject for player ${socket.id}`);
-        stateManager.SocketToPlayerData.get(socket.id).clearObject(stateManager);
+        console.log(`Player ${socket.id} Left/Disconnected. ClearObject for player ${socket.id}`)
+        stateManager.SocketToPlayerData.get(socket.id).destroy(stateManager);
 
         //update the collision detection part
         stateManager.scene.update();
 
         stateManager.SocketToPlayerData.delete(socket.id);
         stateManager.ReadyPlayers.delete(socket.id);
-
 
         const deltaUpdate={
             type:packetType,
@@ -215,19 +212,26 @@ function SoldierDeletedPacketAction(packetType, socket, io, stateManager, data){
 }
 
 function AttackRequestedPacketAction(packetType, socket, io, stateManager, data){
-    try{
+    try {
         var {soldiers, targetPlayerId, targetSoldierId} = data;
         soldiers=soldiers.split(',');
-        let a = stateManager.SocketToPlayerData.get(socket.id);
-        let b = stateManager.SocketToPlayerData.get(targetPlayerId);
-        let targetSoldier = b?.getSoldier(targetSoldierId);
+
+        //Attack Initiator
+        let playerA = stateManager.SocketToPlayerData.get(socket.id);
+
+        //Target Player's attacked unit.
+        let playerB = stateManager.SocketToPlayerData.get(targetPlayerId);
+        let targetSoldier = playerB?.getSoldier(targetSoldierId);
         if(!targetSoldier)
             return;
+
+        //Soldiers belonging to Attacker, that are given attack order.
         soldiers.forEach(soldierId=>{
-            let attacker = a.getSoldier(soldierId);
+            let attacker = playerA.getSoldier(soldierId);
             attacker.attackUnit(targetSoldier);
         });
-    }catch(err){
+    }
+    catch(err) {
         console.log(err);
     }
 }

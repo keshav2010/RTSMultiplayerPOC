@@ -229,6 +229,7 @@ export class GameScene extends BaseScene {
     this.AddSceneEvent(PacketType.ByServer.SOLDIER_CREATE_ACK,
       ({ isCreated, soldier, playerId, soldierType }) => {
         if (!isCreated) return;
+        console.log("soldier created : ", {soldier, playerId});
         StateManager.getPlayer(playerId).addSoldier(
           new Spearman(
             this,
@@ -255,6 +256,7 @@ export class GameScene extends BaseScene {
     });
     this.AddSceneEvent(PacketType.ByServer.SOLDIER_KILLED,
       ({ playerId, soldierId }) => {
+        console.log("Soldier Killed ", {playerId, soldierId});
         let soldier = StateManager.getPlayer(playerId).getSoldier(soldierId);
         if (soldier.length < 1) return;
         soldier = soldier[0];

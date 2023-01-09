@@ -4,15 +4,20 @@ const SAT = require("sat"); //(w,h)
 const SoldierStateMachineJSON = require("./stateMachines/SoldierStateMachine.json");
 const { createMachine, interpret } = require("xstate");
 const StateMachine = require("../common/StateMachine");
-const SoldierConstants = require('./unitConstants');
-const {AllianceTypes, AllianceTracker} = require("./AllianceTracker");
+const SoldierConstants = require("./unitConstants");
+const { AllianceTypes, AllianceTracker } = require("./AllianceTracker");
 
-function mapRange(val, mapRangeStart, mapRangeEnd, targetRangeStart, targetRangeEnd)
-{
+function mapRange(
+  val,
+  mapRangeStart,
+  mapRangeEnd,
+  targetRangeStart,
+  targetRangeEnd
+) {
   let givenRange = mapRangeEnd - mapRangeStart;
   let targetRange = targetRangeEnd - targetRangeStart;
-  let normalizedGivenRange = (val - mapRangeStart)/givenRange;
-  return targetRangeStart + normalizedGivenRange*targetRange;
+  let normalizedGivenRange = (val - mapRangeStart) / givenRange;
+  return targetRangeStart + normalizedGivenRange * targetRange;
 }
 /**
  * SAT BOX Interface    |   * QUADTREE Object Interface
@@ -43,14 +48,14 @@ class Soldier extends SAT.Box {
     this.width = this.w;
     this.height = this.h;
 
-    //compromised position possible for agent
+    //position possible for agent
     this.expectedPosition = new SAT.Vector(params.x, params.y);
 
     //actual position requested by client
     this.targetPosition = new SAT.Vector(params.x, params.y);
 
-    //Soldier whom we need to attack
-    this.attackTarget = null;
+    //Soldier that this soldier unit is going to attack
+    this.AttackTargetSoldier = null;
 
     this.isAtDestination = true;
 
@@ -63,7 +68,8 @@ class Soldier extends SAT.Box {
 
     this.id = String(Soldier.sid);
     this.playerId = String(params.playerId);
-    Soldier.sid++;
+    ++Soldier.sid;
+
     this.stateMachine = new StateMachine(SoldierStateMachineJSON);
 
     //Boid
@@ -98,8 +104,7 @@ class Soldier extends SAT.Box {
     if (distanceToExpectedPos <= SoldierConstants.DESIRED_DIST_FROM_TARGET) {
       //this.expectedPosition.copy(this.pos);
       this.isAtDestination = true;
-    }
-    else {
+    } else {
       this.isAtDestination = false;
     }
     return this.isAtDestination;
@@ -109,18 +114,25 @@ class Soldier extends SAT.Box {
     this.targetPosition = new SAT.Vector(x, y);
     this.expectedPosition = new SAT.Vector(x, y);
     this.hasReachedDestination();
-    this.attackTarget = null;
+    this.AttackTargetSoldier = null;
     this.stateMachine.controller.send("Move");
   }
 
   getSteerVector(expectedPos) {
-    var desiredVector = new SAT.Vector().copy(expectedPos).sub(this.pos)
+    var desiredVector = new SAT.Vector().copy(expectedPos).sub(this.pos);
     var distance = desiredVector.len();
     desiredVector.normalize();
-    if(distance < SoldierConstants.DESIRED_DIST_FROM_TARGET){
-      desiredVector.scale(mapRange(distance, 0, SoldierConstants.DESIRED_DIST_FROM_TARGET, 0, this.speed));
-    }
-    else desiredVector.scale(this.speed);
+    if (distance < SoldierConstants.DESIRED_DIST_FROM_TARGET) {
+      desiredVector.scale(
+        mapRange(
+          distance,
+          0,
+          SoldierConstants.DESIRED_DIST_FROM_TARGET,
+          0,
+          this.speed
+        )
+      );
+    } else desiredVector.scale(this.speed);
 
     var steerVector = new SAT.Vector()
       .copy(desiredVector)
@@ -231,18 +243,15 @@ class Soldier extends SAT.Box {
     });
   }
 
-  /**
-   * Always scan for seperation force
-   */
   Idle(delta, updateManager, stateManager) {
-
-    //repel from only those units which are not yet at their destination.
+    /*repel from only those units which are not yet at their destination.
+     */
     let seperationForce = this.getSeperationVector(stateManager, (a, b) => {
       return a.hasReachedDestination() && b.hasReachedDestination();
     });
 
     this.applyForce(seperationForce);
-    if (this.velocityVector.len() > 0 || !this.hasReachedDestination()){
+    if (this.velocityVector.len() > 0 || !this.hasReachedDestination()) {
       this.stateMachine.controller.send("Move");
     }
   }
@@ -268,8 +277,7 @@ class Soldier extends SAT.Box {
     if (nearbyUnits.length < 2) return;
 
     nearbyUnits.forEach((unit) => {
-      if (unit === this)
-        return;
+      if (unit === this) return;
 
       let overlapExpectedPos =
         new SAT.Vector()
@@ -289,34 +297,36 @@ class Soldier extends SAT.Box {
     });
   }
   Attack(delta, updateManager, stateManager) {
-
-    let distToTarget = new SAT.Vector().copy(this.attackTarget.pos).sub(this.pos).len();
+    let distToTarget = new SAT.Vector()
+      .copy(this.AttackTargetSoldier.pos)
+      .sub(this.pos)
+      .len();
     if (distToTarget > SoldierConstants.DESIRED_DIST_FROM_TARGET) {
       this.stateMachine.controller.send("TargetNotInRange");
       return;
     }
 
-    this.attackTarget.health -= delta * this.damage;
-    this.health -= delta * this.attackTarget.damage;
+    this.AttackTargetSoldier.health -= delta * this.damage;
+    this.health -= delta * this.AttackTargetSoldier.damage;
 
-    this.attackTarget.health = Math.max(0, this.attackTarget.health);
+    this.AttackTargetSoldier.health = Math.max(0, this.AttackTargetSoldier.health);
     this.health = Math.max(0, this.health);
 
     updateManager.queueServerEvent({
       type: PacketType.ByServer.SOLDIER_ATTACKED,
       a: this.getSnapshot(),
-      b: this.attackTarget.getSnapshot(),
+      b: this.AttackTargetSoldier.getSnapshot(),
     });
 
-    if (this.attackTarget.health === 0) {
+    if (this.AttackTargetSoldier.health === 0) {
       updateManager.queueServerEvent({
         type: PacketType.ByServer.SOLDIER_KILLED,
-        playerId: this.attackTarget.playerId,
-        soldierId: this.attackTarget.id,
+        playerId: this.AttackTargetSoldier.playerId,
+        soldierId: this.AttackTargetSoldier.id,
       });
       stateManager.removeSoldier(
-        this.attackTarget.playerId,
-        this.attackTarget.id
+        this.AttackTargetSoldier.playerId,
+        this.AttackTargetSoldier.id
       );
     }
     if (this.health === 0) {
@@ -331,7 +341,7 @@ class Soldier extends SAT.Box {
   }
   FindTarget(delta, updateManager, stateManager) {
     try {
-      this.attackTarget = null;
+      this.AttackTargetSoldier = null;
       var nearbyUnits = stateManager.scene.getNearbyUnits(
         {
           x: this.pos.x + this.width / 2,
@@ -340,38 +350,37 @@ class Soldier extends SAT.Box {
         SoldierConstants.ENEMY_SEARCH_RADIUS
       );
       if (nearbyUnits.length < 2) return;
-  
+
       //Go to unit with least distance instead of random unit.
       let minDist = Math.infinity;
       let nearestUnit = null;
       nearbyUnits.forEach((unit) => {
-
         //consider only if unit belongs to enemy team
-        if ( unit === this ||
+        if (
+          unit === this ||
           Soldier.alliances.getAlliance(this.playerId, unit.playerId) !==
-            AllianceTypes.ENEMIES )
+          AllianceTypes.ENEMIES
+        )
           return;
-  
+
         let distBetweenUnits = new SAT.Vector()
-            .copy(unit.pos)
-            .sub(this.pos)
-            .len();
-        if(distBetweenUnits < minDist){
+          .copy(unit.pos)
+          .sub(this.pos)
+          .len();
+        if (distBetweenUnits < minDist) {
           minDist = distBetweenUnits;
           unit = nearestUnit;
         }
       });
-      
-      if(nearestUnit) {
-        this.attackTarget = nearestUnit;
+
+      if (nearestUnit) {
+        this.AttackTargetSoldier = nearestUnit;
         this.stateMachine.controller.send("TargetFound");
-      }
-      else {
+      } else {
         //TODO: what about expectedPosition / targetPosition
         this.stateMachine.controller.send("TargetNotFound");
       }
-    }
-    catch (err) {
+    } catch (err) {
       console.error(err);
       this.stateMachine.controller.send("TargetNotFound");
     }
@@ -381,40 +390,46 @@ class Soldier extends SAT.Box {
   }
   ChaseTarget(delta, updateManager, stateManager) {
     try {
-      if (!this.attackTarget) {
+      if (!this.AttackTargetSoldier) {
         this.stateMachine.controller.send("TargetKilled");
         return;
       }
 
       let seperationForce = this.getSeperationVector(stateManager);
-      let steerForce = this.getSteerVector(this.attackTarget.pos);
+      let steerForce = this.getSteerVector(this.AttackTargetSoldier.pos);
       this.applyForce(seperationForce);
       this.applyForce(steerForce);
 
-      this.targetPosition.copy(this.attackTarget.pos);
-      this.expectedPosition.copy(this.attackTarget.pos);
+      this.targetPosition.copy(this.AttackTargetSoldier.pos);
+      this.expectedPosition.copy(this.AttackTargetSoldier.pos);
 
       updateManager.queueServerEvent({
         type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
         soldier: this.getSnapshot(),
       });
 
-      let distToTarget = new SAT.Vector().copy(this.attackTarget.pos).sub(this.pos).len();
-      if(distToTarget <= SoldierConstants.DESIRED_DIST_FROM_TARGET) {
+      let distToTarget = new SAT.Vector()
+        .copy(this.AttackTargetSoldier.pos)
+        .sub(this.pos)
+        .len();
+      if (distToTarget <= SoldierConstants.DESIRED_DIST_FROM_TARGET) {
         this.stateMachine.controller.send("TargetInRange");
       }
-
     } catch (err) {
       console.log(err);
-      this.targetPosition.copy(this.attackTarget.pos);
+      this.targetPosition.copy(this.AttackTargetSoldier.pos);
       this.expectedPosition.copy(this.targetPosition);
-      this.attackTarget = null;
+      this.AttackTargetSoldier = null;
     }
   }
 
-  attackUnit(unitReference) {
-    this.attackTarget = unitReference;
-    Soldier.alliances.setAlliance(this.playerId, unitReference?.playerId, AllianceTypes.ENEMIES);
+  attackUnit(targetSoldier) {
+    this.AttackTargetSoldier = targetSoldier;
+    Soldier.alliances.setAlliance(
+      this.playerId,
+      targetSoldier?.playerId,
+      AllianceTypes.ENEMIES
+    );
     this.stateMachine.controller.send("Attack");
   }
 
@@ -442,16 +457,6 @@ class Soldier extends SAT.Box {
       playerId: this.playerId,
     };
     return soldierData;
-  }
-
-  //sort of like a destructor
-  clearObject(stateManager) {
-    if (stateManager) {
-      this.attackTarget = null;
-
-      this.parent = null;
-      stateManager.scene.remove(this);
-    } else console.log("Soldier failed to be cleared from Collision-System");
   }
 }
 module.exports = Soldier;

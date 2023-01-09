@@ -88,23 +88,27 @@ class Player
         this.SoldierMap.set(s.id, s);
         return {status:true, soldierId: s.id, soldier:s};
     }
+    
     getSoldier(soldierId){
         return this.SoldierMap.get(soldierId);
     }
+
     removeSoldier(id, stateManager)
     {
         try{
-            this.SoldierMap.get(id).clearObject(stateManager);
+            let soldierToRemove = this.SoldierMap.get(id);
+            stateManager.scene.remove(soldierToRemove);
             this.SoldierMap.delete(id);
         }
         catch(err){
             console.log(err);
         }
     }
-    clearObject(stateManager)
+
+    destroy(stateManager)
     {
         this.SoldierMap.forEach(soldier=>{
-            soldier.clearObject(stateManager);
+            stateManager.scene.remove(soldier);
         });
         this.SoldierMap = new Map();
     }
