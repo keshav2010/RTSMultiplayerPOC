@@ -35,6 +35,21 @@ class ClientStateManager
             this.ConnectedPlayers.delete(playerId);
         }
     }
+    removeSoldier(playerId, soldierId) {
+        if(!this.ConnectedPlayers.has(playerId)) {
+            console.warn(`Failed to remove soldier ${soldierId}, since player does not exists (playerId: ${playerId}).`);
+            return;
+        }
+        let player = this.ConnectedPlayers.get(playerId);
+        let soldierArr = player.getSoldier(soldierId);
+        if(soldierArr.length === 0) {
+            console.log(`Soldier(${soldierId}) not found for player: ${playerId}`);
+            return;
+        }
+        let soldier = soldierArr[0];
+        player.removeSoldier(soldier);
+        return;
+    }
     updateSoldierFromServerSnapshot(serverSoldierSnapshot){
         let clientLocalSoldier = this.getPlayer(serverSoldierSnapshot.playerId).getSoldier(serverSoldierSnapshot.id);
         if(clientLocalSoldier.length < 1)

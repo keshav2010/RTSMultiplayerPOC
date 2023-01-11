@@ -297,6 +297,9 @@ class Soldier extends SAT.Box {
     });
   }
   Attack(delta, updateManager, stateManager) {
+    if(!this.AttackTargetSoldier) {
+      this.stateMachine.controller.send("TargetLost");
+    }
     let distToTarget = new SAT.Vector()
       .copy(this.AttackTargetSoldier.pos)
       .sub(this.pos)
@@ -306,18 +309,16 @@ class Soldier extends SAT.Box {
       return;
     }
 
-    this.AttackTargetSoldier.health -= delta * this.damage;
-    this.health -= delta * this.AttackTargetSoldier.damage;
+    this.AttackTargetSoldier.attackMe(delta, this);
 
-    this.AttackTargetSoldier.health = Math.max(0, this.AttackTargetSoldier.health);
-    this.health = Math.max(0, this.health);
-
+    //schedule update to client about attack on enemy soldier.
     updateManager.queueServerEvent({
       type: PacketType.ByServer.SOLDIER_ATTACKED,
       a: this.getSnapshot(),
       b: this.AttackTargetSoldier.getSnapshot(),
     });
 
+    //if attacked soldier unit dead, update server-state and schedule update for client.
     if (this.AttackTargetSoldier.health === 0) {
       updateManager.queueServerEvent({
         type: PacketType.ByServer.SOLDIER_KILLED,
@@ -328,15 +329,8 @@ class Soldier extends SAT.Box {
         this.AttackTargetSoldier.playerId,
         this.AttackTargetSoldier.id
       );
-    }
-    if (this.health === 0) {
-      updateManager.queueServerEvent({
-        type: PacketType.ByServer.SOLDIER_KILLED,
-        playerId: this.playerId,
-        soldierId: this.id,
-      });
-      stateManager.removeSoldier(this.playerId, this.id);
-      return;
+      this.AttackTargetSoldier = null;
+      this.stateMachine.controller.send("TargetKilled");
     }
   }
   FindTarget(delta, updateManager, stateManager) {
@@ -349,7 +343,10 @@ class Soldier extends SAT.Box {
         },
         SoldierConstants.ENEMY_SEARCH_RADIUS
       );
-      if (nearbyUnits.length < 2) return;
+      if (nearbyUnits.length < 2) {
+        this.stateMachine.controller.send("TargetNotFound");
+        return;
+      }
 
       //Go to unit with least distance instead of random unit.
       let minDist = Math.infinity;
@@ -386,12 +383,16 @@ class Soldier extends SAT.Box {
     }
   }
   Defend(delta, updateManager, stateManager) {
-    //also same as attack
+    if(!this.AttackTargetSoldier) {
+      this.stateMachine.controller.send("NoAttackerUnitNearby");
+      return;
+    }
+    this.stateMachine.controller.send("AttackerUnitNearby");
   }
   ChaseTarget(delta, updateManager, stateManager) {
     try {
       if (!this.AttackTargetSoldier) {
-        this.stateMachine.controller.send("TargetKilled");
+        this.stateMachine.controller.send("TargetLost");
         return;
       }
 
@@ -431,6 +432,15 @@ class Soldier extends SAT.Box {
       AllianceTypes.ENEMIES
     );
     this.stateMachine.controller.send("Attack");
+  }
+
+  attackMe(delta, attackedBySoldier) {
+    this.health -= delta * attackedBySoldier.damage;
+    this.health = Math.max(0, this.health);
+    if(attackedBySoldier)
+      this.AttackTargetSoldier = attackedBySoldier;
+
+    this.stateMachine.controller.send("PlayerAttacked");
   }
 
   //Returns a perfectly serializable object with no refs, this object can be shared between threads
