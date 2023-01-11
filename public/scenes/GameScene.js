@@ -254,13 +254,9 @@ export class GameScene extends BaseScene {
       StateManager.updateSoldierFromServerSnapshot(a);
       StateManager.updateSoldierFromServerSnapshot(b);
     });
-    this.AddSceneEvent(PacketType.ByServer.SOLDIER_KILLED,
-      ({ playerId, soldierId }) => {
+    this.AddSceneEvent(PacketType.ByServer.SOLDIER_KILLED, ({ playerId, soldierId }) => {
         console.log("Soldier Killed ", {playerId, soldierId});
-        let soldier = StateManager.getPlayer(playerId).getSoldier(soldierId);
-        if (soldier.length < 1) return;
-        soldier = soldier[0];
-        StateManager.getPlayer(playerId).removeSoldier(soldier);
+        StateManager.removeSoldier(playerId, soldierId);
       }
     );
     this.AddSceneEvent(PacketType.ByServer.SOLDIER_POSITION_UPDATED, (data) => {

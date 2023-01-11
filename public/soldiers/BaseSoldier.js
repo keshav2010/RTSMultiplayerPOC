@@ -95,7 +95,9 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
         this.scene.events.emit(GAMEEVENTS.SOLDIER_SELECTED, this);
     }
     markUnselected(){
-        this.scene.registry.get('stateManager').selectedSoldiers.delete(this.id);
+        if(!this || !this.scene)
+            return;
+        this.scene.registry.get('stateManager')?.selectedSoldiers.delete(this.id);
         this.alpha = 1;
 
         //emit scene wide event
