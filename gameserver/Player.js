@@ -97,7 +97,8 @@ class Player
     {
         try{
             let soldierToRemove = this.SoldierMap.get(id);
-            stateManager.scene.remove(soldierToRemove);
+            if(soldierToRemove)
+                stateManager.scene.remove(soldierToRemove);
             this.SoldierMap.delete(id);
         }
         catch(err){

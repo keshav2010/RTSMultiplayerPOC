@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "build": "webpack",
-    "start": "nodemon app.js"
+    "start": "nodemon app.js",
+    "test": "webpack && nodemon app.js"
   },
   "author": "keshav",
   "license": "ISC",

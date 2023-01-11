@@ -1,14 +1,14 @@
 {
   "id": "Soldier",
-  "initial": "Idle",
   "description": "SoldierUnitStateMachine",
+  "initial": "Idle",
   "states": {
     "Idle": {
       "description": "Avoidance",
       "on": {
         "Move": {
-          "description": "whenever velocity > 0",
-          "target": "Move"
+          "target": "Move",
+          "description": "whenever velocity > 0"
         },
         "Attack": {
           "target": "Attack"
@@ -34,11 +34,11 @@
         "TargetLost": {
           "target": "FindTarget"
         },
-        "Killed": {
-          "target": "SoldierKilled"
-        },
         "Move": {
           "target": "Move"
+        },
+        "TargetKilled": {
+          "target": "FindTarget"
         }
       }
     },
@@ -62,8 +62,8 @@
           "target": "FindTarget"
         },
         "Move": {
-          "description": "When user wants to cancel attack and force-move unit to specific position",
-          "target": "Move"
+          "target": "Move",
+          "description": "When user wants to cancel attack and force-move unit to specific position"
         }
       }
     },
@@ -76,7 +76,6 @@
           "target": "Idle"
         }
       }
-    },
-    "SoldierKilled": {}
+    }
   }
 }
