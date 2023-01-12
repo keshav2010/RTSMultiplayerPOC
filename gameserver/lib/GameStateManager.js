@@ -1,17 +1,16 @@
-const PacketType = require("../common/PacketType");
-const Player = require("./Player");
+const PacketType = require("../../common/PacketType");
+const Player = require("../Player");
 const EventEmitter = require("events");
-const ServerLocalEvents = require("./ServerLocalEvents");
-const Scene = require("./Scene");
-const nbLoop = require("../common/nonBlockingLoop");
-const StateMachine = require("../common/StateMachine");
+const ServerLocalEvents = require("../ServerLocalEvents");
+const Scene = require("../Scene");
+const nbLoop = require("../../common/nonBlockingLoop");
+const StateMachine = require("../../common/StateMachine");
 const PendingUpdateManager = require("./PendingUpdateManager");
-const ServerStateMachineJSON = require("./stateMachines/ServerStateMachine.json");
 /**
  * Manages entire game state.
  */
 class GameStateManager {
-  constructor(io) {
+  constructor(io, serverStateMachine) {
     this.clientInitUpdates = [];
 
     //all delta changes that we can send to client by serializing them or as a string whatever.
@@ -23,11 +22,12 @@ class GameStateManager {
     this.SocketToPlayerData = new Map();
     this.ReadyPlayers = new Map();
     this.lastSimulateTime_ms = Date.now();
+    
     this.event = new EventEmitter();
     this.scene = new Scene(this);
 
     this.countdown = process.env.COUNTDOWN; //seconds
-    this.stateMachine = new StateMachine(ServerStateMachineJSON);
+    this.stateMachine = new StateMachine(serverStateMachine);
     this.pendingUpdates = new PendingUpdateManager();
   }
 

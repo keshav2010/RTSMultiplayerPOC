@@ -5,7 +5,7 @@ const SoldierStateMachineJSON = require("./stateMachines/SoldierStateMachine.jso
 const { createMachine, interpret } = require("xstate");
 const StateMachine = require("../common/StateMachine");
 const SoldierConstants = require("./unitConstants");
-const { AllianceTypes, AllianceTracker } = require("./AllianceTracker");
+const { AllianceTypes, AllianceTracker } = require("./lib/AllianceTracker");
 
 function mapRange(
   val,
