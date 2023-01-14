@@ -12,12 +12,12 @@ const uuidv = v4;
 class Player
 {
     static maxResources = 200;
-    static resourceMultiplier=10; //per second
+    static resourceMultiplier=1; //per second
     constructor(id, name){
         this.name = name || 'Keshav';
         this.id = id;
         this.SoldierMap = new Map();
-        this.resources = 100;
+        this.resources = 30;
         this.color = [Math.random()*255, Math.random()*255, Math.random()*255];
 
         //flag poss
@@ -42,6 +42,7 @@ class Player
             });
 
             let soldiersIdArr = [...this.SoldierMap.keys()];
+            /*
             var i=0;
             var test = ()=>{return (i<soldiersIdArr.length)}
             var loop = ()=>{
@@ -52,6 +53,13 @@ class Player
                 return true; //continue
             }
             nbLoop(test, loop);
+            */
+            for(let i=0; i<soldiersIdArr.length; i++) {
+                let soldierObject = this.SoldierMap.get(soldiersIdArr[i]);
+                if(!soldierObject)
+                    continue
+                soldierObject.tick(delta, updateManager, stateManager);
+            }
         }catch(err){
             console.error(err);
         }

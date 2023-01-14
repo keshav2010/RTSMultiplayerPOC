@@ -28,6 +28,7 @@ module.exports = {
 
           //simulate all players.
           let playerIdArray = [...gameStateManager.SocketToPlayerData.keys()];
+          /*
           let i = 0;
           var test = () => {
             return i < playerIdArray.length;
@@ -38,6 +39,11 @@ module.exports = {
             return true;
           };
           nbLoop(test, loop);
+         */
+          for(let i=0; i < playerIdArray.length; i++) {
+            let playerObject = gameStateManager.SocketToPlayerData.get(playerIdArray[i]);
+            playerObject.tick(deltaTime, gameStateManager.pendingUpdates, gameStateManager);
+          }
         } catch (err) {
           console.log(err);
         }
