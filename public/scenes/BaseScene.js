@@ -35,9 +35,7 @@ export class BaseScene extends Phaser.Scene {
             obj.destroy(true);
         else
             obj.destroy();
-        console.log(`before deleting ${obj.type}`,this.objectSet);
         this.objectSet.delete(obj);
-        console.log(`after deleting ${obj.type}`,this.objectSet);
     }
     DestroyObjects() {
         this.objectSet.forEach(obj => {
