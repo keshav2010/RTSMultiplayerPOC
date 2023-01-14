@@ -25,6 +25,8 @@ export class SpawnSelectionScene extends BaseScene {
     super(CONSTANT.SCENES.SPAWNSELECTSCENE);
     this.mapWidth = 3500;
     this.mapHeight = 1500;
+
+    this.PlayerSpawnPointsTracker = {};
   }
 
   preload() {
@@ -137,11 +139,22 @@ export class SpawnSelectionScene extends BaseScene {
         this.AddObject(this.add.text(150, 150, `${player.id} Joined`), false)
       );
     });
+
     this.AddSceneEvent(PacketType.ByServer.SPAWN_POINT_ACK,
       ({ spawnX, spawnY, playerId }) => {
-        this.add.image(spawnX, spawnY, "flag");
+
+        //remove any previous choice of this player from scene.
+        if(this.PlayerSpawnPointsTracker[playerId]){
+          this.DestroyObject(this.PlayerSpawnPointsTracker[playerId].image)
+          delete this.PlayerSpawnPointsTracker[playerId];
+        }
+        
+        //show new choice on map for player
+        let spawnPointFlag = this.AddObject(this.add.image(spawnX, spawnY, "flag"));
+        this.PlayerSpawnPointsTracker[playerId] = { image: spawnPointFlag, spawnX, spawnY };
       }
     );
+
     this.AddSceneEvent(PacketType.ByServer.COUNTDOWN_TIME, (data) => {
       let { time } = data;
       if (this.timerBar)

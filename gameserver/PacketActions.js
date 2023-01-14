@@ -29,16 +29,18 @@ function PlayerInitPacketAction(packetType, socket, io, stateManager){
         [...stateManager.SocketToPlayerData.values()].filter(v=>v.id !== socket.id).forEach(opponent=>{
             if(opponent.SoldierMap.size < 1)
                 return;
-            [...opponent.SoldierMap.values()].forEach((s)=>{
+            [...opponent.SoldierMap.values()].forEach((s)=> {
+                let soldierSnapshot = s.getSnapshot();
+                
                 let initPacket = {
                     type: PacketType.ByServer.SOLDIER_CREATE_ACK,
                     isCreated: true,
 
                     socket, //init packets are sent only to the player who joined and not to other players
 
-                    soldier: s.getSnapshot(), //detail of soldier
-                    playerId: s.getSnapshot().playerId, //person who created soldier
-                    soldierType: s.getSnapshot().type
+                    soldier: soldierSnapshot, //detail of soldier
+                    playerId: soldierSnapshot.playerId, //person who created soldier
+                    soldierType: soldierSnapshot.type
                 }
                 stateManager.clientInitUpdates.push(initPacket);
             });

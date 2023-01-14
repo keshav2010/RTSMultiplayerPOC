@@ -38,6 +38,10 @@ export class BaseScene extends Phaser.Scene {
             this.events.on(eventType, callback);
     }
 
+    DestroyObject(obj) {
+        obj.destroy();
+        this.objectArray = this.objectArray.filter(object => object !== obj);
+    }
     DestroyObjects() {
         this.phaserContainer && this.phaserContainer.destroy();
         this.objectArray.forEach(obj => {

@@ -64,7 +64,7 @@ class Player
             console.error(err);
         }
     }
-    getSnapshot(){
+    getSnapshot() {
         //get snapshot for each soldier
         var soldierSnapshots = [...this.SoldierMap.values().map(soldier=>soldier.getSnapshot())]
         return {
