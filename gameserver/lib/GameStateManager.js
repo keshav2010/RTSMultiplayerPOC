@@ -1,17 +1,16 @@
-const PacketType = require("../common/PacketType");
-const Player = require("./Player");
+const PacketType = require("../../common/PacketType");
+const Player = require("../Player");
 const EventEmitter = require("events");
-const ServerLocalEvents = require("./ServerLocalEvents");
+const ServerLocalEvents = require("../ServerLocalEvents");
 const Scene = require("./Scene");
-const nbLoop = require("../common/nonBlockingLoop");
-const StateMachine = require("../common/StateMachine");
+const StateMachine = require("./StateMachine");
 const PendingUpdateManager = require("./PendingUpdateManager");
-const ServerStateMachineJSON = require("./stateMachines/ServerStateMachine.json");
+const { AllianceTracker } = require("./AllianceTracker");
 /**
  * Manages entire game state.
  */
 class GameStateManager {
-  constructor(io) {
+  constructor(io, serverStateMachineJSON, serverStateMachineBehaviour) {
     this.clientInitUpdates = [];
 
     //all delta changes that we can send to client by serializing them or as a string whatever.
@@ -23,12 +22,15 @@ class GameStateManager {
     this.SocketToPlayerData = new Map();
     this.ReadyPlayers = new Map();
     this.lastSimulateTime_ms = Date.now();
+    
     this.event = new EventEmitter();
     this.scene = new Scene(this);
 
     this.countdown = process.env.COUNTDOWN; //seconds
-    this.stateMachine = new StateMachine(ServerStateMachineJSON);
+    this.stateMachine = new StateMachine(serverStateMachineJSON, serverStateMachineBehaviour);
     this.pendingUpdates = new PendingUpdateManager();
+
+    this.alliances = new AllianceTracker();
   }
 
   /**
@@ -76,60 +78,8 @@ class GameStateManager {
   }
 
   simulate() {
-    switch (this.stateMachine.currentState) {
-      case "SpawnSelectionState":
-        this.SpawnSelectionState();
-        break;
-      case "BattleState":
-        this.BattleState();
-        break;
-      case "BattleEndState":
-        this.BattleEndState();
-        break;
-    }
+    this.stateMachine.tick({gameStateManager: this});
   }
-
-  SpawnSelectionState() {
-    try {
-      //in seconds
-      var deltaTime = (Date.now() - this.lastSimulateTime_ms) / 1000;
-      this.lastSimulateTime_ms = Date.now();
-      this.countdown -= deltaTime;
-      this.countdown = Math.max(0, this.countdown);
-      this.pendingUpdates.queueServerEvent({
-        type: PacketType.ByServer.COUNTDOWN_TIME,
-        time: this.countdown,
-      });
-      if (this.countdown <= 0) {
-        console.log("countdown completed for spawn-selection");
-        this.stateMachine.controller.send("TIMEOUT");
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  }
-
-  BattleState() {
-    try {
-      var deltaTime = (Date.now() - this.lastSimulateTime_ms) / 1000;
-      this.lastSimulateTime_ms = Date.now();
-      let playerIdArray = [...this.SocketToPlayerData.keys()];
-      var i = 0;
-      var test = () => {
-        return i < playerIdArray.length;
-      };
-      var loop = () => {
-        let playerObject = this.SocketToPlayerData.get(playerIdArray[i++]);
-        playerObject.tick(deltaTime, this.pendingUpdates, this);
-        return true;
-      };
-      nbLoop(test, loop);
-    } catch (err) {
-      console.log(err);
-    }
-  }
-
-  BattleEndState(updateManager) {}
 
   createPlayer(id) {
     if (!this.SocketToPlayerData.has(id))
@@ -167,6 +117,13 @@ class GameStateManager {
       };
       stateManager.cumulativeUpdates.push(deltaUpdate);
     } catch (err) {}
+  }
+
+  setAlliance(playerAId, playerBId, allianceType) {
+    this.alliances.setAlliance(playerAId, playerBId, allianceType);
+  }
+  getAlliance(playerAId, playerBId) {
+    return this.alliances.getAlliance(playerAId, playerBId);
   }
 }
 

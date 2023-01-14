@@ -8,10 +8,10 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 
 const PacketType = require('./common/PacketType');
-const Packet = require('./gameserver/Packet');
+const Packet = require('./gameserver/lib/Packet');
 const PacketActions = require('./gameserver/PacketActions');
 
-const GameStateManager = require('./gameserver/GameStateManager');
+const GameStateManager = require('./gameserver/lib/GameStateManager');
 const cors = require('cors');
 
 const nbLoop = require('./common/nonBlockingLoop');
@@ -89,7 +89,9 @@ function processPendingUpdates()
 io.on('connection', socket=>{
     console.log('***clients connected : ', io.of('/').sockets.size);
     if(io.of('/').sockets.size === 1){
-        gameState = new GameStateManager(io);
+        gameState = new GameStateManager(io, 
+            require("./gameserver/stateMachines/server-state-machine/ServerStateMachine.json"),
+            require("./gameserver/stateMachines/server-state-machine/ServerStateBehaviour"));
         setImmediate(processPendingUpdates);
     }
     Packet.io = io;

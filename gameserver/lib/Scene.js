@@ -1,10 +1,3 @@
-/**
- */
-const Soldier = require("./Soldier");
-const PacketType = require("../common/PacketType");
-const SoldierType = require("../common/SoldierType");
-const ServerLocalEvents = require("./ServerLocalEvents");
-const Collision = require("detect-collisions");
 const Quadtree = require("quadtree-lib");
 const SAT = require("sat");
 

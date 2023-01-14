@@ -8,7 +8,7 @@ class AllianceTracker {
     {
         this.allianceMap = {};
     }
-    setAlliance(playerA_Id, playerB_Id, allianceType, stateManager) {
+    setAlliance(playerA_Id, playerB_Id, allianceType) {
         if(!Object.values(AllianceTypes).includes(allianceType))
             throw new Error("AllianceType is invalid.");
         if(!playerA_Id || !playerB_Id)
@@ -22,7 +22,7 @@ class AllianceTracker {
 
         console.log(this.allianceMap);
     }
-    getAlliance(playerA_Id, playerB_Id, stateManager) {
+    getAlliance(playerA_Id, playerB_Id) {
         if(playerA_Id && playerB_Id && playerA_Id === playerB_Id) {
             this.allianceMap[playerA_Id][playerB_Id] = AllianceTypes.ALLY;
             return AllianceTypes.ALLY;

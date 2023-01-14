@@ -1,11 +1,12 @@
 const PacketType = require("../common/PacketType");
 const SAT = require("sat"); //(w,h)
 
-const SoldierStateMachineJSON = require("./stateMachines/SoldierStateMachine.json");
-const { createMachine, interpret } = require("xstate");
-const StateMachine = require("../common/StateMachine");
+const SoldierStateMachineJSON = require("./stateMachines/soldier-state-machine/SoldierStateMachine.json");
+const soldierStateBehaviours = require("./stateMachines/soldier-state-machine/SoldierStateBehaviour");
+
+const StateMachine = require("./lib/StateMachine");
 const SoldierConstants = require("./unitConstants");
-const { AllianceTypes, AllianceTracker } = require("./AllianceTracker");
+const { AllianceTypes } = require("./lib/AllianceTracker");
 
 function mapRange(
   val,
@@ -31,8 +32,6 @@ function mapRange(
  */
 class Soldier extends SAT.Box {
   static sid = 0;
-  static alliances = new AllianceTracker();
-
   constructor(type, params, parentObject) {
     // {pos:{x,y}}
     super(
@@ -70,7 +69,7 @@ class Soldier extends SAT.Box {
     this.playerId = String(params.playerId);
     ++Soldier.sid;
 
-    this.stateMachine = new StateMachine(SoldierStateMachineJSON);
+    this.stateMachine = new StateMachine(SoldierStateMachineJSON, soldierStateBehaviours);
 
     //Boid
     this.steeringVector = new SAT.Vector(0, 0);
@@ -213,29 +212,8 @@ class Soldier extends SAT.Box {
         b.expectedPosition.copy(b.pos);
       }
     });
-    switch (this.stateMachine.currentState) {
-      case "Idle":
-        this.Idle(delta, updateManager, stateManager);
-        break;
-      case "Move":
-        this.Move(delta, updateManager, stateManager);
-        break;
-      case "ChaseTarget":
-        this.ChaseTarget(delta, updateManager, stateManager);
-        break;
-      case "Attack":
-        this.Attack(delta, updateManager, stateManager);
-        break;
-      case "FindTarget":
-        this.FindTarget(delta, updateManager, stateManager);
-        break;
-      case "Defend":
-        this.Defend(delta, updateManager, stateManager);
-        break;
-      default:
-        this.Idle(delta, updateManager, stateManager);
-        break;
-    }
+
+    this.stateMachine.tick({delta, updateManager, stateManager, soldier: this});
 
     updateManager.queueServerEvent({
       type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
@@ -243,194 +221,9 @@ class Soldier extends SAT.Box {
     });
   }
 
-  Idle(delta, updateManager, stateManager) {
-    /*repel from only those units which are not yet at their destination.
-     */
-    let seperationForce = this.getSeperationVector(stateManager, (a, b) => {
-      return a.hasReachedDestination() && b.hasReachedDestination();
-    });
-
-    this.applyForce(seperationForce);
-    if (this.velocityVector.len() > 0 || !this.hasReachedDestination()) {
-      this.stateMachine.controller.send("Move");
-    }
-  }
-  Move(delta, updateManager, stateManager) {
-    let seperationForce = this.getSeperationVector(stateManager);
-    let steerForce = this.getSteerVector(this.expectedPosition);
-    this.applyForce(seperationForce);
-    this.applyForce(steerForce);
-
-    let stateMachineTrigged = false;
-    if (this.hasReachedDestination()) {
-      this.stateMachine.controller.send("ReachedPosition");
-      stateMachineTrigged = true;
-    }
-
-    var nearbyUnits = stateManager.scene.getNearbyUnits(
-      {
-        x: this.pos.x + this.width / 2,
-        y: this.pos.y + this.height / 2,
-      },
-      SoldierConstants.NEARBY_SEARCH_RADI
-    );
-    if (nearbyUnits.length < 2) return;
-
-    nearbyUnits.forEach((unit) => {
-      if (unit === this) return;
-
-      let overlapExpectedPos =
-        new SAT.Vector()
-          .copy(unit.expectedPosition)
-          .sub(this.expectedPosition)
-          .len() <= SoldierConstants.MAX_TARGETPOS_OVERLAP_DIST;
-
-      let eitherAtDest =
-        unit.hasReachedDestination() || this.hasReachedDestination();
-
-      if (eitherAtDest && overlapExpectedPos) {
-        unit.isAtDestination = this.isAtDestination = true;
-        this.expectedPosition.copy(this.pos);
-        if (!stateMachineTrigged)
-          this.stateMachine.controller.send("ReachedPosition");
-      }
-    });
-  }
-  Attack(delta, updateManager, stateManager) {
-    if(!this.AttackTargetSoldier) {
-      this.stateMachine.controller.send("TargetLost");
-    }
-    let distToTarget = new SAT.Vector()
-      .copy(this.AttackTargetSoldier.pos)
-      .sub(this.pos)
-      .len();
-    if (distToTarget > SoldierConstants.DESIRED_DIST_FROM_TARGET) {
-      this.stateMachine.controller.send("TargetNotInRange");
-      return;
-    }
-
-    this.AttackTargetSoldier.attackMe(delta, this);
-
-    //schedule update to client about attack on enemy soldier.
-    updateManager.queueServerEvent({
-      type: PacketType.ByServer.SOLDIER_ATTACKED,
-      a: this.getSnapshot(),
-      b: this.AttackTargetSoldier.getSnapshot(),
-    });
-
-    //if attacked soldier unit dead, update server-state and schedule update for client.
-    if (this.AttackTargetSoldier.health === 0) {
-      updateManager.queueServerEvent({
-        type: PacketType.ByServer.SOLDIER_KILLED,
-        playerId: this.AttackTargetSoldier.playerId,
-        soldierId: this.AttackTargetSoldier.id,
-      });
-      stateManager.removeSoldier(
-        this.AttackTargetSoldier.playerId,
-        this.AttackTargetSoldier.id
-      );
-      this.AttackTargetSoldier = null;
-      this.stateMachine.controller.send("TargetKilled");
-    }
-  }
-  FindTarget(delta, updateManager, stateManager) {
-    try {
-      this.AttackTargetSoldier = null;
-      var nearbyUnits = stateManager.scene.getNearbyUnits(
-        {
-          x: this.pos.x + this.width / 2,
-          y: this.pos.y + this.height / 2,
-        },
-        SoldierConstants.ENEMY_SEARCH_RADIUS
-      );
-      if (nearbyUnits.length < 2) {
-        this.stateMachine.controller.send("TargetNotFound");
-        return;
-      }
-
-      //Go to unit with least distance instead of random unit.
-      let minDist = Math.infinity;
-      let nearestUnit = null;
-      nearbyUnits.forEach((unit) => {
-        //consider only if unit belongs to enemy team
-        if (
-          unit === this ||
-          Soldier.alliances.getAlliance(this.playerId, unit.playerId) !==
-          AllianceTypes.ENEMIES
-        )
-          return;
-
-        let distBetweenUnits = new SAT.Vector()
-          .copy(unit.pos)
-          .sub(this.pos)
-          .len();
-        if (distBetweenUnits < minDist) {
-          minDist = distBetweenUnits;
-          unit = nearestUnit;
-        }
-      });
-
-      if (nearestUnit) {
-        this.AttackTargetSoldier = nearestUnit;
-        this.stateMachine.controller.send("TargetFound");
-      } else {
-        //TODO: what about expectedPosition / targetPosition
-        this.stateMachine.controller.send("TargetNotFound");
-      }
-    } catch (err) {
-      console.error(err);
-      this.stateMachine.controller.send("TargetNotFound");
-    }
-  }
-  Defend(delta, updateManager, stateManager) {
-    if(!this.AttackTargetSoldier) {
-      this.stateMachine.controller.send("NoAttackerUnitNearby");
-      return;
-    }
-    this.stateMachine.controller.send("AttackerUnitNearby");
-  }
-  ChaseTarget(delta, updateManager, stateManager) {
-    try {
-      if (!this.AttackTargetSoldier) {
-        this.stateMachine.controller.send("TargetLost");
-        return;
-      }
-
-      let seperationForce = this.getSeperationVector(stateManager);
-      let steerForce = this.getSteerVector(this.AttackTargetSoldier.pos);
-      this.applyForce(seperationForce);
-      this.applyForce(steerForce);
-
-      this.targetPosition.copy(this.AttackTargetSoldier.pos);
-      this.expectedPosition.copy(this.AttackTargetSoldier.pos);
-
-      updateManager.queueServerEvent({
-        type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
-        soldier: this.getSnapshot(),
-      });
-
-      let distToTarget = new SAT.Vector()
-        .copy(this.AttackTargetSoldier.pos)
-        .sub(this.pos)
-        .len();
-      if (distToTarget <= SoldierConstants.DESIRED_DIST_FROM_TARGET) {
-        this.stateMachine.controller.send("TargetInRange");
-      }
-    } catch (err) {
-      console.log(err);
-      this.targetPosition.copy(this.AttackTargetSoldier.pos);
-      this.expectedPosition.copy(this.targetPosition);
-      this.AttackTargetSoldier = null;
-    }
-  }
-
-  attackUnit(targetSoldier) {
+  attackUnit(targetSoldier, stateManager) {
     this.AttackTargetSoldier = targetSoldier;
-    Soldier.alliances.setAlliance(
-      this.playerId,
-      targetSoldier?.playerId,
-      AllianceTypes.ENEMIES
-    );
+    stateManager.setAlliance(this.playerId, targetSoldier?.playerId, AllianceTypes.ENEMIES);
     this.stateMachine.controller.send("Attack");
   }
 
