@@ -25,8 +25,10 @@ module.exports = {
         try {
           var deltaTime = (Date.now() - gameStateManager.lastSimulateTime_ms) / 1000;
           gameStateManager.lastSimulateTime_ms = Date.now();
+
+          //simulate all players.
           let playerIdArray = [...gameStateManager.SocketToPlayerData.keys()];
-          var i = 0;
+          let i = 0;
           var test = () => {
             return i < playerIdArray.length;
           };

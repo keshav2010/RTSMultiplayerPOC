@@ -1,6 +1,7 @@
 const SoldierConstants = require("../../unitConstants");
 const SAT = require("sat");
 const PacketType = require("../../../common/PacketType");
+const {AllianceTypes} = require("../../lib/AllianceTracker");
 module.exports = {
   Idle: ({ delta, updateManager, stateManager, soldier }) => {
     /*repel from only those units which are not yet at their destination.
