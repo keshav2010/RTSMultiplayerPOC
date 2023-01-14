@@ -40,7 +40,7 @@ export class SpawnSelectionScene extends BaseScene {
     StateManager = this.registry.get("stateManager");
     NetworkManager = this.registry.get("networkManager");
 
-    this.playerReadyStatus = this.AddObject(new Column(this, 0, 120), false);
+    this.playerReadyStatus = this.AddObject(new Column(this, 0, 120));
     selectorGraphics = this.AddObject(this.add.graphics());
     selectorGraphics.clear();
 
@@ -51,7 +51,7 @@ export class SpawnSelectionScene extends BaseScene {
       currentValue: 15,
       width: 800,
       height: 30,
-    }), false);
+    }));
 
     this.AddInputEvent("pointerdown", function (pointer) {
       if (pointer.button === 0) {
@@ -136,7 +136,7 @@ export class SpawnSelectionScene extends BaseScene {
       let player = data.player;
       StateManager.addPlayer(new Player(player));
       this.playerReadyStatus.addNode(
-        this.AddObject(this.add.text(150, 150, `${player.id} Joined`), false)
+        this.AddObject(this.add.text(150, 150, `${player.id} Joined`))
       );
     });
 
@@ -145,13 +145,19 @@ export class SpawnSelectionScene extends BaseScene {
 
         //remove any previous choice of this player from scene.
         if(this.PlayerSpawnPointsTracker[playerId]){
-          this.DestroyObject(this.PlayerSpawnPointsTracker[playerId].image)
+          this.DestroyObject(this.PlayerSpawnPointsTracker[playerId].phaserGroup)
           delete this.PlayerSpawnPointsTracker[playerId];
         }
         
         //show new choice on map for player
-        let spawnPointFlag = this.AddObject(this.add.image(spawnX, spawnY, "flag"));
-        this.PlayerSpawnPointsTracker[playerId] = { image: spawnPointFlag, spawnX, spawnY };
+        let spawnPointFlag = this.add.image(spawnX, spawnY, "flag");
+        let playerIdText = this.add.text(
+            spawnX - spawnPointFlag.width,
+            spawnY + spawnPointFlag.height / 2,
+            playerId
+          )
+        let objGroup = this.AddObject(this.add.group([spawnPointFlag, playerIdText]));
+        this.PlayerSpawnPointsTracker[playerId] = { phaserGroup: objGroup, spawnX, spawnY };
       }
     );
 
@@ -166,12 +172,12 @@ export class SpawnSelectionScene extends BaseScene {
 
     this.AddSceneEvent(PacketType.ByClient.PLAYER_READY, (data) => {
       this.playerReadyStatus.addNode(
-        this.AddObject(this.add.text(150, 150, `${data.playerId} Ready`), false)
+        this.AddObject(this.add.text(150, 150, `${data.playerId} Ready`))
       );
     });
     this.AddSceneEvent(PacketType.ByClient.PLAYER_UNREADY, (data) => {
       this.playerReadyStatus.addNode(
-        this.AddObject(this.add.text(150, 150, `${data.playerId} Marked UnReady`), false)
+        this.AddObject(this.add.text(150, 150, `${data.playerId} Marked UnReady`))
       );
     });
 

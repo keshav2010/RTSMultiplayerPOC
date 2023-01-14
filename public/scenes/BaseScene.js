@@ -1,22 +1,19 @@
 export class BaseScene extends Phaser.Scene {
     constructor(key) {
         super({ key });
-        this.phaserContainer = null;
         this.objectArray = [];
 
         this.registeredInputEvents = new Set();
         this.registeredSceneEvents = new Set();
     }
+    AddObject(newObject) {
 
-    AddObject(newObject, addToPhaserContainer=false) {
-        if(addToPhaserContainer) {
-            if(!this.phaserContainer){
-                this.phaserContainer = this.AddObject(this.add.container(), false);
-            }
-            this.phaserContainer.add(newObject);
+        if (newObject.type === "Group") {
+            newObject.getChildren().forEach(child => {
+                this.AddObject(child);
+            });
         }
-        else
-            this.objectArray.push(newObject);
+        this.objectArray.push(newObject);
         return newObject;
     }
 
@@ -38,18 +35,28 @@ export class BaseScene extends Phaser.Scene {
             this.events.on(eventType, callback);
     }
 
+    // Recursively destroy an object, including any children if it's a group
     DestroyObject(obj) {
+        if(obj.type === "Group") {
+            // Create a static copy of the children array to prevent issues with the dynamic array
+            let childrens = [...obj.getChildren()];
+            childrens.forEach(child => {
+                this.DestroyObject(child);
+            });
+        }
         obj.destroy();
-        this.objectArray = this.objectArray.filter(object => object !== obj);
+        let index = this.objectArray.indexOf(obj);
+        if(index >= 0) {
+            this.objectArray.splice(index, 1);
+        }
     }
     DestroyObjects() {
-        this.phaserContainer && this.phaserContainer.destroy();
         this.objectArray.forEach(obj => {
-            obj.destroy();
+            this.DestroyObject(obj);
         });
         this.objectArray = [];
-        this.phaserContainer = null;
     }
+
 
     DestroySceneEvents() {
         for(let eventType of this.registeredSceneEvents) {
