@@ -89,7 +89,9 @@ function processPendingUpdates()
 io.on('connection', socket=>{
     console.log('***clients connected : ', io.of('/').sockets.size);
     if(io.of('/').sockets.size === 1){
-        gameState = new GameStateManager(io, require("./gameserver/stateMachines/ServerStateMachine.json"));
+        gameState = new GameStateManager(io, 
+            require("./gameserver/stateMachines/server-state-machine/ServerStateMachine.json"),
+            require("./gameserver/stateMachines/server-state-machine/ServerStateBehaviour"));
         setImmediate(processPendingUpdates);
     }
     Packet.io = io;

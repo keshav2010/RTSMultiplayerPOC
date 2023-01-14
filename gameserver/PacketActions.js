@@ -228,7 +228,7 @@ function AttackRequestedPacketAction(packetType, socket, io, stateManager, data)
         //Soldiers belonging to Attacker, that are given attack order.
         soldiers.forEach(soldierId=>{
             let attacker = playerA.getSoldier(soldierId);
-            attacker.attackUnit(targetSoldier);
+            attacker.attackUnit(targetSoldier, stateManager);
         });
     }
     catch(err) {

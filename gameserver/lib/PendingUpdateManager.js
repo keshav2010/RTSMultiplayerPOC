@@ -1,6 +1,4 @@
 const LinkedList = require("dbly-linked-list");
-
-//FIFO
 class PendingUpdateManager
 {
     constructor(maxPackets){
