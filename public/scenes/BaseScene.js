@@ -1,19 +1,13 @@
 export class BaseScene extends Phaser.Scene {
     constructor(key) {
         super({ key });
-        this.objectArray = [];
+        this.objectSet = new Set();
 
         this.registeredInputEvents = new Set();
         this.registeredSceneEvents = new Set();
     }
     AddObject(newObject) {
-
-        if (newObject.type === "Group") {
-            newObject.getChildren().forEach(child => {
-                this.AddObject(child);
-            });
-        }
-        this.objectArray.push(newObject);
+        this.objectSet.add(newObject);
         return newObject;
     }
 
@@ -37,26 +31,20 @@ export class BaseScene extends Phaser.Scene {
 
     // Recursively destroy an object, including any children if it's a group
     DestroyObject(obj) {
-        if(obj.type === "Group") {
-            // Create a static copy of the children array to prevent issues with the dynamic array
-            let childrens = [...obj.getChildren()];
-            childrens.forEach(child => {
-                this.DestroyObject(child);
-            });
-        }
-        obj.destroy();
-        let index = this.objectArray.indexOf(obj);
-        if(index >= 0) {
-            this.objectArray.splice(index, 1);
-        }
+        if(obj.type === "Group")
+            obj.destroy(true);
+        else
+            obj.destroy();
+        console.log(`before deleting ${obj.type}`,this.objectSet);
+        this.objectSet.delete(obj);
+        console.log(`after deleting ${obj.type}`,this.objectSet);
     }
     DestroyObjects() {
-        this.objectArray.forEach(obj => {
+        this.objectSet.forEach(obj => {
             this.DestroyObject(obj);
         });
-        this.objectArray = [];
+        this.objectSet = new Set();
     }
-
 
     DestroySceneEvents() {
         for(let eventType of this.registeredSceneEvents) {
