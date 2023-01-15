@@ -94,15 +94,16 @@ class GameStateManager {
     let player = this.SocketToPlayerData.get(playerId);
 
     let { status, soldierId, soldier } = player.createSoldier(type, x, y);
-    if (status) this.scene.insertSoldier(soldier);
-
-    this.event.emit(ServerLocalEvents.SOLDIER_CREATED, {
-      x,
-      y,
-      type,
-      playerId,
-      soldierId,
-    });
+    if (status) {
+      this.scene.insertSoldier(soldier);
+      this.event.emit(ServerLocalEvents.SOLDIER_CREATED, {
+        x,
+        y,
+        type,
+        playerId,
+        soldierId,
+      });
+    }
     return { status, soldierId, soldier };
   }
 

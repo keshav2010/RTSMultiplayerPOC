@@ -23,12 +23,18 @@ export class PlayerStatisticHUD extends BaseScene {
     var count = 0;
     gameScene.AddSceneEvent(PacketType.ByServer.SOLDIER_CREATE_ACK,
       ({ isCreated }) => {
-        soldierCount.setText(`Soldiers: ${++count}`);
+        if(isCreated)
+          soldierCount.setText(`Soldiers: ${++count}`);
       }
     );
 
     gameScene.AddSceneEvent(PacketType.ByServer.PLAYER_LEFT, (data) => {
-      console.log("player left", data);
+      let { playerId } = data;
+      console.log(`Player ${playerId} left`); 
+      let playerObject = StateManager.getPlayer(playerId);
+      count = count - playerObject.getSoldiers().length;
+      soldierCount.setText(`Soldiers: ${count}`);
+      StateManager.removePlayer(playerId);
     });
 
     gameScene.AddSceneEvent(PacketType.ByServer.PLAYER_RESOURCE_UPDATED,

@@ -217,11 +217,6 @@ export class GameScene extends BaseScene {
     this.controls = new Phaser.Cameras.Controls.SmoothedKeyControl(
       controlConfig
     );
-
-    this.AddSceneEvent(PacketType.ByServer.PLAYER_LEFT, (data) => {
-      let { playerId } = data;
-      StateManager.removePlayer(playerId);
-    });
     this.AddSceneEvent(PacketType.ByServer.NEW_CHAT_MESSAGE, (data) => {
       let { message, playerId } = data;
       addNewChatMessage(message, playerId);
