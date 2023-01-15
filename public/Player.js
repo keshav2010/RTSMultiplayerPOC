@@ -9,15 +9,18 @@ class Player
     {
         this.type="PLAYER";
         this.soldiers = new Set();
-        this.spawnPosVec = null;
+        this.spawnPosVec = new SAT.Vector(prop.posX, prop.posY);
 
         //group name will be player name
         this.name = prop.name || 'TempName';
         this.playerId = prop.id;
         this.color = [...prop.color];
     }
-    setSpawnPosition(x,y){
+    setSpawnPoint(x,y){
         this.spawnPosVec = new SAT.Vector(x,y);
+    }
+    getSpawnPoint() {
+        return this.spawnPosVec;
     }
     update(time, deltaTime) {
         this.soldiers.forEach(child => child.update(time, deltaTime));

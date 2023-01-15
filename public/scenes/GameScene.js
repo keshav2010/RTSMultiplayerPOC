@@ -52,6 +52,7 @@ export class GameScene extends BaseScene {
     super(CONSTANT.SCENES.GAME);
     this.mapWidth = 3500;
     this.mapHeight = 1500;
+    this.PlayerSpawnPointsTracker = {};
   }
   preload() {
     this.load.image("playbutton", "../assets/playbutton.png");
@@ -283,6 +284,19 @@ export class GameScene extends BaseScene {
         StateManager.clearState();
         networkManager.disconnectGameServer();
       });
+    
+    //show initial spawnpoint choice on map for player
+    StateManager.getAllPlayers().forEach(({ playerId, spawnPosVec }) => {
+      let spawnPointFlag = this.add.image(spawnPosVec.x, spawnPosVec.y, "flag");
+        let playerIdText = this.add.text(
+            spawnPosVec.x - spawnPointFlag.width,
+            spawnPosVec.y + spawnPointFlag.height / 2,
+            playerId
+          )
+        let objGroup = this.AddObject(this.add.group([spawnPointFlag, playerIdText]));
+        this.PlayerSpawnPointsTracker[playerId] = { phaserGroup: objGroup, spawnX: spawnPosVec.x, spawnY: spawnPosVec.y };
+    });
+
     this.AddSceneEvent('shutdown', (data)=>{
         console.log('shutdown ', data.config.key);
         this.Destroy();

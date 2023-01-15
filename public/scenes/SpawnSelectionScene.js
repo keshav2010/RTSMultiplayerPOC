@@ -128,7 +128,15 @@ export class SpawnSelectionScene extends BaseScene {
       const { playerId, players, _ } = data;
       StateManager.playerId = playerId;
       players.forEach((player) => {
-        StateManager.addPlayer(new Player(player));
+        let newPlayer = new Player(player);
+        StateManager.addPlayer(newPlayer);
+
+        //emit event locally.
+        this.events.emit(PacketType.ByServer.SPAWN_POINT_ACK, {
+          spawnX: newPlayer.getSpawnPoint().x,
+          spawnY: newPlayer.getSpawnPoint().y,
+          playerId: newPlayer.playerId,
+        });
       });
     });
     this.AddSceneEvent(PacketType.ByClient.PLAYER_JOINED, (data) => {
@@ -142,7 +150,6 @@ export class SpawnSelectionScene extends BaseScene {
 
     this.AddSceneEvent(PacketType.ByServer.SPAWN_POINT_ACK,
       ({ spawnX, spawnY, playerId }) => {
-
         //remove any previous choice of this player from scene.
         if(this.PlayerSpawnPointsTracker[playerId]){
           this.DestroyObject(this.PlayerSpawnPointsTracker[playerId].phaserGroup)
@@ -158,6 +165,8 @@ export class SpawnSelectionScene extends BaseScene {
           )
         let objGroup = this.AddObject(this.add.group([spawnPointFlag, playerIdText]));
         this.PlayerSpawnPointsTracker[playerId] = { phaserGroup: objGroup, spawnX, spawnY };
+        let player = StateManager.getPlayer(playerId);
+        player.setSpawnPoint(spawnX, spawnY);
       }
     );
 
@@ -208,22 +217,29 @@ export class SpawnSelectionScene extends BaseScene {
         Math.max(0, this.cameras.main.zoom - deltaY * 0.0003)
       );
     });
-    var ReadyButton = this.AddObject(this.add.text(15, 220, "I'm Ready!")).setInteractive();
-    ReadyButton.on("pointerdown", () => {
-        buttonState = !buttonState;
-        ReadyButton.setColor(buttonState ? "green" : "white");
-        if (buttonState)
-          NetworkManager.sendEventToServer(
-            PacketType.ByClient.PLAYER_READY,
-            {}
-          );
-        else
-          NetworkManager.sendEventToServer(
-            PacketType.ByClient.PLAYER_UNREADY,
-            {}
-          );
-      });
+    let ReadyButton = this.AddObject(this.add.text(15, 220, "I'm Ready!")).setInteractive().on("pointerdown", () => {
+      buttonState = !buttonState;
+      ReadyButton.setColor(buttonState ? "green" : "white");
+      if (buttonState)
+        NetworkManager.sendEventToServer(
+          PacketType.ByClient.PLAYER_READY,
+          {}
+        );
+      else
+        NetworkManager.sendEventToServer(
+          PacketType.ByClient.PLAYER_UNREADY,
+          {}
+        );
+    })
 
+    //initial random position.
+    NetworkManager.sendEventToServer(
+      PacketType.ByClient.SPAWN_POINT_REQUESTED,
+      {
+        spawnX: 800*Math.random() + Math.random()*400,
+        spawnY: 800*Math.random() + Math.random()*400,
+      }
+    );
     this.AddSceneEvent("shutdown", (data) => {
       console.log("shutdown ", data.config.key);
       this.Destroy();

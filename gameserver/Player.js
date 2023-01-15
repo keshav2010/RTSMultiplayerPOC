@@ -24,7 +24,7 @@ class Player
         this.posX = 200+Math.random()*400;
         this.posY = 200+Math.random()*400;
     }
-    setSpawnPosition(x,y){
+    setSpawnPoint(x,y){
         this.posX = x;
         this.posY = y;
     }
@@ -78,8 +78,8 @@ class Player
         }
     }
     createSoldier(type, x, y){
-        x = x||this.posX;
-        y = y||this.posY;
+        x = this.posX;
+        y = this.posY;
         type=type||SoldierType.SPEARMAN;
         if(this.resources < 10)
             return {status:false};
@@ -96,7 +96,6 @@ class Player
         this.SoldierMap.set(s.id, s);
         return {status:true, soldierId: s.id, soldier:s};
     }
-    
     getSoldier(soldierId){
         return this.SoldierMap.get(soldierId);
     }
