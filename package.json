@@ -6,7 +6,8 @@
   "scripts": {
     "build": "webpack",
     "start": "nodemon app.js",
-    "test": "webpack && jest && nodemon app.js"
+    "test": "jest",
+    "dev": "webpack && jest && nodemon app.js"
   },
   "author": "keshav",
   "license": "ISC",
