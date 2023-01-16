@@ -4,8 +4,6 @@ const PacketType = require("../../common/PacketType");
 const { Spearman } = require("../soldiers/Spearman");
 import { BaseScene } from "./BaseScene";
 const SoldierType = require("../../common/SoldierType");
-const { Column, Viewport, Scrollbar } = require("phaser-ui-tools");
-const Player = require("../Player");
 var $ = require("jquery");
 
 var selectorGraphics;
