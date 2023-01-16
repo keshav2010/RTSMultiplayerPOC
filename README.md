@@ -1,4 +1,6 @@
 # RTSMultiplayerPOC
+[![Node.js CI](https://github.com/keshav2010/RTSMultiplayerPOC/actions/workflows/node.js.yml/badge.svg?branch=main)](https://github.com/keshav2010/RTSMultiplayerPOC/actions/workflows/node.js.yml)
+
 Multiplayer RTS Dedicated Game Server written in NodeJS for a small-scale game.
 
 Approach
