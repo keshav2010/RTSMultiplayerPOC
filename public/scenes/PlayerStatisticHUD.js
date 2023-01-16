@@ -8,17 +8,29 @@ export class PlayerStatisticHUD extends BaseScene {
   }
   preload() {
     this.load.image("playbutton", "../assets/playbutton.png");
+    this.load.image("exitbutton", "../assets/exitbutton.png");
     this.scene.bringToTop();
   }
   create() {
     var gameScene = this.scene.get(CONSTANT.SCENES.GAME);
     var StateManager = this.registry.get("stateManager");
+    var networkManager = this.registry.get("networkManager");
 
     const resourceText = this.AddObject(this.add.text(50, 50, "Resources: 0"));
     const soldierCount = this.AddObject(this.add.text(50, 100, "Soldiers: 0"));
-    const Controls = this.AddObject(this.add.text(10, 10,
-      "Dev Testing [MMB => spawn soldier, drag n select units, RightClick for move/attack"
-    ));
+    const Controls = this.AddObject(
+      this.add.text(
+        10,
+        10,
+        "Dev Testing [MMB => spawn soldier, drag n select units, RightClick for move/attack"
+      )
+    );
+    var QuitButton = this.AddObject(this.add.image(900, 70, "exitbutton"))
+      .setInteractive()
+      .on("pointerdown", () => {
+        StateManager.clearState();
+        networkManager.disconnectGameServer();
+      });
 
     var count = 0;
     gameScene.AddSceneEvent(PacketType.ByServer.SOLDIER_CREATE_ACK,

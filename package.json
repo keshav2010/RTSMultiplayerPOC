@@ -6,7 +6,7 @@
   "scripts": {
     "build": "webpack",
     "start": "nodemon app.js",
-    "test": "webpack && nodemon app.js"
+    "test": "webpack && jest && nodemon app.js"
   },
   "author": "keshav",
   "license": "ISC",
@@ -32,6 +32,7 @@
   "devDependencies": {
     "css-loader": "^6.7.1",
     "html-webpack-plugin": "^5.5.0",
+    "jest": "^29.3.1",
     "style-loader": "^3.3.1",
     "webpack-cli": "^4.9.2"
   }

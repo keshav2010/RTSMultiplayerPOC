@@ -23,11 +23,9 @@ class AllianceTracker {
         console.log(this.allianceMap);
     }
     getAlliance(playerA_Id, playerB_Id) {
-        if(playerA_Id && playerB_Id && playerA_Id === playerB_Id) {
-            this.allianceMap[playerA_Id][playerB_Id] = AllianceTypes.ALLY;
-            return AllianceTypes.ALLY;
-        }
-        return this.allianceMap[playerA_Id][playerB_Id] || AllianceTypes.NEUTRAL;
+        if(playerA_Id === playerB_Id) return AllianceTypes.ALLY;
+        if(!this.allianceMap[playerA_Id] || !this.allianceMap[playerA_Id][playerB_Id]) return AllianceTypes.NEUTRAL;
+        return this.allianceMap[playerA_Id][playerB_Id];
     }
     removeEntry(playerId) {
         Object.keys(this.allianceMap).forEach(player => {

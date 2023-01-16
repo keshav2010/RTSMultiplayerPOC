@@ -59,7 +59,7 @@ export class GameScene extends BaseScene {
     this.load.image("knight", "../assets/knight.png");
     this.load.image("spearman", "../assets/spearman.png");
     this.load.image("map", "../assets/map.png");
-    this.load.image("flag", "../assets/flag.jpg");
+    this.load.image("flag", "../assets/flag.png");
   }
   create() {
     var StateManager = this.registry.get("stateManager");
@@ -279,11 +279,6 @@ export class GameScene extends BaseScene {
         Math.max(0, this.cameras.main.zoom - deltaY * 0.0003)
       );
     });
-    var QuitButton = this.AddObject(this.add.text(150, 220, "Leave Game")).setInteractive()
-      .on("pointerdown", () => {
-        StateManager.clearState();
-        networkManager.disconnectGameServer();
-      });
     
     //show initial spawnpoint choice on map for player
     StateManager.getAllPlayers().forEach(({ playerId, spawnPosVec }) => {

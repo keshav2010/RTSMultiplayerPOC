@@ -34,7 +34,7 @@ export class SpawnSelectionScene extends BaseScene {
     this.load.image("knight", "../assets/knight.png");
     this.load.image("spearman", "../assets/spearman.png");
     this.load.image("map", "../assets/map.png");
-    this.load.image("flag", "../assets/flag.jpg");
+    this.load.image("flag", "../assets/flag.png");
   }
   create() {
     StateManager = this.registry.get("stateManager");
@@ -47,9 +47,9 @@ export class SpawnSelectionScene extends BaseScene {
     this.timerBar = this.AddObject(new LoadingBar(this, this, {
       x: 250,
       y: 150,
-      maxValue: 15,
-      currentValue: 15,
-      width: 800,
+      maxValue: 5,
+      currentValue: 5,
+      width: 500,
       height: 30,
     }));
 
@@ -173,7 +173,7 @@ export class SpawnSelectionScene extends BaseScene {
     this.AddSceneEvent(PacketType.ByServer.COUNTDOWN_TIME, (data) => {
       let { time } = data;
       if (this.timerBar)
-        this.timerBar.decrease(this.timerBar.currentValue - time);
+        this.timerBar.setValue(time);
       if (time === 0) {
         this.scene.start(CONSTANT.SCENES.GAME);
       }
