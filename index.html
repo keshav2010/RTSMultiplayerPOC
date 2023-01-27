@@ -10,7 +10,7 @@
     <body>
         <div class="container-fluid">
             <div class="row">
-                <div class="col-sm-4">
+                <div class="col-sm-12">
                     <h4>RealTimeStrategy IO-Game Project (0.0.2 BUILD)</h4>
                     <ol>
                     <li>MMB => Create Soldier</li>
@@ -22,13 +22,14 @@
                     
                     <p>Still in very initial phase</p>
                 </div>
-                <div class="col-sm-8" style="background-color: #eee;">
+                <div class="col-sm-8" id="app">
+                </div>
+                <div class="col-sm-4" style="background-color: #eee;">
                     <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center p-3"
-                            style="border-top: 4px solid #ffa900;">
+                        <div class="card-header d-flex justify-content-between align-items-center p-3">
                             <h5 class="mb-0">Chat messages</h5>
                         </div>
-                        <div class="card-body" data-mdb-perfect-scrollbar="true" style="position: relative; height: 200px; overflow-y: scroll;">
+                        <div class="card-body chat-body" data-mdb-perfect-scrollbar="true" style="position: relative; height: 100%; min-height:250px; overflow-y: scroll;">
                 
                         </div>
                         <div class="card-footer text-muted d-flex justify-content-start align-items-center p-3">
@@ -40,8 +41,18 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-sm-6" id="app">
+
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center">
+                            <h5 class="mb-0">Spawn Units</h5>
+                        </div>
+                        <div class="card-body" data-mdb-perfect-scrollbar="true" style="position: relative; overflow-y: scroll;">
+                            <ul style="display:flex;">
+                                <button>Soldier</button>
+                                <button>Knight</button>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
             

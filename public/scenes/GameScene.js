@@ -13,11 +13,7 @@ var selectorDraw = false;
 
 var pointerDownWorldSpace = null;
 var cursors;
-$(() => {
-  $("#send-chat-btn").on("click", function () {
-    SendChatMessage();
-  });
-});
+
 function SendChatMessage() {
   try {
     var networkManager = this.registry.get("networkManager");
@@ -42,9 +38,13 @@ function addNewChatMessage(msg, sender) {
             </div>
         </div>
     </div>`;
-  $(".card-body").append(msgBlock);
+  $(".chat-body").append(msgBlock);
 }
-
+$(() => {
+  $("#send-chat-btn").on("click", function () {
+    SendChatMessage();
+  });
+});
 export class GameScene extends BaseScene {
   constructor() {
     super(CONSTANT.SCENES.GAME);

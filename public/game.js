@@ -8,12 +8,12 @@ import {MatchmakingScene} from './scenes/MatchmakingScene';
 import {PlayerStatisticHUD} from './scenes/PlayerStatisticHUD';
 
 var game = new Phaser.Game({
-    type: Phaser.CANVAS,
-    width: 1500,
+    type: Phaser.AUTO,
+    width: 1200,
     height: 600,
     scale:{
         mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_HORIZONTAL
+        autoCenter: Phaser.Scale.CENTER_BOTH
     },
     parent:'app',
     disableContextMenu: true,

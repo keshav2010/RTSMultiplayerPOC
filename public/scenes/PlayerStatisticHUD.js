@@ -1,6 +1,8 @@
 const CONSTANT = require("../constant");
 import { BaseScene } from "./BaseScene";
 const PacketType = require("../../common/PacketType");
+const { Viewport, Row, Scrollbar } = require('phaser-ui-tools');
+var $ = require("jquery");
 
 export class PlayerStatisticHUD extends BaseScene {
   constructor() {
@@ -9,12 +11,37 @@ export class PlayerStatisticHUD extends BaseScene {
   preload() {
     this.load.image("playbutton", "../assets/playbutton.png");
     this.load.image("exitbutton", "../assets/exitbutton.png");
+    this.load.image("spearman", "../assets/spearman.png");
+    this.load.image("knight", "../assets/knight.png");
+
+    this.load.image("soldierButton", "../assets/sprite.png");
+    this.load.image("track", "../assets/track.png");
+    this.load.spritesheet('bar', "../assets/bar.png", { frameWidth: 44, frameHeight: 22 });
     this.scene.bringToTop();
   }
   create() {
     var gameScene = this.scene.get(CONSTANT.SCENES.GAME);
     var StateManager = this.registry.get("stateManager");
     var networkManager = this.registry.get("networkManager");
+
+    var viewport = new Viewport(this, 125, 275, 260, 128);
+    var row = new Row(this, 0, 0);
+    viewport.addNode(row);
+
+    for(let i=0; i<=10; i++) {
+      let soldierButton = this.AddObject(this.add.image(0, 0, "soldierButton"));
+      row.addNode(soldierButton);
+    }
+    var scrollbar = new Scrollbar(
+      this,
+      viewport,
+      true,
+      false,
+      "track",
+      "bar",
+      { duration: 10, ease: Phaser.Math.Easing.Quadratic.Out }
+    );
+    Phaser.Display.Align.To.BottomCenter(scrollbar, viewport, 0, 128);
 
     const resourceText = this.AddObject(this.add.text(50, 50, "Resources: 0"));
     const soldierCount = this.AddObject(this.add.text(50, 100, "Soldiers: 0"));
@@ -25,7 +52,7 @@ export class PlayerStatisticHUD extends BaseScene {
         "Dev Testing [MMB => spawn soldier, drag n select units, RightClick for move/attack"
       )
     );
-    var QuitButton = this.AddObject(this.add.image(900, 70, "exitbutton"))
+    var QuitButton = this.AddObject(this.add.image(900, 40, "exitbutton"))
       .setInteractive()
       .on("pointerdown", () => {
         StateManager.clearState();
