@@ -16,17 +16,18 @@ function PlayerInitPacketAction(packetType, socket, io, stateManager){
         if(!stateManager.SocketToPlayerData.has(socket.id))
             stateManager.SocketToPlayerData.set(socket.id, new Player(socket.id));
 
+        let players =  [...stateManager.SocketToPlayerData.values()];
         const deltaUpdate = {
             type: packetType,
             socket,
             playerId: socket.id,
-            players: [...stateManager.SocketToPlayerData.values()],
+            players: players.map(player => player.getSnapshot()),
             readyPlayers: [...stateManager.ReadyPlayers.values()]
         }
         stateManager.clientInitUpdates.push(deltaUpdate);
 
         //If someone joins in late, they should get update of already-created soldiers
-        [...stateManager.SocketToPlayerData.values()].filter(v=>v.id !== socket.id).forEach(opponent=>{
+        players.filter(v=>v.id !== socket.id).forEach(opponent=>{
             if(opponent.SoldierMap.size < 1)
                 return;
             [...opponent.SoldierMap.values()].forEach((s)=> {
@@ -62,9 +63,10 @@ function PlayerJoinedPacketAction(packetType, socket, io, stateManager){
             stateManager.SocketToPlayerData.set(socket.id, new Player(socket.id));
         }
 
+        const player = stateManager.SocketToPlayerData.get(socket.id);
         const deltaUpdate={
             type: packetType,
-            player: stateManager.SocketToPlayerData.get(socket.id)
+            player: player.getSnapshot()
         }
         stateManager.cumulativeUpdates.push(deltaUpdate);
     }
@@ -178,25 +180,35 @@ function SoldierMoveRequestedPacketAction(packetType, socket, io, stateManager, 
  *  soldierType
  * }
  */
-function SoldierCreateRequestedPacketAction(packetType, socket, io, stateManager, data){
-    let playerId = socket.id;
-    let {soldierType, currentPositionX, currentPositionY} = data;
-    let createStatus = stateManager.createSoldier(currentPositionX, currentPositionY, soldierType, playerId)
-    var updatePacket = {
-        type: PacketType.ByServer.SOLDIER_CREATE_ACK,
-        isCreated: createStatus.status
+function SoldierCreateRequestedPacketAction(
+  packetType,
+  socket,
+  io,
+  stateManager,
+  data
+) {
+  let playerId = socket.id;
+  let { soldierType, currentPositionX, currentPositionY } = data;
+  let createStatus = stateManager.createSoldier(
+    currentPositionX,
+    currentPositionY,
+    soldierType,
+    playerId
+  );
+  var updatePacket = {
+    type: PacketType.ByServer.SOLDIER_CREATE_ACK,
+    isCreated: createStatus.status,
+  };
+  if (createStatus.status) {
+    //record whatever things we've modified in this array
+    updatePacket = {
+      ...updatePacket,
+      soldier: createStatus.soldier.getSnapshot(), //detail of soldier
+      playerId, //person who created soldier
+      soldierType,
     };
-    if(createStatus.status)
-    {
-        //record whatever things we've modified in this array
-        updatePacket={
-            ...updatePacket,
-            soldier: createStatus.soldier.getSnapshot(), //detail of soldier
-            playerId, //person who created soldier
-            soldierType
-        }
-    }
-    stateManager.cumulativeUpdates.push(updatePacket);
+  }
+  stateManager.cumulativeUpdates.push(updatePacket);
 }
 
 function SoldierDeletedPacketAction(packetType, socket, io, stateManager, data){
