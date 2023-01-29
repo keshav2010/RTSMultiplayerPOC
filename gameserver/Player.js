@@ -47,10 +47,36 @@ class Player {
     this.SoldierSpawnRequestDetail[requestId] = {
       id: requestId,
       soldierType,
-      count: this.SoldierSpawnRequestDetail[requestId].count + spawnCount,
-      countdown: 10
+      count:
+        (this.SoldierSpawnRequestDetail[requestId]?.count || 0) + spawnCount,
+      countdown: 10,
     };
     return this.SoldierSpawnRequestDetail[requestId];
+  }
+
+  processPendingSpawnRequests(deltaTime) {
+    if (this.SoldierSpawnRequestIdQueue.getSize() < 1)
+      return null;
+
+    let requestId = this.SoldierSpawnRequestIdQueue.peekFront();
+    let { soldierType } = this.SoldierSpawnRequestDetail[requestId];
+
+    this.SoldierSpawnRequestDetail[requestId].countdown = Math.max(
+      this.SoldierSpawnRequestDetail[requestId].countdown - deltaTime,
+      0
+    );
+
+    if (this.SoldierSpawnRequestDetail[requestId].countdown > 0)
+      return null;
+    //reset countdown.
+    this.SoldierSpawnRequestDetail[requestId].countdown = 10;
+    this.SoldierSpawnRequestDetail[requestId].count -= 1;
+    if (this.SoldierSpawnRequestDetail[requestId].count === 0) {
+      this.SoldierSpawnRequestIdQueue.dequeue();
+      delete this.SoldierSpawnRequestDetail[requestId];
+    }
+    console.log(this.SoldierSpawnRequestDetail[requestId]);
+    return soldierType;
   }
 
   setSpawnPoint(x, y) {
@@ -70,19 +96,30 @@ class Player {
         resources: this.resources,
       });
 
+      let soldierTypeToSpawn = this.processPendingSpawnRequests(delta);
+      if (soldierTypeToSpawn) {
+        let createStatus = stateManager.createSoldier(
+          soldierTypeToSpawn,
+          this.posX,
+          this.posY,
+          this.id
+        );
+        let updatePacket = {
+          type: PacketType.ByServer.SOLDIER_CREATE_ACK,
+          isCreated: createStatus.status,
+        };
+        if (createStatus.status) {
+          updatePacket = {
+            ...updatePacket,
+            soldier: createStatus.soldier.getSnapshot(),
+            playerId: this.id, //person who created soldier
+            soldierType: soldierTypeToSpawn,
+          };
+        }
+        stateManager.cumulativeUpdates.push(updatePacket);
+      }
+
       let soldiersIdArr = [...this.SoldierMap.keys()];
-      /*
-            var i=0;
-            var test = ()=>{return (i<soldiersIdArr.length)}
-            var loop = ()=>{
-                let soldierObject = this.SoldierMap.get(soldiersIdArr[i++]);
-                if(!soldierObject)
-                    return true;
-                soldierObject.tick(delta, updateManager, stateManager);
-                return true; //continue
-            }
-            nbLoop(test, loop);
-            */
       for (let i = 0; i < soldiersIdArr.length; i++) {
         let soldierObject = this.SoldierMap.get(soldiersIdArr[i]);
         if (!soldierObject) continue;
@@ -94,8 +131,8 @@ class Player {
   }
   getSnapshot() {
     //get snapshot for each soldier
-    var soldierSnapshots=[];
-    if(this.SoldierMap.size > 0)
+    var soldierSnapshots = [];
+    if (this.SoldierMap.size > 0)
       soldierSnapshots = [
         ...this.SoldierMap.values().map((soldier) => soldier.getSnapshot()),
       ];
@@ -107,7 +144,9 @@ class Player {
       posY: this.posY,
       soldiers: soldierSnapshots,
       color: [...this.color],
-      spawnRequests: this.SoldierSpawnRequestIdQueue.toArray().map(requestId => this.SoldierSpawnRequestDetail[requestId])
+      spawnRequests: this.SoldierSpawnRequestIdQueue.toArray().map(
+        (requestId) => this.SoldierSpawnRequestDetail[requestId]
+      ),
     };
   }
   createSoldier(type, x, y) {

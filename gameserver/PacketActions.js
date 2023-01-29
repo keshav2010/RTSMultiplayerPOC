@@ -211,6 +211,26 @@ function SoldierCreateRequestedPacketAction(
   stateManager.cumulativeUpdates.push(updatePacket);
 }
 
+function SoldierSpawnRequestedPacketAction(
+  packetType,
+  socket,
+  io,
+  stateManager,
+  data
+) {
+  let playerId = socket.id;
+  let player = stateManager.SocketToPlayerData.get(playerId);
+  let { soldierType } = data;
+  let queuedSpawnRequest = player.queueSoldierSpawnRequest(soldierType);
+  var updatePacket = {
+    type: PacketType.ByServer.SOLDIER_SPAWN_SCHEDULED,
+    ...queuedSpawnRequest,
+    playerId,
+  };
+
+  stateManager.cumulativeUpdates.push(updatePacket);
+}
+
 function SoldierDeletedPacketAction(packetType, socket, io, stateManager, data){
     let playerId = socket.id;
     let {soldierId} = data;
@@ -286,5 +306,6 @@ module.exports={
     SoldierDeletedPacketAction,
     AttackRequestedPacketAction,
     ChatMessagePacketAction,
-    SpawnPointRequestedAction
+    SpawnPointRequestedAction,
+    SoldierSpawnRequestedPacketAction
 }

@@ -184,6 +184,19 @@ io.on("connection", (socket) => {
     );
   });
 
+  //Client requested a new soldier spawn
+  socket.on(PacketType.ByClient.SOLDIER_SPAWN_REQUESTED, (data) => {
+    gameState.pendingUpdates.queueClientRequest(
+      new Packet(
+        PacketType.ByClient.SOLDIER_SPAWN_REQUESTED,
+        socket,
+        data,
+        PacketActions.SoldierSpawnRequestedPacketAction,
+        ["BattleState"]
+      )
+    );
+  });
+
   //Client deleted their soldier
   socket.on(PacketType.ByClient.SOLDIER_DELETED, (data) => {
     gameState.pendingUpdates.queueClientRequest(

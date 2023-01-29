@@ -70,7 +70,7 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
         this.expectedPositionX = x;
         this.expectedPositionY = y;
         this.setPosition(x,y);
-        this.scale = 0.25;
+        this.scale = 1;
         this.hp = new LoadingBar(scene, this);
         this.highlightBackground = new BackgroundHighlight(scene, this, this.color[0],this.color[1],this.color[2]);
         this.on('destroy', ()=>{
