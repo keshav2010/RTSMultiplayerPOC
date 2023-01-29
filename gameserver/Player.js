@@ -8,6 +8,11 @@ const PacketType = require('../common/PacketType');
 const SoldierType = require('../common/SoldierType');
 const { Queue } = require('./lib/Queue');
 const { v4: uuidv4 } = require('uuid');
+
+const SoldierCost = {
+  [SoldierType.SPEARMAN]: 10,
+  [SoldierType.KNIGHT]: 20
+}
 class Player {
   static maxResources = 200;
   static resourceMultiplier = 1; //per second
@@ -30,6 +35,10 @@ class Player {
     this.posY = 200 + Math.random() * 400;
   }
 
+  getSoldierCost(soldierType) {
+    return SoldierCost[soldierType];
+  }
+
   queueSoldierSpawnRequest(soldierType, spawnCount = 1) {
     const lastQueuedRequest = this.SoldierSpawnRequestIdQueue.peekEnd();
     const lastQueuedSoldierType =
@@ -49,7 +58,7 @@ class Player {
       soldierType,
       count:
         (this.SoldierSpawnRequestDetail[requestId]?.count || 0) + spawnCount,
-      countdown: 10,
+      countdown: (this.SoldierSpawnRequestDetail[requestId]?.countdown || 10),
     };
     return this.SoldierSpawnRequestDetail[requestId];
   }
@@ -61,6 +70,9 @@ class Player {
     let requestId = this.SoldierSpawnRequestIdQueue.peekFront();
     let { soldierType } = this.SoldierSpawnRequestDetail[requestId];
 
+    //resources are not sufficient for upcoming spawn
+    if(this.resources < this.getSoldierCost(soldierType))
+      return null;
     this.SoldierSpawnRequestDetail[requestId].countdown = Math.max(
       this.SoldierSpawnRequestDetail[requestId].countdown - deltaTime,
       0
