@@ -141,7 +141,7 @@ export class SpawnSelectionScene extends BaseScene {
       let player = data.player;
       StateManager.addPlayer(new Player(player));
       this.playerReadyStatus.addNode(
-        this.AddObject(this.add.text(150, 150, `${player.id} Joined`))
+        this.AddObject(this.add.text(150, 150, `${player.name} Joined`))
       );
     });
 
@@ -158,7 +158,7 @@ export class SpawnSelectionScene extends BaseScene {
         let playerIdText = this.add.text(
             spawnX - spawnPointFlag.width,
             spawnY + spawnPointFlag.height / 2,
-            playerId
+            StateManager.getPlayer(playerId).name
           )
         let objGroup = this.AddObject(this.add.group([spawnPointFlag, playerIdText]));
         this.PlayerSpawnPointsTracker[playerId] = { phaserGroup: objGroup, spawnX, spawnY };

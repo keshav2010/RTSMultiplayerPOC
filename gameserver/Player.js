@@ -13,8 +13,8 @@ class Player {
   static maxResources = 200;
   static resourceMultiplier = 1; //per second
   constructor(id, name) {
-    this.name = name || "Keshav";
     this.id = id;
+    this.name = name || `UnnamedPlayer${id.substr(0, 4)}`;
     this.SoldierMap = new Map();
     this.resources = 30;
     this.color = [
