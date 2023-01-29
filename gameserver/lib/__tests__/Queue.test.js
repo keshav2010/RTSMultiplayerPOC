@@ -11,8 +11,8 @@ describe('Queue', () => {
     queue.enqueue('second');
     queue.enqueue('third');
     expect(queue.getSize()).toBe(3);
-    expect(queue.peekFront().data).toBe('first');
-    expect(queue.peekEnd().data).toBe('third');
+    expect(queue.peekFront()).toBe('first');
+    expect(queue.peekEnd()).toBe('third');
   });
 
   test('dequeue', () => {
@@ -21,8 +21,8 @@ describe('Queue', () => {
     queue.enqueue('third');
     queue.dequeue();
     expect(queue.getSize()).toBe(2);
-    expect(queue.peekFront().data).toBe('second');
-    expect(queue.peekEnd().data).toBe('third');
+    expect(queue.peekFront()).toBe('second');
+    expect(queue.peekEnd()).toBe('third');
   });
 
   test('toArray', () => {
@@ -34,13 +34,13 @@ describe('Queue', () => {
 
   test('peekFront', () => {
     queue.enqueue('first');
-    expect(queue.peekFront().data).toBe('first');
+    expect(queue.peekFront()).toBe('first');
     expect(queue.getSize()).toBe(1);
   });
 
   test('peekEnd', () => {
     queue.enqueue('first');
-    expect(queue.peekEnd().data).toBe('first');
+    expect(queue.peekEnd()).toBe('first');
     expect(queue.getSize()).toBe(1);
   });
 
@@ -48,8 +48,8 @@ describe('Queue', () => {
     queue.enqueue('first');
     queue.enqueue('second');
     queue.enqueue('third');
-    expect(queue.findAt(1).data).toBe('second');
-    expect(queue.findAt(3).data).toBe('first');
+    expect(queue.findAt(1)).toBe('second');
+    expect(queue.findAt(3)).toBe('first');
   });
 
   test('removeNode', () => {

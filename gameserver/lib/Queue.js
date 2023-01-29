@@ -14,11 +14,11 @@ class Queue
     }
     peekFront() {
         if(this.mList.isEmpty()) return null;
-        return this.mList.getHeadNode();
+        return this.mList.getHeadNode().data;
     }
     peekEnd() {
         if(this.mList.isEmpty()) return null;
-        return this.mList.getTailNode();
+        return this.mList.getTailNode().data;
     }
     toArray() {
         return this.mList.toArray();
@@ -28,7 +28,7 @@ class Queue
             return null;
         if(offset >= this.mList.getSize() && this.mList.getSize() > 0)
             offset = offset%this.mList.getSize();
-        return this.mList.findAt(offset);
+        return this.mList.findAt(offset).data;
     }
     removeNode(data) {
         let contains = this.mList.contains(data);

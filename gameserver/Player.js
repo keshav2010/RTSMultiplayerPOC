@@ -94,6 +94,7 @@ class Player {
         type: PacketType.ByServer.PLAYER_RESOURCE_UPDATED,
         playerId: this.id,
         resources: this.resources,
+        spawnQueue: this.SoldierSpawnRequestIdQueue.toArray().map(id => this.SoldierSpawnRequestDetail[id])
       });
 
       let soldierTypeToSpawn = this.processPendingSpawnRequests(delta);
