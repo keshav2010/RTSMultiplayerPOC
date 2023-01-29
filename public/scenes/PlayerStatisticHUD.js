@@ -44,7 +44,8 @@ export class PlayerStatisticHUD extends BaseScene {
     Phaser.Display.Align.To.BottomCenter(scrollbar, viewport, 0, 128);
 
     const resourceText = this.AddObject(this.add.text(50, 50, "Resources: 0"));
-    const soldierCount = this.AddObject(this.add.text(50, 100, "Soldiers: 0"));
+    const soldierCount = this.AddObject(this.add.text(50, 80, "Soldiers: 0"));
+    const spawnQueueText = this.AddObject(this.add.text(50, 110, ""));
     const Controls = this.AddObject(
       this.add.text(
         10,
@@ -76,14 +77,22 @@ export class PlayerStatisticHUD extends BaseScene {
       StateManager.removePlayer(playerId);
     });
 
-    gameScene.AddSceneEvent(PacketType.ByServer.PLAYER_RESOURCE_UPDATED,
-      ({ type, playerId, resources }) => {
+    gameScene.AddSceneEvent(
+      PacketType.ByServer.PLAYER_RESOURCE_UPDATED,
+      ({ type, playerId, resources, spawnQueue }) => {
         try {
           if (StateManager.getPlayer()?.playerId === playerId)
             resourceText.setText(`Resources: ${resources.toFixed(2)}`);
           else if (!StateManager.getPlayer()) {
             resourceText.setText(`Resources: ---N/A--`);
           }
+          spawnQueueText.setText(
+            spawnQueue.length > 0
+              ? `(${spawnQueue[0].countdown.toFixed(1)}) seconds until ${
+                  spawnQueue[0].soldierType
+                }-X${spawnQueue[0].count} Spawn.`
+              : ""
+          );
         } catch (err) {
           console.log(err);
         }
