@@ -14,9 +14,9 @@ var selectorDraw = false;
 var pointerDownWorldSpace = null;
 var cursors;
 
+var networkManager;
 function SendChatMessage() {
   try {
-    var networkManager = this.registry.get("networkManager");
     var messageText = $("#chat-message").val();
     networkManager.sendEventToServer(PacketType.ByClient.CLIENT_SENT_CHAT, {
       message: messageText,
@@ -44,6 +44,22 @@ $(() => {
   $("#send-chat-btn").on("click", function () {
     SendChatMessage();
   });
+  $('#btn_spearman').on('click', function() {
+    networkManager.sendEventToServer(
+      PacketType.ByClient.SOLDIER_SPAWN_REQUESTED,
+      {
+        soldierType: SoldierType.SPEARMAN.id
+      }
+    );
+  });
+  $('#btn_knight').on('click', function() {
+    networkManager.sendEventToServer(
+      PacketType.ByClient.SOLDIER_SPAWN_REQUESTED,
+      {
+        soldierType: SoldierType.KNIGHT.id
+      }
+    );
+  });
 });
 export class GameScene extends BaseScene {
   constructor() {
@@ -61,7 +77,7 @@ export class GameScene extends BaseScene {
   }
   create() {
     var StateManager = this.registry.get("stateManager");
-    var networkManager = this.registry.get("networkManager");
+    networkManager = this.registry.get("networkManager");
 
     selectorGraphics = this.AddObject(this.add.graphics());
     this.AddInputEvent("pointerdown", function (pointer) {
@@ -77,13 +93,13 @@ export class GameScene extends BaseScene {
           x: pointer.worldX,
           y: pointer.worldY,
         };
-      } else if (pointer.button === 1) {
-        //mmb
-        //middle mouse btn press => create spearman
+      }
+      //mmb
+      else if (pointer.button === 1) {
         networkManager.sendEventToServer(
           PacketType.ByClient.SOLDIER_CREATE_REQUESTED,
           {
-            soldierType: SoldierType.SPEARMAN,
+            soldierType: SoldierType.SPEARMAN.id,
             currentPositionX: pointer.worldX,
             currentPositionY: pointer.worldY,
           }

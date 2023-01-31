@@ -10,13 +10,15 @@ const PacketType={
         'PLAYER_JOINED':'pljoin',
         'SOLDIER_ATTACK_REQUESTED': 'sldierattkreq',
         'CLIENT_SENT_CHAT':'clientchat',
-        'SPAWN_POINT_SELECTED': 'spwnpntslct'
+        'SPAWN_POINT_SELECTED': 'spwnpntslct',
+        'SOLDIER_SPAWN_REQUESTED': 'unitspwnreq',
     },
     ByServer:{
         'NEW_CHAT_MESSAGE':'newcm',
         'SOLDIER_KILLED':'sk',
         'GAME_STARTED':'gs',
         'SOLDIER_CREATE_ACK':'sca',
+        'SOLDIER_SPAWN_SCHEDULED': 'sspwnsch',
         'SPAWN_POINT_ACK':'spnpntack',
 
         'GAME_STATE_SYNC':'gss',
