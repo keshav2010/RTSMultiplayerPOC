@@ -48,7 +48,7 @@ $(() => {
     networkManager.sendEventToServer(
       PacketType.ByClient.SOLDIER_SPAWN_REQUESTED,
       {
-        soldierType: SoldierType.SPEARMAN
+        soldierType: SoldierType.SPEARMAN.id
       }
     );
   });
@@ -56,7 +56,7 @@ $(() => {
     networkManager.sendEventToServer(
       PacketType.ByClient.SOLDIER_SPAWN_REQUESTED,
       {
-        soldierType: SoldierType.KNIGHT
+        soldierType: SoldierType.KNIGHT.id
       }
     );
   });
@@ -99,7 +99,7 @@ export class GameScene extends BaseScene {
         networkManager.sendEventToServer(
           PacketType.ByClient.SOLDIER_CREATE_REQUESTED,
           {
-            soldierType: SoldierType.SPEARMAN,
+            soldierType: SoldierType.SPEARMAN.id,
             currentPositionX: pointer.worldX,
             currentPositionY: pointer.worldY,
           }
