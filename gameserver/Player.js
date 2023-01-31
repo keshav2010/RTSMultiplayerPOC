@@ -6,7 +6,7 @@ const Soldier = require('./Soldier');
 const nbLoop = require('../common/nonBlockingLoop');
 const PacketType = require('../common/PacketType');
 const SoldierType = require('../common/SoldierType');
-const { Queue } = require('./lib/Queue');
+const { Queue } = require('../common/Queue');
 const { v4: uuidv4 } = require('uuid');
 
 const SoldierCost = {
