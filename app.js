@@ -98,26 +98,6 @@ io.on("connection", (socket) => {
   }
   Packet.io = io;
 
-  //Initial packets
-  gameState.queueClientRequest(
-    new Packet(
-      PacketType.ByServer.PLAYER_INIT,
-      socket,
-      {},
-      PacketActions.PlayerInitPacketAction,
-      ["SpawnSelectionState"]
-    )
-  );
-  gameState.queueClientRequest(
-    new Packet(
-      PacketType.ByClient.PLAYER_JOINED,
-      socket,
-      {},
-      PacketActions.PlayerJoinedPacketAction,
-      ["SpawnSelectionState"]
-    )
-  );
-
   socket.on("disconnect", (reason) => {
     console.log(
       "***clients disconnected, active atm : ",
@@ -129,6 +109,29 @@ io.on("connection", (socket) => {
         socket,
         {},
         PacketActions.PlayerLeftPacketAction
+      )
+    );
+  });
+
+  // client requests init packet
+  socket.on(PacketType.ByClient.CLIENT_INIT_REQUESTED, (data) => {
+    //Initial packets
+    gameState.queueClientRequest(
+      new Packet(
+        PacketType.ByServer.PLAYER_INIT,
+        socket,
+        {},
+        PacketActions.PlayerInitPacketAction,
+        ["SpawnSelectionState"]
+      )
+    );
+    gameState.queueClientRequest(
+      new Packet(
+        PacketType.ByClient.PLAYER_JOINED,
+        socket,
+        {},
+        PacketActions.PlayerJoinedPacketAction,
+        ["SpawnSelectionState"]
       )
     );
   });

@@ -1,6 +1,7 @@
 
 const PacketType={
     ByClient:{
+        'CLIENT_INIT_REQUESTED': 'cir',
         'PLAYER_READY':'plr',
         'PLAYER_UNREADY':'plur',
         'SOLDIER_CREATE_REQUESTED':'slcrreq',

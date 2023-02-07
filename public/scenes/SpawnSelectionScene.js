@@ -37,6 +37,7 @@ export class SpawnSelectionScene extends BaseScene {
     StateManager = this.registry.get("stateManager");
     NetworkManager = this.registry.get("networkManager");
 
+    NetworkManager.sendEventToServer(PacketType.ByClient.CLIENT_INIT_REQUESTED);
     this.playerReadyStatus = this.AddObject(new Column(this, 0, 120));
     selectorGraphics = this.AddObject(this.add.graphics());
     selectorGraphics.clear();
@@ -135,6 +136,14 @@ export class SpawnSelectionScene extends BaseScene {
           playerId: newPlayer.playerId,
         });
       });
+      //initial random position.
+      NetworkManager.sendEventToServer(
+        PacketType.ByClient.SPAWN_POINT_REQUESTED,
+        {
+          spawnX: 800*Math.random() + Math.random()*400,
+          spawnY: 800*Math.random() + Math.random()*400,
+        }
+      );
     });
     this.AddSceneEvent(PacketType.ByClient.PLAYER_JOINED, (data) => {
       console.log(`[PLAYER_JOINED]:`, data);
@@ -227,16 +236,7 @@ export class SpawnSelectionScene extends BaseScene {
           PacketType.ByClient.PLAYER_UNREADY,
           {}
         );
-    })
-
-    //initial random position.
-    NetworkManager.sendEventToServer(
-      PacketType.ByClient.SPAWN_POINT_REQUESTED,
-      {
-        spawnX: 800*Math.random() + Math.random()*400,
-        spawnY: 800*Math.random() + Math.random()*400,
-      }
-    );
+    });
     this.AddSceneEvent("shutdown", (data) => {
       console.log("shutdown ", data.config.key);
       this.Destroy();
