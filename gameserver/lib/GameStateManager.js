@@ -1,98 +1,126 @@
 const PacketType = require("../../common/PacketType");
-const Player = require("../Player");
 const EventEmitter = require("events");
 const ServerLocalEvents = require("../ServerLocalEvents");
 const Scene = require("./Scene");
 const StateMachine = require("./StateMachine");
-const PendingUpdateManager = require("./PendingUpdateManager");
 const { AllianceTracker } = require("./AllianceTracker");
+const { Queue } = require("../../common/Queue");
 /**
  * Manages entire game state.
  */
 class GameStateManager {
   constructor(io, serverStateMachineJSON, serverStateMachineBehaviour) {
-    this.clientInitUpdates = [];
-
-    //all delta changes that we can send to client by serializing them or as a string whatever.
     this.cumulativeUpdates = [];
+    this.pendingClientRequests = new Queue();
 
     this.io = io;
 
     this.GameStarted = false;
     this.SocketToPlayerData = new Map();
-    this.ReadyPlayers = new Map();
+    this.SocketsMap = new Map();
     this.lastSimulateTime_ms = Date.now();
-    
+
     this.event = new EventEmitter();
     this.scene = new Scene(this);
 
     this.countdown = process.env.COUNTDOWN; //seconds
-    this.stateMachine = new StateMachine(serverStateMachineJSON, serverStateMachineBehaviour);
-    this.pendingUpdates = new PendingUpdateManager();
-
+    this.stateMachine = new StateMachine(
+      serverStateMachineJSON,
+      serverStateMachineBehaviour
+    );
     this.alliances = new AllianceTracker();
   }
 
-  /**
-   * broadcast updates to all clients.
-   * reset cumulativeUpdates container.
-   */
-  broadcastCumulativeUpdate() {
-    //broadcast changes to everyone
-    this.io.emit("tick", JSON.stringify({ data: this.cumulativeUpdates }));
-
-    //reset
-    this.cumulativeUpdates = [];
+  queueClientRequest(clientRequest) {
+    this.pendingClientRequests.enqueue(clientRequest);
+  }
+  getClientRequest() {
+    let request = this.pendingClientRequests.peekFront();
+    this.pendingClientRequests.dequeue();
+    return request;
   }
 
-  /**
-   * This function is expected to execute only once per client.
-   */
-  broadcastClientInitUpdate() {
-    try {
-      this.clientInitUpdates.forEach((deltaPacket) => {
-        //copy all other parameters except socket field
-        let filtered = Object.keys(deltaPacket)
-          .filter((key) => key !== "socket")
-          .reduce((obj, key) => {
-            obj[key] = deltaPacket[key];
-            return obj;
-          }, {});
-
-        deltaPacket.socket.emit(
-          "tick",
-          JSON.stringify({
-            data: [filtered],
-          })
-        );
-      });
-      this.clientInitUpdates = [];
-    } catch (err) {
-      console.log(err);
-    }
+  enqueueStateUpdate(packet) {
+    this.cumulativeUpdates.push(packet);
   }
 
   broadcastUpdates() {
-    this.broadcastClientInitUpdate();
-    this.broadcastCumulativeUpdate();
+    //removes socket property from packet.
+    function cleanPacket(packet) {
+      const { socket, ...cleanPacket } = packet;
+      return cleanPacket;
+    }
+    
+    let batches = [];
+    for (const packet of this.cumulativeUpdates) {
+      let isBroadcastPacket = !packet.hasOwnProperty('socket');
+      if (isBroadcastPacket) {
+        if (!batches.length || !(batches[batches.length - 1][0]?.hasOwnProperty("socket"))) {
+          batches.push({ packets: [cleanPacket(packet)] });
+        } else {
+          batches[batches.length - 1].packets.push(cleanPacket(packet));
+        }
+        continue;
+      }
+      
+      const lastBatch = batches[batches.length - 1];
+      if (lastBatch && lastBatch?.socket?.id === packet.socket.id) {
+        lastBatch.packets.push(cleanPacket(packet));
+        continue;
+      }
+      batches.push({ socket: packet.socket, packets: [cleanPacket(packet)] });
+    }
+  
+    for(const batch of batches) {
+      let isBroadcastPackets = !batch.hasOwnProperty("socket");
+      if(isBroadcastPackets) {
+        this.io.emit("tick", JSON.stringify({ data: batch.packets }));
+      } else {
+        batch.socket.emit("tick", JSON.stringify({ data: batch.packets }));
+      }
+    }
+    this.cumulativeUpdates = [];
   }
 
   simulate() {
     this.stateMachine.tick({gameStateManager: this});
   }
 
-  createPlayer(id) {
-    if (!this.SocketToPlayerData.has(id))
-      this.SocketToPlayerData.set(id, new Player(id, null, this));
+  registerPlayer(socket, player) {
+    console.log("registering player : ", player.id);
+    if(!this.SocketToPlayerData.has(socket.id))
+      this.SocketToPlayerData.set(socket.id, player);
+    if(!this.SocketsMap.has(player.id))
+      this.SocketsMap.set(player.id, socket);
   }
 
-  removePlayer(id) {
-    this.event.emit(ServerLocalEvents.SOLDIER_REMOVED, "test");
+  getPlayer(socket) {
+    return this.SocketToPlayerData.get(socket.id) || null;
+  }
+  getPlayers() {
+    return [...this.SocketToPlayerData.values()];
+  }
+  isPlayerRegistered(socket, player) {
+    return player?.id && socket?.id && this.SocketToPlayerData.has(socket.id) && this.SocketsMap.has(player?.id)
+  }
+
+  getPlayerSocket(playerId) {
+    return this.SocketsMap.get(playerId);
+  }
+  getPlayerById(playerId) {
+    let socketId = this.SocketsMap.get(playerId)?.id;
+    return this.SocketToPlayerData.get(socketId) || null;
+  }
+  removePlayer(socket) {
+        //update for collision detection.
+        this.scene.update();
+        const player = this.SocketToPlayerData.get(socket.id);
+        this.SocketToPlayerData.delete(socket.id);
+        this.SocketsMap.delete(player.id);
   }
 
   createSoldier(x, y, type, playerId) {
-    let player = this.SocketToPlayerData.get(playerId);
-
+    let player = this.getPlayerById(playerId);
     let { status, soldierId, soldier } = player.createSoldier(type, x, y);
     if (status) {
       this.scene.insertSoldier(soldier);
@@ -106,7 +134,6 @@ class GameStateManager {
     }
     return { status, soldierId, soldier };
   }
-
   removeSoldier(playerId, soldierId) {
     try {
       this.SocketToPlayerData.get(playerId).removeSoldier(soldierId, this);
@@ -116,7 +143,7 @@ class GameStateManager {
         playerId: playerId,
         soldierId: soldierId,
       };
-      stateManager.cumulativeUpdates.push(deltaUpdate);
+      this.enqueueStateUpdate(deltaUpdate);
     } catch (err) {}
   }
 

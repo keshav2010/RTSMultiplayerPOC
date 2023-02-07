@@ -58,23 +58,24 @@ function processPendingUpdates() {
   var startTime = Date.now();
   var timeUtilised = 0;
 
+  //get requests received from clients & update game state
   var loop = () => {
-    var updatePacket = gameState.pendingUpdates.getClientRequest();
+    var updatePacket = gameState.getClientRequest();
     if (updatePacket) updatePacket.updateStateManager(gameState);
     timeUtilised = Date.now() - startTime;
     return true;
   };
+
   var test = () => {
     return timeUtilised < MAX_MS_PER_TICK && io.of("/").sockets.size > 0;
   };
+
+  
   var onEnd = () => {
-    gameState.simulate();
-    //Broadcast delta-changes to all connected clients
+    
+    //send updates to clients.
     gameState.broadcastUpdates();
-    let serverEvent;
-    while ((serverEvent = gameState.pendingUpdates.getServerEvent())) {
-      if (serverEvent) io.emit("tick", JSON.stringify({ data: [serverEvent] }));
-    }
+    gameState.simulate();
     const newTickAfterMS = Math.abs(MAX_MS_PER_TICK - timeUtilised);
     //run server loop only if connections exist
     if (io.of("/").sockets.size > 0) {
@@ -98,7 +99,7 @@ io.on("connection", (socket) => {
   Packet.io = io;
 
   //Initial packets
-  gameState.pendingUpdates.queueClientRequest(
+  gameState.queueClientRequest(
     new Packet(
       PacketType.ByServer.PLAYER_INIT,
       socket,
@@ -107,7 +108,7 @@ io.on("connection", (socket) => {
       ["SpawnSelectionState"]
     )
   );
-  gameState.pendingUpdates.queueClientRequest(
+  gameState.queueClientRequest(
     new Packet(
       PacketType.ByClient.PLAYER_JOINED,
       socket,
@@ -122,7 +123,7 @@ io.on("connection", (socket) => {
       "***clients disconnected, active atm : ",
       io.of("/").sockets.size
     );
-    gameState.pendingUpdates.queueClientRequest(
+    gameState.queueClientRequest(
       new Packet(
         PacketType.ByServer.PLAYER_LEFT,
         socket,
@@ -134,7 +135,7 @@ io.on("connection", (socket) => {
 
   //client marked ready
   socket.on(PacketType.ByClient.PLAYER_READY, (data) => {
-    gameState.pendingUpdates.queueClientRequest(
+    gameState.queueClientRequest(
       new Packet(
         PacketType.ByClient.PLAYER_READY,
         socket,
@@ -147,7 +148,7 @@ io.on("connection", (socket) => {
 
   //client is not ready
   socket.on(PacketType.ByClient.PLAYER_UNREADY, (data) => {
-    gameState.pendingUpdates.queueClientRequest(
+    gameState.queueClientRequest(
       new Packet(
         PacketType.ByClient.PLAYER_UNREADY,
         socket,
@@ -160,7 +161,7 @@ io.on("connection", (socket) => {
 
   //Client Requesting to move a soldier
   socket.on(PacketType.ByClient.SOLDIER_MOVE_REQUESTED, (data) => {
-    gameState.pendingUpdates.queueClientRequest(
+    gameState.queueClientRequest(
       new Packet(
         PacketType.ByClient.SOLDIER_MOVE_REQUESTED,
         socket,
@@ -173,7 +174,7 @@ io.on("connection", (socket) => {
 
   //Client requesting a new soldier
   socket.on(PacketType.ByClient.SOLDIER_CREATE_REQUESTED, (data) => {
-    gameState.pendingUpdates.queueClientRequest(
+    gameState.queueClientRequest(
       new Packet(
         PacketType.ByClient.SOLDIER_CREATE_REQUESTED,
         socket,
@@ -186,7 +187,7 @@ io.on("connection", (socket) => {
 
   //Client requested a new soldier spawn
   socket.on(PacketType.ByClient.SOLDIER_SPAWN_REQUESTED, (data) => {
-    gameState.pendingUpdates.queueClientRequest(
+    gameState.queueClientRequest(
       new Packet(
         PacketType.ByClient.SOLDIER_SPAWN_REQUESTED,
         socket,
@@ -199,7 +200,7 @@ io.on("connection", (socket) => {
 
   //Client deleted their soldier
   socket.on(PacketType.ByClient.SOLDIER_DELETED, (data) => {
-    gameState.pendingUpdates.queueClientRequest(
+    gameState.queueClientRequest(
       new Packet(
         PacketType.ByClient.SOLDIER_DELETED,
         socket,
@@ -212,7 +213,7 @@ io.on("connection", (socket) => {
 
   //Client Requesting Attack on other.
   socket.on(PacketType.ByClient.SOLDIER_ATTACK_REQUESTED, (data) => {
-    gameState.pendingUpdates.queueClientRequest(
+    gameState.queueClientRequest(
       new Packet(
         PacketType.ByClient.SOLDIER_ATTACK_REQUESTED,
         socket,
@@ -225,7 +226,7 @@ io.on("connection", (socket) => {
 
   //Client sent a chat message
   socket.on(PacketType.ByClient.CLIENT_SENT_CHAT, (data) => {
-    gameState.pendingUpdates.queueClientRequest(
+    gameState.queueClientRequest(
       new Packet(
         PacketType.ByClient.CLIENT_SENT_CHAT,
         socket,
@@ -236,7 +237,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on(PacketType.ByClient.SPAWN_POINT_REQUESTED, (data) => {
-    gameState.pendingUpdates.queueClientRequest(
+    gameState.queueClientRequest(
       new Packet(
         PacketType.ByClient.SPAWN_POINT_REQUESTED,
         socket,

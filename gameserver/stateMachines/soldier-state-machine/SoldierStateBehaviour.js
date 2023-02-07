@@ -58,7 +58,7 @@ module.exports = {
     });
   },
 
-  Attack: ({ delta, updateManager, stateManager, soldier }) => {
+  Attack: ({ delta, stateManager, soldier }) => {
     if (!soldier.AttackTargetSoldier) {
       soldier.stateMachine.controller.send("TargetLost");
     }
@@ -74,7 +74,7 @@ module.exports = {
     soldier.AttackTargetSoldier.attackMe(delta, soldier);
 
     //schedule update to client about attack on enemy soldier.
-    updateManager.queueServerEvent({
+    stateManager.enqueueStateUpdate({
       type: PacketType.ByServer.SOLDIER_ATTACKED,
       a: soldier.getSnapshot(),
       b: soldier.AttackTargetSoldier.getSnapshot(),
@@ -82,7 +82,7 @@ module.exports = {
 
     //if attacked soldier unit dead, update server-state and schedule update for client.
     if (soldier.AttackTargetSoldier.health === 0) {
-      updateManager.queueServerEvent({
+      stateManager.enqueueStateUpdate({
         type: PacketType.ByServer.SOLDIER_KILLED,
         playerId: soldier.AttackTargetSoldier.playerId,
         soldierId: soldier.AttackTargetSoldier.id,
@@ -154,7 +154,7 @@ module.exports = {
     soldier.stateMachine.controller.send("AttackerUnitNearby");
   },
 
-  ChaseTarget: ({ delta, updateManager, stateManager, soldier }) => {
+  ChaseTarget: ({ delta, stateManager, soldier }) => {
     try {
       if (!soldier.AttackTargetSoldier) {
         soldier.stateMachine.controller.send("TargetLost");
@@ -169,7 +169,7 @@ module.exports = {
       soldier.targetPosition.copy(soldier.AttackTargetSoldier.pos);
       soldier.expectedPosition.copy(soldier.AttackTargetSoldier.pos);
 
-      updateManager.queueServerEvent({
+      stateManager.enqueueStateUpdate({
         type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
         soldier: soldier.getSnapshot(),
       });
