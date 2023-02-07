@@ -1,5 +1,4 @@
 const PacketType = require("../../../common/PacketType");
-const nbLoop = require("../../../common/nonBlockingLoop");
 module.exports = {
     SpawnSelectionState: ({gameStateManager}) => {
         try {
@@ -8,7 +7,8 @@ module.exports = {
           gameStateManager.lastSimulateTime_ms = Date.now();
           gameStateManager.countdown -= deltaTime;
           gameStateManager.countdown = Math.max(0, gameStateManager.countdown);
-          gameStateManager.pendingUpdates.queueServerEvent({
+          
+          gameStateManager.enqueueStateUpdate({
             type: PacketType.ByServer.COUNTDOWN_TIME,
             time: gameStateManager.countdown,
           });
@@ -25,25 +25,10 @@ module.exports = {
         try {
           var deltaTime = (Date.now() - gameStateManager.lastSimulateTime_ms) / 1000;
           gameStateManager.lastSimulateTime_ms = Date.now();
-
           //simulate all players.
-          let playerIdArray = [...gameStateManager.SocketToPlayerData.keys()];
-          /*
-          let i = 0;
-          var test = () => {
-            return i < playerIdArray.length;
-          };
-          var loop = () => {
-            let playerObject = gameStateManager.SocketToPlayerData.get(playerIdArray[i++]);
-            playerObject.tick(deltaTime, gameStateManager.pendingUpdates, gameStateManager);
-            return true;
-          };
-          nbLoop(test, loop);
-         */
-          for(let i=0; i < playerIdArray.length; i++) {
-            let playerObject = gameStateManager.SocketToPlayerData.get(playerIdArray[i]);
-            playerObject.tick(deltaTime, gameStateManager.pendingUpdates, gameStateManager);
-          }
+          gameStateManager.getPlayers().forEach(player => {
+            player.tick(deltaTime, gameStateManager);
+          });
         } catch (err) {
           console.log(err);
         }

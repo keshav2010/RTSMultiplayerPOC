@@ -11,8 +11,7 @@ class Player
         this.soldiers = new Set();
         this.spawnPosVec = new SAT.Vector(prop.posX, prop.posY);
 
-        //group name will be player name
-        this.name = prop.name || 'TempName';
+        this.name = prop.name;
         this.playerId = prop.id;
         this.color = [...prop.color];
     }

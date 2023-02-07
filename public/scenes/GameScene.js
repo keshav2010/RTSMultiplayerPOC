@@ -300,7 +300,7 @@ export class GameScene extends BaseScene {
         let playerIdText = this.add.text(
             spawnPosVec.x - spawnPointFlag.width,
             spawnPosVec.y + spawnPointFlag.height / 2,
-            playerId
+            StateManager.getPlayer(playerId).name
           )
         let objGroup = this.AddObject(this.add.group([spawnPointFlag, playerIdText]));
         this.PlayerSpawnPointsTracker[playerId] = { phaserGroup: objGroup, spawnX: spawnPosVec.x, spawnY: spawnPosVec.y };

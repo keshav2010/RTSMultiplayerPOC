@@ -184,7 +184,7 @@ class Soldier extends SAT.Box {
     return steer;
   }
 
-  tick(delta, updateManager, stateManager) {
+  tick(delta, stateManager) {
     this.velocityVector.add(this.accelerationVector);
     if (this.velocityVector.len() > this.speed)
       this.velocityVector.normalize().scale(this.speed);
@@ -213,9 +213,9 @@ class Soldier extends SAT.Box {
       }
     });
 
-    this.stateMachine.tick({delta, updateManager, stateManager, soldier: this});
+    this.stateMachine.tick({delta, stateManager, soldier: this});
 
-    updateManager.queueServerEvent({
+    stateManager.enqueueStateUpdate({
       type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
       soldier: this.getSnapshot(),
     });

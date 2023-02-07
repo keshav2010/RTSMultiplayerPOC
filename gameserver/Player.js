@@ -13,8 +13,8 @@ class Player {
   static maxResources = 200;
   static resourceMultiplier = 1; //per second
   constructor(id, name) {
-    this.name = name || "Keshav";
     this.id = id;
+    this.name = name || `UnnamedPlayer${id.substr(0, 4)}`;
     this.SoldierMap = new Map();
     this.resources = 30;
     this.color = [
@@ -25,6 +25,8 @@ class Player {
 
     this.SoldierSpawnRequestIdQueue = new Queue();
     this.SoldierSpawnRequestDetail = {};
+
+    this.readyStatus = false;
 
     //flag poss
     this.posX = 200 + Math.random() * 400;
@@ -92,14 +94,15 @@ class Player {
     this.posY = y;
   }
 
-  tick(delta, updateManager, stateManager) {
+  tick(delta, stateManager) {
     try {
       this.resources += Player.resourceMultiplier * delta;
       this.resources = Math.min(this.resources, Player.maxResources);
 
       //Queue delta update
-      updateManager.queueServerEvent({
+      stateManager.enqueueStateUpdate({
         type: PacketType.ByServer.PLAYER_RESOURCE_UPDATED,
+        socket: stateManager.getPlayerSocket(this.id),
         playerId: this.id,
         resources: this.resources,
         spawnQueue: this.SoldierSpawnRequestIdQueue.toArray().map(id => this.SoldierSpawnRequestDetail[id])
@@ -108,9 +111,9 @@ class Player {
       let soldierTypeToSpawn = this.processPendingSpawnRequests(delta);
       if (soldierTypeToSpawn) {
         let createStatus = stateManager.createSoldier(
-          soldierTypeToSpawn,
           this.posX,
           this.posY,
+          soldierTypeToSpawn,
           this.id
         );
         let updatePacket = {
@@ -125,14 +128,14 @@ class Player {
             soldierType: soldierTypeToSpawn,
           };
         }
-        stateManager.cumulativeUpdates.push(updatePacket);
+        stateManager.enqueueStateUpdate(updatePacket);
       }
 
       let soldiersIdArr = [...this.SoldierMap.keys()];
       for (let i = 0; i < soldiersIdArr.length; i++) {
         let soldierObject = this.SoldierMap.get(soldiersIdArr[i]);
         if (!soldierObject) continue;
-        soldierObject.tick(delta, updateManager, stateManager);
+        soldierObject.tick(delta, stateManager);
       }
     } catch (err) {
       console.error(err);
@@ -151,6 +154,7 @@ class Player {
       resources: this.resources,
       posX: this.posX,
       posY: this.posY,
+      readyStatus: this.readyStatus,
       soldiers: soldierSnapshots,
       color: [...this.color],
       spawnRequests: this.SoldierSpawnRequestIdQueue.toArray().map(
