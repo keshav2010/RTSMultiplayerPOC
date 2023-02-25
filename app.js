@@ -3,7 +3,6 @@ const express = require("express");
 const path = require("path");
 const fs = require("fs");
 const socketIO = require("socket.io");
-require("dotenv").config();
 const PORT = process.env.PORT || 3000;
 const app = express();
 
@@ -13,7 +12,6 @@ const PacketActions = require("./gameserver/PacketActions");
 
 const GameStateManager = require("./gameserver/lib/GameStateManager");
 const cors = require("cors");
-
 const nbLoop = require("./common/nonBlockingLoop");
 
 app.use(cors());

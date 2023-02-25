@@ -1,0 +1,135 @@
+const cluster = require("cluster");
+const http = require("http");
+const numCPUs = require("os").cpus().length;
+const url = require("url");
+const express = require("express");
+const PORT = process.env.PORT || 3000;
+const path = require("path");
+const fs = require("fs");
+const { v4: uuidv4 } = require("uuid");
+
+const cors = require("cors");
+const nbLoop = require("./common/nonBlockingLoop");
+
+//worker id to session id
+const WorkerDict = {}; //for each worker, stores details.
+const MAX_SESSION_PER_WORKER = process.env.MAX_SESSION_PER_WORKER;
+const app = express();
+app.use(cors());
+app.use(express.static("dist"));
+app.use(express.static("public"));
+const server = http.createServer(app);
+
+// Serve HTML
+app.get("/", async function (req, res) {
+  try {
+    const pathName = path.resolve(__dirname, "dist");
+    const files = await fs.promises.readdir(pathName);
+    const filename = files.find((file) => path.extname(file) === ".html");
+
+    if (!filename) {
+      return res
+        .status(500)
+        .send(`<h1>ERROR! No HTML files found in ${pathName}</h1>`);
+    }
+
+    const filepath = path.resolve(pathName, filename);
+    const stats = await fs.promises.stat(filepath);
+
+    if (!stats.isFile()) {
+      return res.status(500).send(`<h1>ERROR! ${filename} is not a file.</h1>`);
+    }
+
+    res.sendFile(filepath);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("<h1>Internal Server Error, Try again later.</h1>");
+  }
+});
+
+app.post("/session", (req, res) => {
+  
+  //find worker where session can be created.
+  let availableWorker = Object.values(WorkerDict).find(
+    (workerData) => workerData.sessions.length < Number(MAX_SESSION_PER_WORKER)
+  )?.worker;
+  const usingExistingWorker = availableWorker !== undefined;
+  if (!availableWorker) {
+    if (Object.keys(WorkerDict) >= numCPUs)
+      return res.status(503).json({
+        message: `Unable to create session, max capacity reached on this instance.`,
+        code: "MAX_SESSIONS_REACHED",
+      });
+
+    // spawn a new worker.
+    availableWorker = cluster.fork();
+  }
+
+  //if is a new worker, create details object, otherwise fetch it from dict.
+  const sessionId = uuidv4();
+  const workerDetail = !usingExistingWorker
+    ? {
+        sessions: [],
+        worker: availableWorker,
+      }
+    : WorkerDict[availableWorker.id];
+  workerDetail.sessions.push(sessionId);
+  
+  //update dict.
+  WorkerDict[availableWorker.id] = workerDetail;
+  availableWorker.send({
+    type: 'SESSION_INIT',
+    sessionId: sessionId
+  });
+  return res.status(200).json({
+    workerId: `${availableWorker.id}`,
+    sessionId: sessionId,
+    availableWorker
+  });
+});
+
+app.get('/sessions', (req, res) => {
+  let { id : sessionId } = req.query;
+  if ( //if sessionId not provided or, if provided but is invalid.
+    typeof sessionId === "undefined" ||
+    Object.values(WorkerDict).filter((worker) =>
+      worker.sessions.includes(sessionId)
+    ).length === 0
+  ) {
+    if(typeof sessionId !== "undefined")
+      return res.status(404).json({
+        error: "No Session Found."
+      });
+  }
+})
+
+app.get("*", (req, res) => {
+  res.statusCode(404).send();
+});
+
+//When any of the workers die
+cluster.on("exit", (worker, code, signal) => {
+  console.log(`Worker ${worker.id} exited with code ${code}, signal ${signal}`);
+  delete WorkerDict[worker.id];
+});
+
+//Emitted after the worker IPC channel has disconnected
+cluster.on("disconnect", (worker) => {
+  console.log(`[cluster-disconnect]: Worker#${worker.id} disconnected`);
+  delete WorkerDict[worker.id];
+});
+
+cluster.on("message", (msg) => {
+  if (msg.type === "WORKER_READY") {
+    console.log(`[${msg.type}] Worker ${msg.workerId} ready to accept sessions (port ${msg.port})`);
+  }
+});
+cluster.on("listening", (worker, address) => {
+  console.log(
+    `[cluster-listening] worker ${worker.id} Live @port: ${address.port}`
+  );
+  WorkerDict[worker.id].port = address.port;
+});
+server.listen(PORT, () => {
+  console.log(`Master HTTP Server listening on port ${server.address().port}`);
+});

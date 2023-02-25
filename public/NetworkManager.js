@@ -14,8 +14,10 @@ class NetworkManager {
     }
 
     //connects to game server and launches spawn-select scene in parallel.
-    connectGameServer(serverUrl = null) {
-        this.socket = io(serverUrl);
+    connectGameServer(sessionId) {
+        this.socket = io(`/${sessionId}`,{
+            transports: ["websocket"],
+        });
         if(!this.eventHandlersBinded) {
             console.log(`binding event handlers`);
             this.bindEventHandlers();
