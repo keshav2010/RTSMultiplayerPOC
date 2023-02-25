@@ -46,8 +46,9 @@ function serverTick(gameState, io) {
 }
 
 process.on("message", (message) => {
-  console.log("worker received message : ", message);
+  //new session create
   if (message.type === "SESSION_INIT") {
+    console.log("Worker Received Session Init", message);
     SessionManager[message.sessionId] = {
       sessionId: message.sessionId,
       gameState: new GameStateManager(
@@ -229,6 +230,17 @@ process.on("message", (message) => {
         );
       });
     });
+
+    let trySendAck = () => {
+      console.log('attempting to send ack for sessionId ', message.sessionId);
+      if(server.listening)
+        process.send({
+          type: "SESSION_READY",
+          sessionId: message.sessionId
+        });
+      else setTimeout(trySendAck,0);
+    };
+    trySendAck();
   }
 });
 
@@ -236,5 +248,4 @@ server.listen(0, () => {
   console.log(
     `[Worker${cluster.worker.id}] Online @ port ${server.address().port}`
   );
-  process.send({ type: "WORKER_READY", port: server.address().port });
 });

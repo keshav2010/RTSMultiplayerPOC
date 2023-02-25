@@ -13,6 +13,10 @@ const nbLoop = require("./common/nonBlockingLoop");
 
 //worker id to session id
 const WorkerDict = {}; //for each worker, stores details.
+var clusterWorkersPort = null;
+
+const WorkerIdToPendingHTTPRequest = {};
+
 const MAX_SESSION_PER_WORKER = process.env.MAX_SESSION_PER_WORKER;
 const app = express();
 app.use(cors());
@@ -77,14 +81,10 @@ app.post("/session", (req, res) => {
   
   //update dict.
   WorkerDict[availableWorker.id] = workerDetail;
+  WorkerIdToPendingHTTPRequest[availableWorker.id] = res;
   availableWorker.send({
     type: 'SESSION_INIT',
     sessionId: sessionId
-  });
-  return res.status(200).json({
-    workerId: `${availableWorker.id}`,
-    sessionId: sessionId,
-    availableWorker
   });
 });
 
@@ -117,19 +117,32 @@ cluster.on("exit", (worker, code, signal) => {
 cluster.on("disconnect", (worker) => {
   console.log(`[cluster-disconnect]: Worker#${worker.id} disconnected`);
   delete WorkerDict[worker.id];
-});
-
-cluster.on("message", (msg) => {
-  if (msg.type === "WORKER_READY") {
-    console.log(`[${msg.type}] Worker ${msg.workerId} ready to accept sessions (port ${msg.port})`);
+  if(WorkerIdToPendingHTTPRequest.hasOwnProperty(worker.id)) {
+    WorkerIdToPendingHTTPRequest[worker.id].status(503).json({
+      message: "worker channel has disconnected"
+    })
+    delete WorkerIdToPendingHTTPRequest[worker.id]
   }
 });
-cluster.on("listening", (worker, address) => {
-  console.log(
-    `[cluster-listening] worker ${worker.id} Live @port: ${address.port}`
-  );
-  WorkerDict[worker.id].port = address.port;
+
+cluster.on("message", (worker, message) => {
+  console.log('cluster received message : ', message);
+  if(message.type === 'SESSION_READY') {
+    const {sessionId} = message.sessionId;
+  
+    WorkerIdToPendingHTTPRequest[worker.id].status(200).json({
+      sessionId: sessionId,
+      port: clusterWorkersPort
+    });
+    delete WorkerIdToPendingHTTPRequest[worker.id];
+  }
 });
+
+cluster.on("listening", (worker, address) => {
+  console.log(`[cluster:listening] Worker ${worker.id} ready to accept sessions (port ${address.port})`);
+  clusterWorkersPort = clusterWorkersPort || address.port;
+});
+
 server.listen(PORT, () => {
   console.log(`Master HTTP Server listening on port ${server.address().port}`);
 });
