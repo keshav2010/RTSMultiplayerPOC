@@ -120,7 +120,7 @@ io.on("connection", (socket) => {
         socket,
         {},
         PacketActions.PlayerInitPacketAction,
-        ["SpawnSelectionState"]
+        ["SessionLobbyState"]
       )
     );
     gameState.queueClientRequest(
@@ -129,7 +129,7 @@ io.on("connection", (socket) => {
         socket,
         {},
         PacketActions.PlayerJoinedPacketAction,
-        ["SpawnSelectionState"]
+        ["SessionLobbyState"]
       )
     );
   });
@@ -142,7 +142,7 @@ io.on("connection", (socket) => {
         socket,
         data,
         PacketActions.PlayerReadyPacketAction,
-        ["SpawnSelectionState"]
+        ["SessionLobbyState"]
       )
     );
   });
@@ -155,7 +155,7 @@ io.on("connection", (socket) => {
         socket,
         data,
         PacketActions.PlayerUnreadyPacketAction,
-        ["SpawnSelectionState"]
+        ["SessionLobbyState"]
       )
     );
   });

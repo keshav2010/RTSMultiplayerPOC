@@ -6,6 +6,7 @@ import {ResultScene} from './scenes/ResultScene';
 import {SpawnSelectionScene} from './scenes/SpawnSelectionScene';
 import {MatchmakingScene} from './scenes/MatchmakingScene';
 import {PlayerStatisticHUD} from './scenes/PlayerStatisticHUD';
+import {SessionLobbyScene} from './scenes/SessionLobbyScene';
 
 var game = new Phaser.Game({
     type: Phaser.AUTO,
@@ -17,6 +18,6 @@ var game = new Phaser.Game({
     },
     parent:'app',
     disableContextMenu: true,
-    scene: [MenuScene, PlayerStatisticHUD, MatchmakingScene,
+    scene: [MenuScene, SessionLobbyScene, PlayerStatisticHUD, MatchmakingScene,
         SpawnSelectionScene, GameScene, ResultScene]
 });

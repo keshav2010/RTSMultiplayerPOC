@@ -52,7 +52,7 @@ app.get("/", async function (req, res) {
 });
 
 app.post("/session", (req, res) => {
-  
+  console.log("SESSION CREATE REQUEST");
   //find worker where session can be created.
   let availableWorker = Object.values(WorkerDict).find(
     (workerData) => workerData.sessions.length < Number(MAX_SESSION_PER_WORKER)
@@ -78,30 +78,34 @@ app.post("/session", (req, res) => {
       }
     : WorkerDict[availableWorker.id];
   workerDetail.sessions.push(sessionId);
-  
+
   //update dict.
   WorkerDict[availableWorker.id] = workerDetail;
   WorkerIdToPendingHTTPRequest[availableWorker.id] = res;
   availableWorker.send({
-    type: 'SESSION_INIT',
-    sessionId: sessionId
+    type: "SESSION_INIT",
+    sessionId: sessionId,
   });
 });
 
-app.get('/sessions', (req, res) => {
-  let { id : sessionId } = req.query;
-  if ( //if sessionId not provided or, if provided but is invalid.
+app.get("/sessions", (req, res) => {
+  let { id: sessionId } = req.query;
+  if (
+    //if sessionId not provided or, if provided but is invalid.
     typeof sessionId === "undefined" ||
     Object.values(WorkerDict).filter((worker) =>
       worker.sessions.includes(sessionId)
     ).length === 0
   ) {
-    if(typeof sessionId !== "undefined")
+    if (typeof sessionId !== "undefined")
       return res.status(404).json({
-        error: "No Session Found."
+        error: "No Session Found.",
       });
+    
+    // sessionId is not provided, return all active sessions.
+    
   }
-})
+});
 
 app.get("*", (req, res) => {
   res.statusCode(404).send();
@@ -117,29 +121,32 @@ cluster.on("exit", (worker, code, signal) => {
 cluster.on("disconnect", (worker) => {
   console.log(`[cluster-disconnect]: Worker#${worker.id} disconnected`);
   delete WorkerDict[worker.id];
-  if(WorkerIdToPendingHTTPRequest.hasOwnProperty(worker.id)) {
+  if (WorkerIdToPendingHTTPRequest.hasOwnProperty(worker.id)) {
     WorkerIdToPendingHTTPRequest[worker.id].status(503).json({
-      message: "worker channel has disconnected"
-    })
-    delete WorkerIdToPendingHTTPRequest[worker.id]
-  }
-});
-
-cluster.on("message", (worker, message) => {
-  console.log('cluster received message : ', message);
-  if(message.type === 'SESSION_READY') {
-    const {sessionId} = message.sessionId;
-  
-    WorkerIdToPendingHTTPRequest[worker.id].status(200).json({
-      sessionId: sessionId,
-      port: clusterWorkersPort
+      message: "worker channel has disconnected",
     });
     delete WorkerIdToPendingHTTPRequest[worker.id];
   }
 });
 
+cluster.on("message", (worker, message) => {
+  console.log("cluster received message : ", message);
+  if (message.type === "SESSION_READY") {
+    const { sessionId } = message;
+    const responseData = {
+      sessionId: sessionId,
+      port: clusterWorkersPort
+    };
+    WorkerIdToPendingHTTPRequest[worker.id].status(200).json(responseData);
+    
+    delete WorkerIdToPendingHTTPRequest[worker.id];
+  }
+});
+
 cluster.on("listening", (worker, address) => {
-  console.log(`[cluster:listening] Worker ${worker.id} ready to accept sessions (port ${address.port})`);
+  console.log(
+    `[cluster:listening] Worker ${worker.id} ready to accept sessions (port ${address.port})`
+  );
   clusterWorkersPort = clusterWorkersPort || address.port;
 });
 

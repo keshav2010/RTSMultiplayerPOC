@@ -6,6 +6,8 @@ const PacketType = require("./common/PacketType");
 const Packet = require("./gameserver/lib/Packet");
 const PacketActions = require("./gameserver/PacketActions");
 const GameStateManager = require("./gameserver/lib/GameStateManager");
+const nbLoop = require("./common/nonBlockingLoop");
+const { v4: uuidv4 } = require("uuid");
 
 const app = express();
 const server = http.createServer(app);
@@ -51,6 +53,7 @@ process.on("message", (message) => {
     console.log("Worker Received Session Init", message);
     SessionManager[message.sessionId] = {
       sessionId: message.sessionId,
+      hostId: uuidv4(),
       gameState: new GameStateManager(
         io.of(`/${message.sessionId}`),
         require("./gameserver/stateMachines/server-state-machine/ServerStateMachine.json"),
@@ -64,12 +67,13 @@ process.on("message", (message) => {
         `[#${message.sessionId}-Clients Connected]`,
         io.of(`/${message.sessionId}`).sockets.size
       );
-
+      
+      const gameState = SessionManager[message.sessionId].gameState;
       //if is the first client connection,
       if (io.of(`/${message.sessionId}`).sockets.size === 1) {
         setImmediate(() => {
           serverTick(
-            SessionManager[message.sessionId],
+            SessionManager[message.sessionId].gameState,
             io.of(`/${message.sessionId}`)
           );
         });
@@ -100,7 +104,7 @@ process.on("message", (message) => {
             socket,
             {},
             PacketActions.PlayerInitPacketAction,
-            ["SpawnSelectionState"]
+            ["SessionLobbyState"]
           )
         );
         gameState.queueClientRequest(
@@ -109,7 +113,7 @@ process.on("message", (message) => {
             socket,
             {},
             PacketActions.PlayerJoinedPacketAction,
-            ["SpawnSelectionState"]
+            ["SessionLobbyState"]
           )
         );
       });
@@ -122,7 +126,7 @@ process.on("message", (message) => {
             socket,
             data,
             PacketActions.PlayerReadyPacketAction,
-            ["SpawnSelectionState"]
+            ["SessionLobbyState"]
           )
         );
       });
@@ -135,7 +139,7 @@ process.on("message", (message) => {
             socket,
             data,
             PacketActions.PlayerUnreadyPacketAction,
-            ["SpawnSelectionState"]
+            ["SessionLobbyState"]
           )
         );
       });

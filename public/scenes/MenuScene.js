@@ -14,6 +14,7 @@ export class MenuScene extends BaseScene {
   preload() {
     this.scene.bringToTop();
     this.load.image("playbutton", "../assets/playbutton.png");
+    this.load.image("createbutton", "../assets/createbutton.png");
   }
   create() {
     console.log("menu-scene create()");
@@ -31,17 +32,49 @@ export class MenuScene extends BaseScene {
       this.registry.get("networkManager").isSocketConnected()
     )
       this.registry.get("networkManager").disconnectGameServer();
-
-    else if (!this.registry.get('networkManager'))
+    else if (!this.registry.get("networkManager"))
       this.registry.set(
         "networkManager",
         new NetworkManager(this.game, this.registry)
       );
     let text = this.AddObject(this.add.text(100, 20, "War.IO"));
-    let playBtn = this.AddObject(this.add.image(500, 220, "playbutton")).setInteractive();
+    let playBtn = this.AddObject(
+      this.add.image(500, 120, "playbutton")
+    ).setInteractive();
+    let createSessionBtn = this.AddObject(
+      this.add.image(500, 320, "createbutton")
+    ).setInteractive();
     playBtn.on("pointerdown", () => {
       console.log("start game");
       this.scene.start(CONSTANT.SCENES.MATCHMAKER);
+    });
+    createSessionBtn.on("pointerdown", async () => {
+      console.log("creating a session on server ");
+      let data = await this.registry
+        .get("networkManager")
+        .hostSession()
+        .catch((err) => {
+          console.error(err);
+        });
+      if (data) {
+        const onConnectHandler = () => {
+          this.scene.start(CONSTANT.SCENES.SESSIONLOBBY, data);
+        };
+        const onDisconnectHandler = () => {
+          console.log("SocketDisconnect: Launching Menu Scene");
+          this.scene.start(CONSTANT.SCENES.MENU);
+        };
+        //join session
+        this.registry
+          .get("networkManager")
+          .connectGameServer(
+            `localhost:${data.port}/${data.sessionId}`,
+            onConnectHandler,
+            onDisconnectHandler
+          );
+      } else {
+        console.log("failed to create session");
+      }
     });
     this.AddSceneEvent("shutdown", (data) => {
       console.log("shutdown ", data.config.key);
