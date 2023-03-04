@@ -53,14 +53,12 @@ process.on("message", (message) => {
     console.log("Worker Received Session Init", message);
     SessionManager[message.sessionId] = {
       sessionId: message.sessionId,
-      hostId: uuidv4(),
       gameState: new GameStateManager(
         io.of(`/${message.sessionId}`),
         require("./gameserver/stateMachines/server-state-machine/ServerStateMachine.json"),
         require("./gameserver/stateMachines/server-state-machine/ServerStateBehaviour")
       ),
     };
-
     //whenever a client is connected to namespace/session
     io.of(`/${message.sessionId}`).on("connection", (socket) => {
       console.log(
@@ -69,6 +67,30 @@ process.on("message", (message) => {
       );
       
       const gameState = SessionManager[message.sessionId].gameState;
+
+      process.send({
+        type: "SESSION_AVAILABILITY_UPDATE",
+        sessionId: message.sessionId,
+        gameStarted: gameState.GameStarted
+      });
+
+      // send update to master process whenever game starts, so it marks session as unavailable/busy.
+      gameState.onGameStart(()=>{
+        process.send({
+          type: "SESSION_AVAILABILITY_UPDATE",
+          sessionId: message.sessionId,
+          gameStarted: gameState.GameStarted
+        });
+      });
+
+      gameState.onGameEnd(() => {
+        process.send({
+          type: "SESSION_DESTROYED",
+          sessionId: message.sessionId,
+          workerId: message.workerId
+        });
+      });
+
       //if is the first client connection,
       if (io.of(`/${message.sessionId}`).sockets.size === 1) {
         setImmediate(() => {
@@ -239,7 +261,7 @@ process.on("message", (message) => {
       console.log('attempting to send ack for sessionId ', message.sessionId);
       if(server.listening)
         process.send({
-          type: "SESSION_READY",
+          type: "SESSION_CREATED",
           sessionId: message.sessionId
         });
       else setTimeout(trySendAck,0);

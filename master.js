@@ -12,10 +12,10 @@ const cors = require("cors");
 const nbLoop = require("./common/nonBlockingLoop");
 
 //worker id to session id
-const WorkerDict = {}; //for each worker, stores details.
+const WorkerDict = {};
 var clusterWorkersPort = null;
-
 const WorkerIdToPendingHTTPRequest = {};
+const SessionAvailabilityStatus = {};
 
 const MAX_SESSION_PER_WORKER = process.env.MAX_SESSION_PER_WORKER;
 const app = express();
@@ -85,11 +85,14 @@ app.post("/session", (req, res) => {
   availableWorker.send({
     type: "SESSION_INIT",
     sessionId: sessionId,
+    workerId: availableWorker.id,
   });
 });
 
 app.get("/sessions", (req, res) => {
-  let { id: sessionId } = req.query;
+  let { id: sessionId, limit, offset } = req.query;
+  limit = limit || 1;
+  offset = offset || 0;
   if (
     //if sessionId not provided or, if provided but is invalid.
     typeof sessionId === "undefined" ||
@@ -101,9 +104,18 @@ app.get("/sessions", (req, res) => {
       return res.status(404).json({
         error: "No Session Found.",
       });
-    
-    // sessionId is not provided, return all active sessions.
-    
+
+    // sessionId is not provided, return active sessions.
+    /*
+    {workerId, sessions:[]}
+    */
+    let availableSessions = Object.values(WorkerDict)
+      .map(worker => worker.sessions.filter(sessionId => SessionAvailabilityStatus[sessionId]))
+      .flat(1);
+    console.log(availableSessions);
+    return res.status(200).json({
+      sessions: availableSessions
+    })
   }
 });
 
@@ -120,6 +132,9 @@ cluster.on("exit", (worker, code, signal) => {
 //Emitted after the worker IPC channel has disconnected
 cluster.on("disconnect", (worker) => {
   console.log(`[cluster-disconnect]: Worker#${worker.id} disconnected`);
+  WorkerDict[worker.id].sessions.forEach((sessionId) => {
+    delete SessionAvailabilityStatus[sessionId];
+  });
   delete WorkerDict[worker.id];
   if (WorkerIdToPendingHTTPRequest.hasOwnProperty(worker.id)) {
     WorkerIdToPendingHTTPRequest[worker.id].status(503).json({
@@ -131,15 +146,25 @@ cluster.on("disconnect", (worker) => {
 
 cluster.on("message", (worker, message) => {
   console.log("cluster received message : ", message);
-  if (message.type === "SESSION_READY") {
+  if (message.type === "SESSION_CREATED") {
     const { sessionId } = message;
     const responseData = {
       sessionId: sessionId,
-      port: clusterWorkersPort
+      port: clusterWorkersPort,
     };
+    SessionAvailabilityStatus[sessionId] = true;
     WorkerIdToPendingHTTPRequest[worker.id].status(200).json(responseData);
-    
     delete WorkerIdToPendingHTTPRequest[worker.id];
+  } else if (message.type === "SESSION_AVAILABILITY_UPDATE") {
+    const { sessionId, gameStarted } = message;
+    SessionAvailabilityStatus[sessionId] = !gameStarted;
+  } else if (message.type === "SESSION_DESTROYED") {
+    const { sessionId, workerId } = message;
+
+    let sessionIndex = WorkerDict[workerId].sessions.indexOf(sessionId);
+    if (sessionIndex > -1)
+      WorkerDict[workerId].sessions.splice(sessionIndex, 1);
+    delete SessionAvailabilityStatus[sessionId];
   }
 });
 

@@ -22,13 +22,16 @@ module.exports = {
   },
   SpawnSelectionState: ({ gameStateManager }) => {
     try {
+      if(!gameStateManager.GameStarted) {
+        gameStateManager.startGame();
+      }
       //in seconds
       var deltaTime =
         (Date.now() - gameStateManager.lastSimulateTime_ms) / 1000;
       gameStateManager.lastSimulateTime_ms = Date.now();
       gameStateManager.countdown -= deltaTime;
       gameStateManager.countdown = Math.max(0, gameStateManager.countdown);
-
+      
       gameStateManager.enqueueStateUpdate({
         type: PacketType.ByServer.COUNTDOWN_TIME,
         time: gameStateManager.countdown,

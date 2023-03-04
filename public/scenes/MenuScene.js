@@ -44,9 +44,11 @@ export class MenuScene extends BaseScene {
     let createSessionBtn = this.AddObject(
       this.add.image(500, 320, "createbutton")
     ).setInteractive();
-    playBtn.on("pointerdown", () => {
+    playBtn.on("pointerdown", async () => {
       console.log("start game");
       this.scene.start(CONSTANT.SCENES.MATCHMAKER);
+      let data = await this.registry.get("networkManager").getAvailableSession();
+      console.log('sessions ', data);
     });
     createSessionBtn.on("pointerdown", async () => {
       console.log("creating a session on server ");

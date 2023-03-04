@@ -55,7 +55,7 @@ function PlayerJoinedPacketAction(packetType, socket, io, stateManager){
     try{
         console.log(`Player ${socket.id} Attempting to Join.`);
         if(stateManager.GameStarted){
-            console.log(`Player ${socket.id} --- Game Started, Disconnecting..`);
+            console.log(`Game Started, Disconnecting player${socket.id}`);
             socket.disconnect();
             return;
         }
@@ -76,9 +76,9 @@ function PlayerReadyPacketAction(packetType, socket, io, stateManager){
         console.log(`Player ${socket.id} Marked ready.`);
         stateManager.getPlayer(socket).readyStatus = true;
         let readyPlayersCount = stateManager.getPlayers().filter(p => p.readyStatus).length;
-        if(readyPlayersCount === stateManager.getPlayers().length)
-            stateManager.GameStarted = true;
-
+        if(readyPlayersCount === stateManager.getPlayers().length)  {
+            stateManager.startGame();
+        }
         const deltaUpdate = {
             type:packetType,
             playerId: stateManager.getPlayer(socket).id,
@@ -93,10 +93,11 @@ function PlayerReadyPacketAction(packetType, socket, io, stateManager){
 
 function PlayerUnreadyPacketAction(packetType, socket, io, stateManager){
     try{
-        console.log(`Player ${socket.id} Marked Unready.`);
+        console.log(`Player ${socket.id} Trying to mark itself Unready.`);
         let readyPlayersCount = stateManager.getPlayers().filter(p => p.readyStatus).length;
-        if(stateManager.GameStarted || readyPlayersCount === stateManager.getPlayers().length){
-            stateManager.GameStarted = true;
+        if(stateManager.GameStarted || readyPlayersCount === stateManager.getPlayers().length) {
+            if(!stateManager.GameStarted)
+                stateManager.startGame();
             return;
         }
         stateManager.getPlayer(socket).readyStatus = false;

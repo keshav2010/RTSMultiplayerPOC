@@ -86,6 +86,10 @@ class NetworkManager {
         this.socket.emit(eventType, data);
     }
 
+    async getAvailableSession() {
+        let session = await axios.get('/sessions?limit=1');
+        return session.data;
+    }
     async hostSession() {
         let session = await axios.post('/session');
         this.currentActiveSession = session.data || null;

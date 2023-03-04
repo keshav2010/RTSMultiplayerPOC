@@ -31,6 +31,14 @@ class GameStateManager {
     this.alliances = new AllianceTracker();
   }
 
+  startGame() {
+    this.GameStarted = true;
+    if(this.onGameStartCallback)
+      this.onGameStartCallback();
+    // we'd like to call this only once.
+    this.onGameStartCallback = null;
+  }
+
   queueClientRequest(clientRequest) {
     this.pendingClientRequests.enqueue(clientRequest);
   }
@@ -152,6 +160,12 @@ class GameStateManager {
   }
   getAlliance(playerAId, playerBId) {
     return this.alliances.getAlliance(playerAId, playerBId);
+  }
+  OnGameStart(callback) {
+    this.onGameStartCallback = callback || null;
+  }
+  OnGameEnd(callback) {
+    this.onGameEndCallback = callback || null;
   }
 }
 
