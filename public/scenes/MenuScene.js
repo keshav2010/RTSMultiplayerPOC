@@ -47,41 +47,61 @@ export class MenuScene extends BaseScene {
     playBtn.on("pointerdown", async () => {
       console.log("start game");
       this.scene.start(CONSTANT.SCENES.MATCHMAKER);
-      let data = await this.registry.get("networkManager").getAvailableSession();
-      console.log('sessions ', data);
+      let { sessions, port } = await this.registry
+        .get("networkManager")
+        .getAvailableSession();
+      if(sessions.length === 0) {
+        return;
+      }
+
+      let { sessionId } = sessions[0];
+      const onConnectHandler = () => {
+        this.scene.start(CONSTANT.SCENES.SESSIONLOBBY, {
+          sessionId
+        });
+      };
+      console.log("connecting to ", `localhost:${port}/${sessionId}`);
+      const onDisconnectHandler = () => {
+        console.log("SocketDisconnect: Launching Menu Scene");
+        this.scene.start(CONSTANT.SCENES.MENU);
+      };
+      //join session
+      this.registry
+      .get("networkManager")
+      .connectGameServer(
+        `localhost:${port}/${sessionId}`,
+        onConnectHandler,
+        onDisconnectHandler
+      );
     });
     createSessionBtn.on("pointerdown", async () => {
-      console.log("creating a session on server ");
-      let data = await this.registry
+      let { sessionId, port } = await this.registry
         .get("networkManager")
-        .hostSession()
-        .catch((err) => {
-          console.error(err);
-        });
-      if (data) {
-        const onConnectHandler = () => {
-          this.scene.start(CONSTANT.SCENES.SESSIONLOBBY, data);
-        };
-        const onDisconnectHandler = () => {
-          console.log("SocketDisconnect: Launching Menu Scene");
-          this.scene.start(CONSTANT.SCENES.MENU);
-        };
-        //join session
-        this.registry
-          .get("networkManager")
-          .connectGameServer(
-            `localhost:${data.port}/${data.sessionId}`,
-            onConnectHandler,
-            onDisconnectHandler
-          );
-      } else {
-        console.log("failed to create session");
-      }
+        .hostSession();
+      
+      const onConnectHandler = () => {
+        this.scene.start(CONSTANT.SCENES.SESSIONLOBBY, { sessionId });
+      };
+      const onDisconnectHandler = () => {
+        console.log("SocketDisconnect: Launching Menu Scene");
+        this.scene.start(CONSTANT.SCENES.MENU);
+      };
+      console.log("connecting to ", `localhost:${port}/${sessionId}`);
+      //join session
+      this.registry
+        .get("networkManager")
+        .connectGameServer(
+          `localhost:${port}/${sessionId}`,
+          onConnectHandler,
+          onDisconnectHandler
+        );
     });
+
     this.AddSceneEvent("shutdown", (data) => {
       console.log("shutdown ", data.config.key);
       this.Destroy();
     });
+
     this.AddSceneEvent("destroy", () => {
       this.input.removeAllListeners();
       this.events.removeAllListeners();

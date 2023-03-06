@@ -17,10 +17,7 @@ class NetworkManager {
         this.socket = io(`${url}`,{
             transports: ["websocket"],
         });
-        if(!this.eventHandlersBinded) {
-            console.log(`binding event handlers`);
-            this.bindEventHandlers(onConnectCallback, onDisconnectCallback);
-        }
+        this.bindEventHandlers(onConnectCallback, onDisconnectCallback);
     }
 
     isSocketConnected() {

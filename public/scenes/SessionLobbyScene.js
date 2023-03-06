@@ -21,24 +21,23 @@ export class SessionLobbyScene extends BaseScene {
     this.scene.bringToTop();
     this.load.image("playbutton", "../assets/playbutton.png");
   }
-  create(data) {
-    console.log("SessionLobbyScene create data: ", data);
-
+  create({ sessionId }) {
     StateManager = this.registry.get("stateManager");
     NetworkManager = this.registry.get("networkManager");
 
     this.playerReadyStatus = this.AddObject(new Column(this, 50, 120));
 
-    // Request Server to register this player, and send back basic init data.
+    // Request Server to register this player
     NetworkManager.sendEventToServer(PacketType.ByClient.CLIENT_INIT_REQUESTED);
 
     let sessionLobbyText = this.AddObject(
       this.add.text(
         400,
         20,
-        "Session Lobby - Waiting for Players before we start."
+        `Session(#${sessionId.slice(0, 5)}...) Lobby - Waiting for Players before we start.`
       )
     );
+
     let playBtn = this.AddObject(
       this.add.image(500, 120, "playbutton").setScale(0.4)
     ).setInteractive();

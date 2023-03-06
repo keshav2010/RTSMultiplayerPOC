@@ -45,6 +45,13 @@ function PlayerInitPacketAction(packetType, socket, io, stateManager){
                 stateManager.enqueueStateUpdate(initPacket);
             });
         })
+
+        process.send({
+          type: "SESSION_UPDATE",
+          sessionId: stateManager.sessionId,
+          gameStarted: stateManager.GameStarted,
+          players: stateManager.getPlayers().length,
+        });
     }
     catch(err){
         console.log(err);
@@ -117,13 +124,19 @@ function PlayerLeftPacketAction(packetType, socket, io, stateManager){
     try{
         console.log(`Player ${socket.id} Left/Disconnected. ClearObject for player ${socket.id}`)
         let player = stateManager.getPlayer(socket);
-        player.destroy(stateManager);
+        player?.destroy(stateManager);
         stateManager.removePlayer(socket);
         const deltaUpdate={
             type:packetType,
             playerId: player.id
         }
         stateManager.enqueueStateUpdate(deltaUpdate);
+        process.send({
+          type: "SESSION_UPDATE",
+          sessionId: stateManager.sessionId,
+          gameStarted: stateManager.GameStarted,
+          players: stateManager.getPlayers().length,
+        });
     }
     catch(err){
         console.log(err);

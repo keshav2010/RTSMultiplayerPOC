@@ -67,23 +67,26 @@ process.on("message", (message) => {
       );
       
       const gameState = SessionManager[message.sessionId].gameState;
-
+      gameState.sessionId = message.sessionId;
+      
       process.send({
-        type: "SESSION_AVAILABILITY_UPDATE",
+        type: "SESSION_UPDATE",
         sessionId: message.sessionId,
-        gameStarted: gameState.GameStarted
+        gameStarted: gameState.GameStarted,
+        players: gameState.getPlayers().length
       });
 
       // send update to master process whenever game starts, so it marks session as unavailable/busy.
-      gameState.onGameStart(()=>{
+      gameState.OnGameStart(()=>{
         process.send({
-          type: "SESSION_AVAILABILITY_UPDATE",
+          type: "SESSION_UPDATE",
           sessionId: message.sessionId,
-          gameStarted: gameState.GameStarted
+          gameStarted: gameState.GameStarted,
+          players: gameState.getPlayers().length
         });
       });
 
-      gameState.onGameEnd(() => {
+      gameState.OnGameEnd(() => {
         process.send({
           type: "SESSION_DESTROYED",
           sessionId: message.sessionId,
@@ -262,7 +265,8 @@ process.on("message", (message) => {
       if(server.listening)
         process.send({
           type: "SESSION_CREATED",
-          sessionId: message.sessionId
+          sessionId: message.sessionId,
+          workerId: cluster.worker.id
         });
       else setTimeout(trySendAck,0);
     };
