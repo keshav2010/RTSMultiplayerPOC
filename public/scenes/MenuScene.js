@@ -15,6 +15,7 @@ export class MenuScene extends BaseScene {
     this.scene.bringToTop();
     this.load.image("playbutton", "../assets/playbutton.png");
     this.load.image("createbutton", "../assets/createbutton.png");
+    this.load.html("playerForm", "../html/menu-form.html");
   }
   create() {
     console.log("menu-scene create()");
@@ -39,46 +40,71 @@ export class MenuScene extends BaseScene {
       );
     let text = this.AddObject(this.add.text(100, 20, "War.IO"));
     let playBtn = this.AddObject(
-      this.add.image(500, 120, "playbutton")
+      this.add.image(310, 120, "playbutton")
     ).setInteractive();
     let createSessionBtn = this.AddObject(
-      this.add.image(500, 320, "createbutton")
+      this.add.image(310, 320, "createbutton")
     ).setInteractive();
+
+    var playerForm = this.AddObject(
+      this.add.dom(600, 200).createFromCache("playerForm")
+    );
+    playerForm.setPerspective(800);
+    playerForm.addListener("click");
+    let networkManager = this.registry.get("networkManager");
+    playerForm.on("click", function (event) {
+      if (event.target.name === "playButton") {
+        var inputName = this.getChildByName("nameField");
+        if (inputName.value !== "") {
+          let name = inputName.value.trim().replace(" ", "-");
+          text.setText(`Welcome: ${name}`);
+          networkManager.setPlayerName(name);
+          console.log(networkManager)
+          playerForm.setVisible(false);
+          playerForm.destroy();
+        }
+      }
+    });
+
     playBtn.on("pointerdown", async () => {
       console.log("start game");
-      this.scene.start(CONSTANT.SCENES.MATCHMAKER);
-      let { sessions, port } = await this.registry
-        .get("networkManager")
-        .getAvailableSession();
-      if(sessions.length === 0) {
-        return;
-      }
+      try {
+        // this.scene.start(CONSTANT.SCENES.MATCHMAKER);
+        let { sessions, port } = await this.registry
+          .get("networkManager")
+          .getAvailableSession();
+        if (!sessions || sessions.length === 0) {
+          return;
+        }
 
-      let { sessionId } = sessions[0];
-      const onConnectHandler = () => {
-        this.scene.start(CONSTANT.SCENES.SESSIONLOBBY, {
-          sessionId
-        });
-      };
-      console.log("connecting to ", `localhost:${port}/${sessionId}`);
-      const onDisconnectHandler = () => {
-        console.log("SocketDisconnect: Launching Menu Scene");
-        this.scene.start(CONSTANT.SCENES.MENU);
-      };
-      //join session
-      this.registry
-      .get("networkManager")
-      .connectGameServer(
-        `localhost:${port}/${sessionId}`,
-        onConnectHandler,
-        onDisconnectHandler
-      );
+        let { sessionId } = sessions[0];
+        const onConnectHandler = () => {
+          this.scene.start(CONSTANT.SCENES.SESSIONLOBBY, {
+            sessionId,
+          });
+        };
+        console.log("connecting to ", `localhost:${port}/${sessionId}`);
+        const onDisconnectHandler = () => {
+          console.log("SocketDisconnect: Launching Menu Scene");
+          this.scene.start(CONSTANT.SCENES.MENU);
+        };
+        //join session
+        this.registry
+          .get("networkManager")
+          .connectGameServer(
+            `localhost:${port}/${sessionId}`,
+            onConnectHandler,
+            onDisconnectHandler
+          );
+      } catch (err) {
+        console.error(err);
+      }
     });
     createSessionBtn.on("pointerdown", async () => {
       let { sessionId, port } = await this.registry
         .get("networkManager")
         .hostSession();
-      
+
       const onConnectHandler = () => {
         this.scene.start(CONSTANT.SCENES.SESSIONLOBBY, { sessionId });
       };

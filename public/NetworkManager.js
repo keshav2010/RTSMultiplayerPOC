@@ -83,6 +83,12 @@ class NetworkManager {
         this.socket.emit(eventType, data);
     }
 
+    setPlayerName(name) {
+        this.playerName = name.trim().replace(' ','-');
+    }
+    getPlayerName() {
+        return this.playerName || `RandomPlayer${Math.abs(Math.random()*1000).toFixed()}`;
+    }
     async getAvailableSession() {
         let session = await axios.get('/sessions?limit=1');
         return session.data;

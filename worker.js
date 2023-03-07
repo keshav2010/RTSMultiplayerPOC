@@ -121,13 +121,13 @@ process.on("message", (message) => {
       });
 
       // client requests init packet
-      socket.on(PacketType.ByClient.CLIENT_INIT_REQUESTED, (data) => {
+      socket.on(PacketType.ByClient.CLIENT_INIT_REQUESTED, ({playerName}) => {
         //Initial packets
         gameState.queueClientRequest(
           new Packet(
             PacketType.ByServer.PLAYER_INIT,
             socket,
-            {},
+            {playerName},
             PacketActions.PlayerInitPacketAction,
             ["SessionLobbyState"]
           )

@@ -28,7 +28,9 @@ export class SessionLobbyScene extends BaseScene {
     this.playerReadyStatus = this.AddObject(new Column(this, 50, 120));
 
     // Request Server to register this player
-    NetworkManager.sendEventToServer(PacketType.ByClient.CLIENT_INIT_REQUESTED);
+    NetworkManager.sendEventToServer(PacketType.ByClient.CLIENT_INIT_REQUESTED, {
+      playerName: NetworkManager.getPlayerName()
+    });
 
     let sessionLobbyText = this.AddObject(
       this.add.text(

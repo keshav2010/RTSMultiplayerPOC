@@ -10,10 +10,10 @@
 const Player = require("./Player");
 const PacketType = require("../common/PacketType")
 
-function PlayerInitPacketAction(packetType, socket, io, stateManager){
+function PlayerInitPacketAction(packetType, socket, io, stateManager, {playerName}){
     try{
-        console.log(`Player ${socket.id} just joined, scheduling INIT packet.`);
-        let player = new Player(socket.id);
+        console.log(`Player ${socket.id} (${playerName}) just joined, scheduling INIT packet.`);
+        let player = new Player(socket.id, playerName);
         stateManager.registerPlayer(socket, player);
 
         //the main init packet, the "socket" property is added to ensure packet is only
