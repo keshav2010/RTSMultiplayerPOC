@@ -2,12 +2,12 @@
   "name": "rts_io_gameserver",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "server.js",
   "scripts": {
     "build": "webpack",
     "start": "webpack && jest && nodemon server.js",
     "test": "jest",
-    "dev": "webpack && jest && nodemon app.js"
+    "dev": "webpack && jest && nodemon server.js"
   },
   "author": "keshav",
   "license": "ISC",
