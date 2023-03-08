@@ -1,7 +1,7 @@
 const CONSTANT = require("../constant");
 import { BaseScene } from "./BaseScene";
 const PacketType = require("../../common/PacketType");
-const { Viewport, Row, Scrollbar } = require('phaser-ui-tools');
+const { Viewport, Row } = require('phaser-ui-tools');
 var $ = require("jquery");
 
 export class PlayerStatisticHUD extends BaseScene {
@@ -27,21 +27,6 @@ export class PlayerStatisticHUD extends BaseScene {
     var viewport = new Viewport(this, 125, 275, 260, 128);
     var row = new Row(this, 0, 0);
     viewport.addNode(row);
-
-    for(let i=0; i<=10; i++) {
-      let soldierButton = this.AddObject(this.add.image(0, 0, "soldierButton"));
-      row.addNode(soldierButton);
-    }
-    var scrollbar = new Scrollbar(
-      this,
-      viewport,
-      true,
-      false,
-      "track",
-      "bar",
-      { duration: 10, ease: Phaser.Math.Easing.Quadratic.Out }
-    );
-    Phaser.Display.Align.To.BottomCenter(scrollbar, viewport, 0, 128);
 
     const resourceText = this.AddObject(this.add.text(50, 50, "Resources: 0"));
     const soldierCount = this.AddObject(this.add.text(50, 80, "Soldiers: 0"));

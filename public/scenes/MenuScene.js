@@ -13,12 +13,10 @@ export class MenuScene extends BaseScene {
   }
   preload() {
     this.scene.bringToTop();
-    this.load.image("playbutton", "../assets/playbutton.png");
-    this.load.image("createbutton", "../assets/createbutton.png");
     this.load.html("playerForm", "../html/menu-form.html");
+    //this.load.html("sessionCreationForm", "../html/session-create-form.html");
   }
   create() {
-    console.log("menu-scene create()");
     this.mapGraphics.depth = -5;
     this.mapGraphics.fillStyle(0x002200, 1);
     this.mapGraphics.fillRect(0, 0, 1500, 1500);
@@ -38,47 +36,52 @@ export class MenuScene extends BaseScene {
         "networkManager",
         new NetworkManager(this.game, this.registry)
       );
+    let networkManager = this.registry.get("networkManager");
     let text = this.AddObject(this.add.text(100, 20, "War.IO"));
-    let playBtn = this.AddObject(
-      this.add.image(310, 120, "playbutton")
-    ).setInteractive();
-    let createSessionBtn = this.AddObject(
-      this.add.image(310, 320, "createbutton")
-    ).setInteractive();
 
     var playerForm = this.AddObject(
       this.add.dom(600, 200).createFromCache("playerForm")
     );
-    playerForm.setPerspective(800);
-    playerForm.addListener("click");
-    let networkManager = this.registry.get("networkManager");
-    playerForm.on("click", function (event) {
-      if (event.target.name === "playButton") {
-        var inputName = this.getChildByName("nameField");
-        if (inputName.value !== "") {
-          let name = inputName.value.trim().replace(" ", "-");
-          text.setText(`Welcome: ${name}`);
-          networkManager.setPlayerName(name);
-          console.log(networkManager)
-          playerForm.setVisible(false);
-          playerForm.destroy();
-        }
+
+    /*
+    var sessionCreationForm = this.AddObject(
+      this.add.dom(600, 200).createFromCache("sessionCreationForm")
+    )
+    */
+   
+    let playBtn = playerForm.getChildByName("btnJoin");
+    let createSessionBtn = playerForm.getChildByName("btnCreate");
+    let inputField = playerForm.getChildByName("nameInput");
+
+    inputField.addEventListener("input", (event) => {
+      var inputName = playerForm.getChildByName("nameInput");
+      if (inputName.value !== "") {
+        let name = inputName.value.trim().replace(" ", "-");
+        networkManager.setPlayerName(name);
+        text.setText(`Welcome: ${name}`);
       }
     });
-
-    playBtn.on("pointerdown", async () => {
-      console.log("start game");
+    playerForm.addListener("click");
+    playerForm.on('click', function (event) {
+      event.stopPropagation();
+    });
+    playBtn.addEventListener("pointerdown", async (event) => {
+      event.stopPropagation();
+      var inputName = playerForm.getChildByName("nameInput");
+      if (inputName.value !== "") {
+        let name = inputName.value.trim().replace(" ", "-");
+        networkManager.setPlayerName(name);
+      }
       try {
         // this.scene.start(CONSTANT.SCENES.MATCHMAKER);
-        let { sessions, port } = await this.registry
-          .get("networkManager")
-          .getAvailableSession();
+        let { sessions, port } = await networkManager.getAvailableSession();
         if (!sessions || sessions.length === 0) {
           return;
         }
-
         let { sessionId } = sessions[0];
         const onConnectHandler = () => {
+          playerForm.setVisible(false);
+          playerForm.destroy();
           this.scene.start(CONSTANT.SCENES.SESSIONLOBBY, {
             sessionId,
           });
@@ -100,7 +103,8 @@ export class MenuScene extends BaseScene {
         console.error(err);
       }
     });
-    createSessionBtn.on("pointerdown", async () => {
+    createSessionBtn.addEventListener("pointerdown", async (event) => {
+      event.stopPropagation();
       let { sessionId, port } = await this.registry
         .get("networkManager")
         .hostSession();

@@ -173,6 +173,24 @@ function SoldierMoveRequestedPacketAction(packetType, socket, io, stateManager, 
 }
 
 
+function SoldierSpawnRequestedPacketAction(
+    packetType,
+    socket,
+    io,
+    stateManager,
+    data
+  ) {
+    let player = stateManager.getPlayer(socket);
+    let { soldierType } = data;
+    let queuedSpawnRequest = player.queueSoldierSpawnRequest(soldierType);
+    var updatePacket = {
+      type: PacketType.ByServer.SOLDIER_SPAWN_SCHEDULED,
+      ...queuedSpawnRequest,
+      playerId: player.id,
+    };
+    stateManager.enqueueStateUpdate(updatePacket);
+  }
+  
 /**
  * data:
  * {
@@ -210,23 +228,6 @@ function SoldierCreateRequestedPacketAction(
   stateManager.enqueueStateUpdate(updatePacket);
 }
 
-function SoldierSpawnRequestedPacketAction(
-  packetType,
-  socket,
-  io,
-  stateManager,
-  data
-) {
-  let player = stateManager.getPlayer(socket);
-  let { soldierType } = data;
-  let queuedSpawnRequest = player.queueSoldierSpawnRequest(soldierType);
-  var updatePacket = {
-    type: PacketType.ByServer.SOLDIER_SPAWN_SCHEDULED,
-    ...queuedSpawnRequest,
-    playerId: player.id,
-  };
-  stateManager.enqueueStateUpdate(updatePacket);
-}
 
 function SoldierDeletedPacketAction(packetType, socket, io, stateManager, data){
     let {soldierId} = data;

@@ -16,7 +16,7 @@ class Player {
     this.id = id;
     this.name = name || `UnnamedPlayer${id.substr(0, 4)}`;
     this.SoldierMap = new Map();
-    this.resources = 30;
+    this.resources = 10;
     this.color = [
       Math.random() * 255,
       Math.random() * 255,

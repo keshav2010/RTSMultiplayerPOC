@@ -89,8 +89,8 @@ process.on("message", (message) => {
       gameState.OnGameEnd(() => {
         process.send({
           type: "SESSION_DESTROYED",
-          sessionId: message.sessionId,
-          workerId: message.workerId
+          sessionId: gameState.sessionId,
+          workerId: cluster.worker.id
         });
       });
 

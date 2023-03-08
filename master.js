@@ -52,7 +52,6 @@ app.get("/", async function (req, res) {
 });
 
 app.post("/session", (req, res) => {
-  console.log("SESSION CREATE REQUEST");
   //find worker where session can be created.
   let availableWorker = Object.values(WorkerDict).find(
     (workerData) => workerData.sessions.length < Number(MAX_SESSION_PER_WORKER)
@@ -119,7 +118,7 @@ app.get("/sessions", (req, res) => {
 });
 
 app.get("*", (req, res) => {
-  res.statusCode(404).send();
+  res.status(404).send();
 });
 
 //When any of the workers die
