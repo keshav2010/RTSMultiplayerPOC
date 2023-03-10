@@ -2,6 +2,7 @@ const CONSTANT = require("../constant");
 import { BaseScene } from "./BaseScene";
 const PacketType = require("../../common/PacketType");
 const { Viewport, Row } = require('phaser-ui-tools');
+const SoldierType = require("../../common/SoldierType");
 var $ = require("jquery");
 
 export class PlayerStatisticHUD extends BaseScene {
@@ -32,15 +33,13 @@ export class PlayerStatisticHUD extends BaseScene {
     var soldierSelectionWidget = this.AddObject(
       this.add.dom(250, 500).createFromCache("soldierSelectionWidget")
     );
-    
-    var unitSelectionButtons = {
-      villager: soldierSelectionWidget.getChildByName('option_villager'),
-      stoneman: soldierSelectionWidget.getChildByName('option_stoneman'),
-      spearman: soldierSelectionWidget.getChildByName('option_spearman'),
-      knight: soldierSelectionWidget.getChildByName('option_knight'),
-    }
-
-    unitSelectionButtons.spearman.addEventListener('click', function() {
+    $("#soldierSelectionDiv #option_villager").on("click", ()=>{
+      console.log("trying to create villager");
+    });
+    $("#soldierSelectionDiv #option_stoneman").on("click", () => {
+      console.log("trying to create villager");
+    });
+    $("#soldierSelectionDiv #option_spearman").on("click", () => {
       networkManager.sendEventToServer(
         PacketType.ByClient.SOLDIER_SPAWN_REQUESTED,
         {
@@ -48,7 +47,7 @@ export class PlayerStatisticHUD extends BaseScene {
         }
       );
     });
-    unitSelectionButtons.knight.addEventListener('click', function() {
+    $("#soldierSelectionDiv #option_knight").on("click", () => {
       networkManager.sendEventToServer(
         PacketType.ByClient.SOLDIER_SPAWN_REQUESTED,
         {

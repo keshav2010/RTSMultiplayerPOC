@@ -87,11 +87,22 @@ process.on("message", (message) => {
       });
 
       gameState.OnGameEnd(() => {
+        console.log(`--- OnGameEnd : session ${gameState.sessionId} ended, signalling master (SESSION_DESTROYED)`);
         process.send({
           type: "SESSION_DESTROYED",
           sessionId: gameState.sessionId,
           workerId: cluster.worker.id
         });
+
+        // clear session from worker's entry.
+        const before = Object.keys(SessionManager).length;
+        delete SessionManager[gameState.sessionId];
+        const after = Object.keys(SessionManager).length;
+
+        const sessionNamespace = io.of(`/${gameState.sessionId}`);
+        console.log(`--- Clearing up namespace (disconnectSockets & removeAllListeners) [${before} earlier, -> ${after} sessions remaining]`);
+        sessionNamespace.disconnectSockets();
+        sessionNamespace.removeAllListeners();
       });
 
       //if is the first client connection,
@@ -106,9 +117,11 @@ process.on("message", (message) => {
       Packet.io = io.of(`/${message.sessionId}`);
 
       socket.on("disconnect", (reason) => {
+
+        const activeConnections = io.of(`/${message.sessionId}`).sockets.size;
         console.log(
           "***clients disconnected, Remaining Active Connections : ",
-          io.of(`/${message.sessionId}`).sockets.size
+          activeConnections
         );
         gameState.queueClientRequest(
           new Packet(
@@ -118,6 +131,10 @@ process.on("message", (message) => {
             PacketActions.PlayerLeftPacketAction
           )
         );
+
+        // no active connection left, so destroy session
+        if(activeConnections === 0)
+          gameState.destroySession();
       });
 
       // client requests init packet
@@ -261,7 +278,7 @@ process.on("message", (message) => {
     });
 
     let trySendAck = () => {
-      console.log('attempting to send ack for sessionId ', message.sessionId);
+      // console.log('attempting to send ack for sessionId ', message.sessionId);
       if(server.listening)
         process.send({
           type: "SESSION_CREATED",

@@ -14,12 +14,13 @@ export class MenuScene extends BaseScene {
   preload() {
     this.scene.bringToTop();
     this.load.html("playerForm", "../html/menu-form.html");
-    //this.load.html("sessionCreationForm", "../html/session-create-form.html");
+    this.load.image('background', "../assets/background.png");
   }
   create() {
     this.mapGraphics.depth = -5;
     this.mapGraphics.fillStyle(0x002200, 1);
     this.mapGraphics.fillRect(0, 0, 1500, 1500);
+    this.add.image(this.sys.canvas.width/2, this.sys.canvas.height/2, 'background').setDisplaySize(this.sys.canvas.width, this.sys.canvas.height);
     if (this.registry.get("stateManager")) {
       console.log("Clearing Prev. StateManager data");
       this.registry.get("stateManager").clearState();

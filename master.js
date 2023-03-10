@@ -52,7 +52,7 @@ app.get("/", async function (req, res) {
 });
 
 app.post("/session", (req, res) => {
-  //find worker where session can be created.
+  //find worker that can handle new session.
   let availableWorker = Object.values(WorkerDict).find(
     (workerData) => workerData.sessions.length < Number(MAX_SESSION_PER_WORKER)
   )?.worker;
@@ -153,7 +153,7 @@ cluster.on("message", (worker, message) => {
       ...(SessionInfo[sessionId] || {}),
       open: true,
       sessionId: sessionId,
-      workerId
+      workerId,
     };
 
     WorkerIdToPendingHTTPRequest[worker.id].status(200).json(responseData);

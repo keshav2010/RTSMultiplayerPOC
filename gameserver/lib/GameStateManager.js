@@ -167,6 +167,12 @@ class GameStateManager {
   OnGameEnd(callback) {
     this.onGameEndCallback = callback || null;
   }
+  destroySession() {
+    if(this.onGameEndCallback) {
+      console.log("Destroying Session | Invoking onGameEndCallback ", this.sessionId);
+      this.onGameEndCallback();
+    }
+  }
 }
 
 module.exports = GameStateManager;
