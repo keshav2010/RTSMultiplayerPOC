@@ -44,22 +44,6 @@ $(() => {
   $("#send-chat-btn").on("click", function () {
     SendChatMessage();
   });
-  $('#btn_spearman').on('click', function() {
-    networkManager.sendEventToServer(
-      PacketType.ByClient.SOLDIER_SPAWN_REQUESTED,
-      {
-        soldierType: SoldierType.SPEARMAN.id
-      }
-    );
-  });
-  $('#btn_knight').on('click', function() {
-    networkManager.sendEventToServer(
-      PacketType.ByClient.SOLDIER_SPAWN_REQUESTED,
-      {
-        soldierType: SoldierType.KNIGHT.id
-      }
-    );
-  });
 });
 export class GameScene extends BaseScene {
   constructor() {

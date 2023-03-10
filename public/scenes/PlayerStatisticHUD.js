@@ -17,6 +17,7 @@ export class PlayerStatisticHUD extends BaseScene {
     this.load.image("soldierButton", "../assets/sprite.png");
     this.load.image("track", "../assets/track.png");
     this.load.spritesheet('bar', "../assets/bar.png", { frameWidth: 44, frameHeight: 22 });
+    this.load.html("soldierSelectionWidget", "../html/soldier-selection.html");
     this.scene.bringToTop();
   }
   create() {
@@ -27,6 +28,34 @@ export class PlayerStatisticHUD extends BaseScene {
     var viewport = new Viewport(this, 125, 275, 260, 128);
     var row = new Row(this, 0, 0);
     viewport.addNode(row);
+    
+    var soldierSelectionWidget = this.AddObject(
+      this.add.dom(250, 500).createFromCache("soldierSelectionWidget")
+    );
+    
+    var unitSelectionButtons = {
+      villager: soldierSelectionWidget.getChildByName('option_villager'),
+      stoneman: soldierSelectionWidget.getChildByName('option_stoneman'),
+      spearman: soldierSelectionWidget.getChildByName('option_spearman'),
+      knight: soldierSelectionWidget.getChildByName('option_knight'),
+    }
+
+    unitSelectionButtons.spearman.addEventListener('click', function() {
+      networkManager.sendEventToServer(
+        PacketType.ByClient.SOLDIER_SPAWN_REQUESTED,
+        {
+          soldierType: SoldierType.SPEARMAN.id
+        }
+      );
+    });
+    unitSelectionButtons.knight.addEventListener('click', function() {
+      networkManager.sendEventToServer(
+        PacketType.ByClient.SOLDIER_SPAWN_REQUESTED,
+        {
+          soldierType: SoldierType.KNIGHT.id
+        }
+      );
+    });
 
     const resourceText = this.AddObject(this.add.text(50, 50, "Resources: 0"));
     const soldierCount = this.AddObject(this.add.text(50, 80, "Soldiers: 0"));
