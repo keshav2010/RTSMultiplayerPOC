@@ -13,17 +13,39 @@ const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
 
-const SessionManager = {};
+class SessionManager {
+  constructor() {
+    this.sessions = {};
+  }
+  addSession(sid, gameStateManagerInstance) {
+    this.sessions[sid] = {
+      sessionId: sid,
+      stateManager: gameStateManagerInstance,
+    };
+  }
+  getSessions(sid = null) {
+    if (!sid) return Object.values(this.sessions);
+    return this.sessions[sid] || null;
+  }
+  killSession(sid) {
+    if (!this.sessions.hasOwnProperty(sid)) {
+      console.warn(`Session ${sid} not found, unable to kill.`);
+      return;
+    }
+    delete this.sessions[sid];
+  }
+}
+const sessionManager = new SessionManager();
 const MAX_MS_PER_TICK = 1000 / process.env.TICKRATE;
-function serverTick(gameState, io) {
+function serverTick(stateManager, io) {
   //tick start time
   var startTime = Date.now();
   var timeUtilised = 0;
 
   // get client inputs from queue, update relevant game-state.
   var loop = () => {
-    var updatePacket = gameState.getClientRequest();
-    if (updatePacket) updatePacket.updateStateManager(gameState);
+    var updatePacket = stateManager.getClientRequest();
+    if (updatePacket) updatePacket.updateStateManager(stateManager);
     timeUtilised = Date.now() - startTime;
     return true;
   };
@@ -34,13 +56,13 @@ function serverTick(gameState, io) {
 
   var onEnd = () => {
     //send updates to clients.
-    gameState.broadcastUpdates();
-    gameState.simulate();
+    stateManager.broadcastUpdates();
+    stateManager.simulate();
     const newTickAfterMS = Math.abs(MAX_MS_PER_TICK - timeUtilised);
     //run server loop only if connections exist
     if (io.sockets.size > 0) {
       setTimeout(() => {
-        serverTick(gameState, io);
+        serverTick(stateManager, io);
       }, newTickAfterMS);
     }
   };
@@ -51,56 +73,62 @@ process.on("message", (message) => {
   //new session create
   if (message.type === "SESSION_INIT") {
     console.log("Worker Received Session Init", message);
-    SessionManager[message.sessionId] = {
-      sessionId: message.sessionId,
-      gameState: new GameStateManager(
+    sessionManager.addSession(
+      message.sessionId,
+      new GameStateManager(
         io.of(`/${message.sessionId}`),
         require("./gameserver/stateMachines/server-state-machine/ServerStateMachine.json"),
         require("./gameserver/stateMachines/server-state-machine/ServerStateBehaviour")
-      ),
-    };
+      )
+    );
     //whenever a client is connected to namespace/session
     io.of(`/${message.sessionId}`).on("connection", (socket) => {
       console.log(
         `[#${message.sessionId}-Clients Connected]`,
         io.of(`/${message.sessionId}`).sockets.size
       );
-      
-      const gameState = SessionManager[message.sessionId].gameState;
-      gameState.sessionId = message.sessionId;
-      
+
+      const stateManager = sessionManager.getSessions(
+        message.sessionId
+      ).stateManager;
+      stateManager.sessionId = message.sessionId;
+
       process.send({
         type: "SESSION_UPDATE",
         sessionId: message.sessionId,
-        gameStarted: gameState.GameStarted,
-        players: gameState.getPlayers().length
+        gameStarted: stateManager.GameStarted,
+        players: stateManager.getPlayers().length,
       });
 
       // send update to master process whenever game starts, so it marks session as unavailable/busy.
-      gameState.OnGameStart(()=>{
+      stateManager.OnGameStart(() => {
         process.send({
           type: "SESSION_UPDATE",
           sessionId: message.sessionId,
-          gameStarted: gameState.GameStarted,
-          players: gameState.getPlayers().length
+          gameStarted: stateManager.GameStarted,
+          players: stateManager.getPlayers().length,
         });
       });
 
-      gameState.OnGameEnd(() => {
-        console.log(`--- OnGameEnd : session ${gameState.sessionId} ended, signalling master (SESSION_DESTROYED)`);
+      stateManager.OnGameEnd(() => {
+        console.log(
+          `--- OnGameEnd : session ${stateManager.sessionId} ended, signalling master (SESSION_DESTROYED)`
+        );
         process.send({
           type: "SESSION_DESTROYED",
-          sessionId: gameState.sessionId,
-          workerId: cluster.worker.id
+          sessionId: stateManager.sessionId,
+          workerId: cluster.worker.id,
         });
 
         // clear session from worker's entry.
-        const before = Object.keys(SessionManager).length;
-        delete SessionManager[gameState.sessionId];
-        const after = Object.keys(SessionManager).length;
+        const before = sessionManager.getSessions().length;
+        sessionManager.killSession(stateManager.sessionId);
+        const after = sessionManager.getSessions().length;
 
-        const sessionNamespace = io.of(`/${gameState.sessionId}`);
-        console.log(`--- Clearing up namespace (disconnectSockets & removeAllListeners) [${before} earlier, -> ${after} sessions remaining]`);
+        const sessionNamespace = io.of(`/${stateManager.sessionId}`);
+        console.log(
+          `--- Clearing up namespace (disconnectSockets & removeAllListeners) [${before} earlier, -> ${after} sessions remaining]`
+        );
         sessionNamespace.disconnectSockets();
         sessionNamespace.removeAllListeners();
       });
@@ -109,7 +137,7 @@ process.on("message", (message) => {
       if (io.of(`/${message.sessionId}`).sockets.size === 1) {
         setImmediate(() => {
           serverTick(
-            SessionManager[message.sessionId].gameState,
+            sessionManager.getSessions(message.sessionId).stateManager,
             io.of(`/${message.sessionId}`)
           );
         });
@@ -117,13 +145,12 @@ process.on("message", (message) => {
       Packet.io = io.of(`/${message.sessionId}`);
 
       socket.on("disconnect", (reason) => {
-
         const activeConnections = io.of(`/${message.sessionId}`).sockets.size;
         console.log(
           "***clients disconnected, Remaining Active Connections : ",
           activeConnections
         );
-        gameState.queueClientRequest(
+        stateManager.queueClientRequest(
           new Packet(
             PacketType.ByServer.PLAYER_LEFT,
             socket,
@@ -133,23 +160,22 @@ process.on("message", (message) => {
         );
 
         // no active connection left, so destroy session
-        if(activeConnections === 0)
-          gameState.destroySession();
+        if (activeConnections === 0) stateManager.destroySession();
       });
 
       // client requests init packet
-      socket.on(PacketType.ByClient.CLIENT_INIT_REQUESTED, ({playerName}) => {
+      socket.on(PacketType.ByClient.CLIENT_INIT_REQUESTED, ({ playerName }) => {
         //Initial packets
-        gameState.queueClientRequest(
+        stateManager.queueClientRequest(
           new Packet(
             PacketType.ByServer.PLAYER_INIT,
             socket,
-            {playerName},
+            { playerName },
             PacketActions.PlayerInitPacketAction,
             ["SessionLobbyState"]
           )
         );
-        gameState.queueClientRequest(
+        stateManager.queueClientRequest(
           new Packet(
             PacketType.ByClient.PLAYER_JOINED,
             socket,
@@ -162,7 +188,7 @@ process.on("message", (message) => {
 
       //client marked ready
       socket.on(PacketType.ByClient.PLAYER_READY, (data) => {
-        gameState.queueClientRequest(
+        stateManager.queueClientRequest(
           new Packet(
             PacketType.ByClient.PLAYER_READY,
             socket,
@@ -175,7 +201,7 @@ process.on("message", (message) => {
 
       //client is not ready
       socket.on(PacketType.ByClient.PLAYER_UNREADY, (data) => {
-        gameState.queueClientRequest(
+        stateManager.queueClientRequest(
           new Packet(
             PacketType.ByClient.PLAYER_UNREADY,
             socket,
@@ -188,7 +214,7 @@ process.on("message", (message) => {
 
       //Client Requesting to move a soldier
       socket.on(PacketType.ByClient.SOLDIER_MOVE_REQUESTED, (data) => {
-        gameState.queueClientRequest(
+        stateManager.queueClientRequest(
           new Packet(
             PacketType.ByClient.SOLDIER_MOVE_REQUESTED,
             socket,
@@ -201,7 +227,7 @@ process.on("message", (message) => {
 
       //Client requesting a new soldier
       socket.on(PacketType.ByClient.SOLDIER_CREATE_REQUESTED, (data) => {
-        gameState.queueClientRequest(
+        stateManager.queueClientRequest(
           new Packet(
             PacketType.ByClient.SOLDIER_CREATE_REQUESTED,
             socket,
@@ -214,7 +240,7 @@ process.on("message", (message) => {
 
       //Client requested a new soldier spawn
       socket.on(PacketType.ByClient.SOLDIER_SPAWN_REQUESTED, (data) => {
-        gameState.queueClientRequest(
+        stateManager.queueClientRequest(
           new Packet(
             PacketType.ByClient.SOLDIER_SPAWN_REQUESTED,
             socket,
@@ -227,7 +253,7 @@ process.on("message", (message) => {
 
       //Client deleted their soldier
       socket.on(PacketType.ByClient.SOLDIER_DELETED, (data) => {
-        gameState.queueClientRequest(
+        stateManager.queueClientRequest(
           new Packet(
             PacketType.ByClient.SOLDIER_DELETED,
             socket,
@@ -240,7 +266,7 @@ process.on("message", (message) => {
 
       //Client Requesting Attack on other.
       socket.on(PacketType.ByClient.SOLDIER_ATTACK_REQUESTED, (data) => {
-        gameState.queueClientRequest(
+        stateManager.queueClientRequest(
           new Packet(
             PacketType.ByClient.SOLDIER_ATTACK_REQUESTED,
             socket,
@@ -253,7 +279,7 @@ process.on("message", (message) => {
 
       //Client sent a chat message
       socket.on(PacketType.ByClient.CLIENT_SENT_CHAT, (data) => {
-        gameState.queueClientRequest(
+        stateManager.queueClientRequest(
           new Packet(
             PacketType.ByClient.CLIENT_SENT_CHAT,
             socket,
@@ -265,7 +291,7 @@ process.on("message", (message) => {
 
       //Client selected a spawnpoint
       socket.on(PacketType.ByClient.SPAWN_POINT_REQUESTED, (data) => {
-        gameState.queueClientRequest(
+        stateManager.queueClientRequest(
           new Packet(
             PacketType.ByClient.SPAWN_POINT_REQUESTED,
             socket,
@@ -279,13 +305,13 @@ process.on("message", (message) => {
 
     let trySendAck = () => {
       // console.log('attempting to send ack for sessionId ', message.sessionId);
-      if(server.listening)
+      if (server.listening)
         process.send({
           type: "SESSION_CREATED",
           sessionId: message.sessionId,
-          workerId: cluster.worker.id
+          workerId: cluster.worker.id,
         });
-      else setTimeout(trySendAck,0);
+      else setTimeout(trySendAck, 0);
     };
     trySendAck();
   }
