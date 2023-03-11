@@ -15,7 +15,47 @@ const nbLoop = require("./common/nonBlockingLoop");
 const WorkerDict = {};
 var clusterWorkersPort = null;
 const WorkerIdToPendingHTTPRequest = {};
-const SessionInfo = {};
+
+class SessionManager {
+  constructor() {
+    this.sessions = {};
+  }
+  getSessions(sid=null) {
+    if(sid === null) return Object.values(this.sessions);
+    return this.sessions[sid] || null;
+  }
+  killSession(sid) {
+    if(sid && this.sessions.hasOwnProperty(sid))
+      delete this.sessions[sid];
+  }
+  createNewSession(sid, workerId, isAcceptingNewConnections=true) {
+    this.sessions[sid] = {
+      sessionId: sid,
+      workerId,
+      open: isAcceptingNewConnections,
+      playerCount: 0,
+    }
+  }
+  updateSession(sid, updateParams) {
+    const acceptedParams=['playerCount', 'open'];
+    if(typeof updateParams !== 'object') {
+      throw new Error("updateParams must be an object.");
+    }
+    else if(Object.keys(updateParams).length < 1) {
+      throw new Error("Atleast 1 update param must be provided.");
+    }
+    let containsInvalidParam = Object.keys(updateParams).filter(param => !acceptedParams.includes(param));
+    if(containsInvalidParam.length !== 0) {
+      throw new Error(`Invalid updateParams found.`);
+    }
+
+    this.sessions[sid] = {
+      ...this.sessions[sid],
+      ...updateParams
+    }
+  }
+}
+const sessionManager = new SessionManager();
 
 const MAX_SESSION_PER_WORKER = process.env.MAX_SESSION_PER_WORKER;
 const app = express();
@@ -107,11 +147,11 @@ app.get("/sessions", (req, res) => {
       });
     let availableSessions = Object.values(WorkerDict)
       .map((worker) =>
-        worker.sessions.filter((sessionId) => SessionInfo[sessionId].open)
+        worker.sessions.filter((sessionId) => sessionManager.getSessions(sessionId).open)
       )
       .flat(1);
     return res.status(200).json({
-      sessions: availableSessions.map((sessionId) => SessionInfo[sessionId]),
+      sessions: availableSessions.map((sessionId) => sessionManager.getSessions(sessionId)),
       port: clusterWorkersPort,
     });
   }
@@ -131,7 +171,7 @@ cluster.on("exit", (worker, code, signal) => {
 cluster.on("disconnect", (worker) => {
   console.log(`[cluster-disconnect]: Worker#${worker.id} disconnected`);
   WorkerDict[worker.id].sessions.forEach((sessionId) => {
-    delete SessionInfo[sessionId];
+    sessionManager.killSession(sessionId);
   });
   delete WorkerDict[worker.id];
   if (WorkerIdToPendingHTTPRequest.hasOwnProperty(worker.id)) {
@@ -149,23 +189,17 @@ cluster.on("message", (worker, message) => {
       sessionId: sessionId,
       port: clusterWorkersPort,
     };
-    SessionInfo[sessionId] = {
-      ...(SessionInfo[sessionId] || {}),
-      open: true,
-      sessionId: sessionId,
-      workerId,
-    };
+    sessionManager.createNewSession(sessionId, workerId);
 
     WorkerIdToPendingHTTPRequest[worker.id].status(200).json(responseData);
     delete WorkerIdToPendingHTTPRequest[worker.id];
   } 
   else if (message.type === "SESSION_UPDATE") {
     const { sessionId, gameStarted, players } = message;
-    SessionInfo[sessionId] = {
+    sessionManager.updateSession(sessionId, {
       open: !gameStarted,
-      playerCount: players,
-      ...(SessionInfo[sessionId] || {}),
-    };
+      playerCount: players
+    })
   } 
   else if (message.type === "SESSION_DESTROYED") {
     const { sessionId, workerId } = message;
@@ -173,7 +207,7 @@ cluster.on("message", (worker, message) => {
     let sessionIndex = WorkerDict[workerId].sessions.indexOf(sessionId);
     if (sessionIndex > -1)
       WorkerDict[workerId].sessions.splice(sessionIndex, 1);
-    delete SessionInfo[sessionId];
+    sessionManager.killSession(sessionId);
   }
 });
 

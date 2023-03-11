@@ -27,6 +27,9 @@ class SessionManager {
     if (!sid) return Object.values(this.sessions);
     return this.sessions[sid] || null;
   }
+  getStateManager(sid) {
+    return this.sessions.hasOwnProperty(sid) ? this.sessions[sid].stateManager : null;
+  }
   killSession(sid) {
     if (!this.sessions.hasOwnProperty(sid)) {
       console.warn(`Session ${sid} not found, unable to kill.`);
@@ -88,9 +91,9 @@ process.on("message", (message) => {
         io.of(`/${message.sessionId}`).sockets.size
       );
 
-      const stateManager = sessionManager.getSessions(
+      const stateManager = sessionManager.getStateManager(
         message.sessionId
-      ).stateManager;
+      );
       stateManager.sessionId = message.sessionId;
 
       process.send({
@@ -137,7 +140,7 @@ process.on("message", (message) => {
       if (io.of(`/${message.sessionId}`).sockets.size === 1) {
         setImmediate(() => {
           serverTick(
-            sessionManager.getSessions(message.sessionId).stateManager,
+            sessionManager.getStateManager(message.sessionId),
             io.of(`/${message.sessionId}`)
           );
         });
