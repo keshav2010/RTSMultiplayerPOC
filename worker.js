@@ -73,9 +73,9 @@ function serverTick(stateManager, io) {
 }
 
 process.on("message", (message) => {
+  console.log("[worker] received message : ", message);
   //new session create
-  if (message.type === "SESSION_INIT") {
-    console.log("Worker Received Session Init", message);
+  if (message.type === "SESSION_CREATE_REQUESTED") {
     sessionManager.addSession(
       message.sessionId,
       new GameStateManager(
@@ -97,7 +97,7 @@ process.on("message", (message) => {
       stateManager.sessionId = message.sessionId;
 
       process.send({
-        type: "SESSION_UPDATE",
+        type: "SESSION_UPDATED",
         sessionId: message.sessionId,
         gameStarted: stateManager.GameStarted,
         players: stateManager.getPlayers().length,
@@ -106,7 +106,7 @@ process.on("message", (message) => {
       // send update to master process whenever game starts, so it marks session as unavailable/busy.
       stateManager.OnGameStart(() => {
         process.send({
-          type: "SESSION_UPDATE",
+          type: "SESSION_UPDATED",
           sessionId: message.sessionId,
           gameStarted: stateManager.GameStarted,
           players: stateManager.getPlayers().length,
@@ -134,6 +134,11 @@ process.on("message", (message) => {
         );
         sessionNamespace.disconnectSockets();
         sessionNamespace.removeAllListeners();
+
+        // check how many sessions are pending
+        if(sessionManager.getSessions().length === 0) {
+          cluster.worker.disconnect();
+        }
       });
 
       //if is the first client connection,
@@ -310,7 +315,7 @@ process.on("message", (message) => {
       // console.log('attempting to send ack for sessionId ', message.sessionId);
       if (server.listening)
         process.send({
-          type: "SESSION_CREATED",
+          type: "SESSION_CREATED_ACK",
           sessionId: message.sessionId,
           workerId: cluster.worker.id,
         });

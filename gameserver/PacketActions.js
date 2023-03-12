@@ -49,7 +49,7 @@ function PlayerInitPacketAction(packetType, socket, io, stateManager, {playerNam
         })
 
         process.send({
-          type: "SESSION_UPDATE",
+          type: "SESSION_UPDATED",
           sessionId: stateManager.sessionId,
           gameStarted: stateManager.GameStarted,
           players: stateManager.getPlayers().length,
@@ -136,7 +136,7 @@ function PlayerLeftPacketAction(packetType, socket, io, stateManager){
         }
         stateManager.enqueueStateUpdate(deltaUpdate);
         process.send({
-          type: "SESSION_UPDATE",
+          type: "SESSION_UPDATED",
           sessionId: stateManager.sessionId,
           gameStarted: stateManager.GameStarted,
           players: stateManager.getPlayers().length,

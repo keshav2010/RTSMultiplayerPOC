@@ -79,7 +79,7 @@ export class MenuScene extends BaseScene {
         if (!sessions || sessions.length === 0) {
           return;
         }
-        let { sessionId } = sessions[0];
+        let sessionId = sessions[0];
         const onConnectHandler = () => {
           playerForm.setVisible(false);
           playerForm.destroy();

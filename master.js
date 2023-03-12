@@ -11,6 +11,11 @@ const { v4: uuidv4 } = require("uuid");
 const cors = require("cors");
 const nbLoop = require("./common/nonBlockingLoop");
 
+const app = express();
+app.use(cors());
+app.use(express.static("dist"));
+app.use(express.static("public"));
+
 //worker id to session id
 const WorkerDict = {};
 var clusterWorkersPort = null;
@@ -20,48 +25,133 @@ class SessionManager {
   constructor() {
     this.sessions = {};
   }
-  getSessions(sid=null) {
-    if(sid === null) return Object.values(this.sessions);
+  getSessionsByWorkerId(workerId) {
+    if (!workerId) return null;
+    let sessionsByWorkerId = Object.values(this.sessions).filter(
+      (sessionData) => sessionData.workerId === workerId
+    );
+    return sessionsByWorkerId;
+  }
+  getSessions(sid = null) {
+    if (sid === null) return Object.values(this.sessions);
     return this.sessions[sid] || null;
   }
   killSession(sid) {
-    if(sid && this.sessions.hasOwnProperty(sid))
-      delete this.sessions[sid];
+    if (sid && this.sessions.hasOwnProperty(sid)) delete this.sessions[sid];
   }
-  createNewSession(sid, workerId, isAcceptingNewConnections=true) {
+  createNewSession(sid, workerId, isAcceptingNewConnections = true) {
     this.sessions[sid] = {
       sessionId: sid,
       workerId,
       open: isAcceptingNewConnections,
       playerCount: 0,
-    }
+    };
   }
   updateSession(sid, updateParams) {
-    const acceptedParams=['playerCount', 'open'];
-    if(typeof updateParams !== 'object') {
+    const acceptedParams = ["playerCount", "open"];
+    if (typeof updateParams !== "object") {
       throw new Error("updateParams must be an object.");
-    }
-    else if(Object.keys(updateParams).length < 1) {
+    } else if (Object.keys(updateParams).length < 1) {
       throw new Error("Atleast 1 update param must be provided.");
     }
-    let containsInvalidParam = Object.keys(updateParams).filter(param => !acceptedParams.includes(param));
-    if(containsInvalidParam.length !== 0) {
+    let containsInvalidParam = Object.keys(updateParams).filter(
+      (param) => !acceptedParams.includes(param)
+    );
+    if (containsInvalidParam.length !== 0) {
       throw new Error(`Invalid updateParams found.`);
     }
 
     this.sessions[sid] = {
       ...this.sessions[sid],
-      ...updateParams
-    }
+      ...updateParams,
+    };
   }
 }
-const sessionManager = new SessionManager();
 
-const MAX_SESSION_PER_WORKER = process.env.MAX_SESSION_PER_WORKER;
-const app = express();
-app.use(cors());
-app.use(express.static("dist"));
-app.use(express.static("public"));
+class WorkerManager {
+  constructor(maxSessionsPerWorker) {
+    console.log('maxSessionsPerWorker', maxSessionsPerWorker);
+    this.workers = {}; //workerId as a key
+    this.MAX_SESSIONS_PER_WORKER = Number(maxSessionsPerWorker);
+  }
+
+  //Returns worker which is capable of hosting a new session.
+  getAvailableWorker() {
+    let availableWorker = null;
+    availableWorker =
+      Object.values(this.workers).find(
+        (workerData) =>
+          workerData.sessionManager.getSessions().length <
+          this.MAX_SESSIONS_PER_WORKER
+      )?.worker || null;
+    return availableWorker;
+  }
+
+  //Returns array of all workers if no workerId provided,
+  //otherwise returns a single worker-data object.
+  getWorkers(workerId = null) {
+    if(!workerId) {
+      return Object.values(this.workers);
+    }
+    return this.workers[workerId] || null;
+  }
+
+  //Creates a new worker process with a session.
+  createWorker() {
+    let workerInstance = cluster.fork();
+    this.workers[workerInstance.id] = {
+      worker: workerInstance,
+      sessionManager: new SessionManager(),
+    };
+
+    this.createSession(workerInstance.id);
+    return this.workers[workerInstance.id];
+  }
+  createSession(wid) {
+    const sessionID = uuidv4();
+    this.workers[wid]
+    .sessionManager
+    .createNewSession(sessionID, wid);
+
+    this.workers[wid].worker.send({
+      type: "SESSION_CREATE_REQUESTED",
+      sessionId: sessionID,
+      workerId: wid,
+    });
+    return sessionID;
+  }
+  getSessionManager(wid) {
+    return this.workers[wid].sessionManager || null;
+  }
+  getSessions(wid = null) {
+    if(!wid) {
+      let allSessions = Object.values(this.workers).map(({sessionManager}) => sessionManager.getSessions()).flat(1);
+      return allSessions;
+    }
+    let sessions = this.workers[wid].sessionManager.getSessions();
+    return sessions;
+  }
+  getWorkerBySessionId(sessionId) {
+    let worker = Object.values(this.workers).find(worker => {
+      worker.sessionManager.getSessions(sessionId) !== null
+    });
+    if(!worker) return null;
+    return worker;
+  }
+  killWorker(workerId) {
+    if(!this.workers.hasOwnProperty(workerId)) {
+      console.log(`[WorkerManager/killWorker]: Failed to find worker #${workerId}, either already killed or invalid ID.`);
+      return;
+    }
+    const isDead = this.workers[workerId].worker.isDead();
+    console.log(`[WorkerManager/killWorker]: ${workerId} (isDead: ${isDead}) `);
+    if(!isDead)
+      this.workers[workerId].worker.kill();
+    delete this.workers[workerId];
+  }
+}
+const workerManager = new WorkerManager(Number(process.env.MAX_SESSION_PER_WORKER));
+
 const server = http.createServer(app);
 
 // Serve HTML
@@ -91,41 +181,24 @@ app.get("/", async function (req, res) {
   }
 });
 
-app.post("/session", (req, res) => {
+app.post("/session", async (req, res) => {
   //find worker that can handle new session.
-  let availableWorker = Object.values(WorkerDict).find(
-    (workerData) => workerData.sessions.length < Number(MAX_SESSION_PER_WORKER)
-  )?.worker;
-  const usingExistingWorker = availableWorker !== undefined;
+  let availableWorker = workerManager.getAvailableWorker();
   if (!availableWorker) {
-    if (Object.keys(WorkerDict) >= numCPUs)
+    if (workerManager.getWorkers().length >= numCPUs)
       return res.status(503).json({
         message: `Unable to create session, max capacity reached on this instance.`,
         code: "MAX_SESSIONS_REACHED",
       });
-
-    // spawn a new worker.
-    availableWorker = cluster.fork();
+    
+    //creates a worker with 1 session.
+    workerData = workerManager.createWorker();
+    availableWorker = workerData.worker;
   }
-
-  //if is a new worker, create details object, otherwise fetch it from dict.
-  const sessionId = uuidv4();
-  const workerDetail = !usingExistingWorker
-    ? {
-        sessions: [],
-        worker: availableWorker,
-      }
-    : WorkerDict[availableWorker.id];
-  workerDetail.sessions.push(sessionId);
-
-  //update dict.
-  WorkerDict[availableWorker.id] = workerDetail;
+  else {
+    workerManager.createSession(availableWorker.id);
+  }
   WorkerIdToPendingHTTPRequest[availableWorker.id] = res;
-  availableWorker.send({
-    type: "SESSION_INIT",
-    sessionId: sessionId,
-    workerId: availableWorker.id,
-  });
 });
 
 app.get("/sessions", (req, res) => {
@@ -133,28 +206,26 @@ app.get("/sessions", (req, res) => {
   let { id: sessionId, limit, offset } = req.query;
   limit = limit || 1;
   offset = offset || 0;
-  if (
-    //if sessionId not provided or, if provided but is invalid.
-    typeof sessionId === "undefined" ||
-    Object.values(WorkerDict).filter((worker) =>
-      worker.sessions.includes(sessionId)
-    ).length === 0
-  ) {
-    if (typeof sessionId !== "undefined")
-      return res.status(404).json({
-        sessions: [],
-        port: null,
+  
+  if(sessionId) {
+    let fetchedSession = workerManager
+      .getWorkerBySessionId(sessionId)
+      ?.sessionManager?.getSessions(sessionId);
+    
+      if (!fetchedSession)
+        return res.status(404).send();
+      return res.status(200).json({
+        sessions: [fetchedSession.sessionId],
+        port: clusterWorkersPort
       });
-    let availableSessions = Object.values(WorkerDict)
-      .map((worker) =>
-        worker.sessions.filter((sessionId) => sessionManager.getSessions(sessionId).open)
-      )
-      .flat(1);
-    return res.status(200).json({
-      sessions: availableSessions.map((sessionId) => sessionManager.getSessions(sessionId)),
-      port: clusterWorkersPort,
-    });
   }
+
+  // fetch all available sessions
+  let availableSessions = workerManager.getSessions().filter(s => s.open).map(s => s.sessionId);
+  return res.status(200).json({
+    sessions: availableSessions,
+    port: clusterWorkersPort,
+  });
 });
 
 app.get("*", (req, res) => {
@@ -163,17 +234,14 @@ app.get("*", (req, res) => {
 
 //When any of the workers die
 cluster.on("exit", (worker, code, signal) => {
-  console.log(`Worker ${worker.id} exited with code ${code}, signal ${signal}`);
+  console.log(`[cluster exit]: Worker #${worker.id} exited | [code:${code}] [signal:${signal}]`);
   delete WorkerDict[worker.id];
 });
 
 //Emitted after the worker IPC channel has disconnected
 cluster.on("disconnect", (worker) => {
-  console.log(`[cluster-disconnect]: Worker#${worker.id} disconnected`);
-  WorkerDict[worker.id].sessions.forEach((sessionId) => {
-    sessionManager.killSession(sessionId);
-  });
-  delete WorkerDict[worker.id];
+  console.log(`[cluster-disconnect]: Worker#${worker.id} disconnected: ${worker.isDead()}`);
+  workerManager.killWorker(worker.id);
   if (WorkerIdToPendingHTTPRequest.hasOwnProperty(worker.id)) {
     WorkerIdToPendingHTTPRequest[worker.id].status(503).json({
       message: "worker channel has disconnected",
@@ -183,31 +251,30 @@ cluster.on("disconnect", (worker) => {
 });
 
 cluster.on("message", (worker, message) => {
-  if (message.type === "SESSION_CREATED") {
+  console.log('cluster message received : ', message);
+  if (message.type === "SESSION_CREATED_ACK") {
     const { sessionId, workerId } = message;
     const responseData = {
       sessionId: sessionId,
       port: clusterWorkersPort,
     };
-    sessionManager.createNewSession(sessionId, workerId);
 
     WorkerIdToPendingHTTPRequest[worker.id].status(200).json(responseData);
     delete WorkerIdToPendingHTTPRequest[worker.id];
   } 
-  else if (message.type === "SESSION_UPDATE") {
+  else if (message.type === "SESSION_UPDATED") {
     const { sessionId, gameStarted, players } = message;
-    sessionManager.updateSession(sessionId, {
-      open: !gameStarted,
-      playerCount: players
-    })
+    workerManager
+      .getWorkerBySessionId(sessionId)
+      ?.sessionManager.updateSession(sessionId, {
+        open: !gameStarted,
+        playerCount: players,
+      });
   } 
   else if (message.type === "SESSION_DESTROYED") {
     const { sessionId, workerId } = message;
-
-    let sessionIndex = WorkerDict[workerId].sessions.indexOf(sessionId);
-    if (sessionIndex > -1)
-      WorkerDict[workerId].sessions.splice(sessionIndex, 1);
-    sessionManager.killSession(sessionId);
+    console.log(`master: Received SESSION_DESTROYED: Killing session(${sessionId})`);
+    workerManager.getSessionManager(workerId).killSession(sessionId);
   }
 });
 
