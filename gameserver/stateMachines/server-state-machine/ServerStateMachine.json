@@ -1,27 +1,35 @@
 {
-    "id": "ServerState",
-    "initial": "SpawnSelectionState",
-    "description": "A ServerState ensures that only certain events are processed, those that are possible within that state.",
-    "states": {
-      "SpawnSelectionState": {
-        "description": "PlayerReady, Unready, Left, Joined, SpawnSelected, events are processed in this state.",
-        "on": {
-          "TIMEOUT": {
-            "target": "BattleState"
-          }
+  "id": "ServerState",
+  "description": "A ServerState ensures that only certain events are processed, those that are possible within that state.",
+  "initial": "SessionLobbyState",
+  "states": {
+    "SpawnSelectionState": {
+      "description": "PlayerReady, Unready, Left, Joined, SpawnSelected, events are processed in this state.",
+      "on": {
+        "TIMEOUT": {
+          "target": "BattleState"
         }
-      },
-      "BattleState": {
-        "description": "Events like soldier-created, soldier killed, etc are allowed in this state",
-        "on": {
-          "BattleEnd": {
-            "target": "BattleEndState"
-          }
+      }
+    },
+    "BattleState": {
+      "description": "Events like soldier-created, soldier killed, etc are allowed in this state",
+      "on": {
+        "BattleEnd": {
+          "target": "BattleEndState"
         }
-      },
-      "BattleEndState": {
-        "type": "final",
-        "description": "ServerCleanup and terminate connections, close destroy all the players, their data"
+      }
+    },
+    "BattleEndState": {
+      "description": "ServerCleanup and terminate connections, close destroy all the players, their data",
+      "type": "final"
+    },
+    "SessionLobbyState": {
+      "description": "Lobby Area, events like PLAYER_READY, NOT READY are processed here. This is where every player must  mark themselves are ready in order to start game.",
+      "on": {
+        "StartMatch": {
+          "target": "SpawnSelectionState"
+        }
       }
     }
   }
+}

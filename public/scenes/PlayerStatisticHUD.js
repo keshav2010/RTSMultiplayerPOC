@@ -1,7 +1,8 @@
 const CONSTANT = require("../constant");
 import { BaseScene } from "./BaseScene";
 const PacketType = require("../../common/PacketType");
-const { Viewport, Row, Scrollbar } = require('phaser-ui-tools');
+const { Viewport, Row } = require('phaser-ui-tools');
+const SoldierType = require("../../common/SoldierType");
 var $ = require("jquery");
 
 export class PlayerStatisticHUD extends BaseScene {
@@ -17,6 +18,7 @@ export class PlayerStatisticHUD extends BaseScene {
     this.load.image("soldierButton", "../assets/sprite.png");
     this.load.image("track", "../assets/track.png");
     this.load.spritesheet('bar', "../assets/bar.png", { frameWidth: 44, frameHeight: 22 });
+    this.load.html("soldierSelectionWidget", "../html/soldier-selection.html");
     this.scene.bringToTop();
   }
   create() {
@@ -27,21 +29,32 @@ export class PlayerStatisticHUD extends BaseScene {
     var viewport = new Viewport(this, 125, 275, 260, 128);
     var row = new Row(this, 0, 0);
     viewport.addNode(row);
-
-    for(let i=0; i<=10; i++) {
-      let soldierButton = this.AddObject(this.add.image(0, 0, "soldierButton"));
-      row.addNode(soldierButton);
-    }
-    var scrollbar = new Scrollbar(
-      this,
-      viewport,
-      true,
-      false,
-      "track",
-      "bar",
-      { duration: 10, ease: Phaser.Math.Easing.Quadratic.Out }
+    
+    var soldierSelectionWidget = this.AddObject(
+      this.add.dom(250, 500).createFromCache("soldierSelectionWidget")
     );
-    Phaser.Display.Align.To.BottomCenter(scrollbar, viewport, 0, 128);
+    $("#soldierSelectionDiv #option_villager").on("click", ()=>{
+      console.log("trying to create villager");
+    });
+    $("#soldierSelectionDiv #option_stoneman").on("click", () => {
+      console.log("trying to create villager");
+    });
+    $("#soldierSelectionDiv #option_spearman").on("click", () => {
+      networkManager.sendEventToServer(
+        PacketType.ByClient.SOLDIER_SPAWN_REQUESTED,
+        {
+          soldierType: SoldierType.SPEARMAN.id
+        }
+      );
+    });
+    $("#soldierSelectionDiv #option_knight").on("click", () => {
+      networkManager.sendEventToServer(
+        PacketType.ByClient.SOLDIER_SPAWN_REQUESTED,
+        {
+          soldierType: SoldierType.KNIGHT.id
+        }
+      );
+    });
 
     const resourceText = this.AddObject(this.add.text(50, 50, "Resources: 0"));
     const soldierCount = this.AddObject(this.add.text(50, 80, "Soldiers: 0"));

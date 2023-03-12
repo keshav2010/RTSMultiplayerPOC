@@ -8,12 +8,14 @@
  */
 
 const Player = require("./Player");
-const PacketType = require("../common/PacketType")
+const PacketType = require("../common/PacketType");
+const { v4: uuidv4 } = require("uuid");
 
-function PlayerInitPacketAction(packetType, socket, io, stateManager){
+function PlayerInitPacketAction(packetType, socket, io, stateManager, {playerName}){
     try{
-        console.log(`Player ${socket.id} just joined, scheduling INIT packet.`);
-        let player = new Player(socket.id);
+        const playerId = `pid${uuidv4()}`;
+        console.log(`[INIT_PACKET setup]-Player ${playerName} (${playerId}) Joined.`);
+        let player = new Player(playerId, playerName);
         stateManager.registerPlayer(socket, player);
 
         //the main init packet, the "socket" property is added to ensure packet is only
@@ -45,6 +47,13 @@ function PlayerInitPacketAction(packetType, socket, io, stateManager){
                 stateManager.enqueueStateUpdate(initPacket);
             });
         })
+
+        process.send({
+          type: "SESSION_UPDATED",
+          sessionId: stateManager.sessionId,
+          gameStarted: stateManager.GameStarted,
+          players: stateManager.getPlayers().length,
+        });
     }
     catch(err){
         console.log(err);
@@ -53,13 +62,13 @@ function PlayerInitPacketAction(packetType, socket, io, stateManager){
 
 function PlayerJoinedPacketAction(packetType, socket, io, stateManager){
     try{
-        console.log(`Player ${socket.id} Attempting to Join.`);
+        const player = stateManager.getPlayer(socket);
+        console.log(`Player ${player.id} Attempting to Join.`);
         if(stateManager.GameStarted){
-            console.log(`Player ${socket.id} --- Game Started, Disconnecting..`);
+            console.log(`Game Started, Disconnecting player${player.id}`);
             socket.disconnect();
             return;
         }
-        const player = stateManager.getPlayer(socket);
         const deltaUpdate={
             type: packetType,
             player: player.getSnapshot()
@@ -73,15 +82,16 @@ function PlayerJoinedPacketAction(packetType, socket, io, stateManager){
 
 function PlayerReadyPacketAction(packetType, socket, io, stateManager){
     try{
-        console.log(`Player ${socket.id} Marked ready.`);
+        const player = stateManager.getPlayer(socket);
+        console.log(`Player ${player.id} Marked ready.`);
         stateManager.getPlayer(socket).readyStatus = true;
         let readyPlayersCount = stateManager.getPlayers().filter(p => p.readyStatus).length;
-        if(readyPlayersCount === stateManager.getPlayers().length)
-            stateManager.GameStarted = true;
-
+        if(readyPlayersCount === stateManager.getPlayers().length)  {
+            stateManager.startGame();
+        }
         const deltaUpdate = {
             type:packetType,
-            playerId: stateManager.getPlayer(socket).id,
+            playerId: player.id,
             startGame:stateManager.GameStarted
         }
         stateManager.enqueueStateUpdate(deltaUpdate);
@@ -93,16 +103,18 @@ function PlayerReadyPacketAction(packetType, socket, io, stateManager){
 
 function PlayerUnreadyPacketAction(packetType, socket, io, stateManager){
     try{
-        console.log(`Player ${socket.id} Marked Unready.`);
+        const player = stateManager.getPlayer(socket);
+        console.log(`Player ${player.id} Trying to mark itself Unready.`);
         let readyPlayersCount = stateManager.getPlayers().filter(p => p.readyStatus).length;
-        if(stateManager.GameStarted || readyPlayersCount === stateManager.getPlayers().length){
-            stateManager.GameStarted = true;
+        if(stateManager.GameStarted || readyPlayersCount === stateManager.getPlayers().length) {
+            if(!stateManager.GameStarted)
+                stateManager.startGame();
             return;
         }
-        stateManager.getPlayer(socket).readyStatus = false;
+        player.readyStatus = false;
         const deltaUpdate = {
             type: packetType,
-            playerId: stateManager.getPlayer(socket).id,
+            playerId: player.id,
             startGame:stateManager.GameStarted
         }
         stateManager.enqueueStateUpdate(deltaUpdate);
@@ -114,15 +126,21 @@ function PlayerUnreadyPacketAction(packetType, socket, io, stateManager){
 
 function PlayerLeftPacketAction(packetType, socket, io, stateManager){
     try{
-        console.log(`Player ${socket.id} Left/Disconnected. ClearObject for player ${socket.id}`)
         let player = stateManager.getPlayer(socket);
-        player.destroy(stateManager);
+        console.log(`Player ${player.id} Left/Disconnected.`)
+        player?.destroy(stateManager);
         stateManager.removePlayer(socket);
         const deltaUpdate={
             type:packetType,
             playerId: player.id
         }
         stateManager.enqueueStateUpdate(deltaUpdate);
+        process.send({
+          type: "SESSION_UPDATED",
+          sessionId: stateManager.sessionId,
+          gameStarted: stateManager.GameStarted,
+          players: stateManager.getPlayers().length,
+        });
     }
     catch(err){
         console.log(err);
@@ -159,6 +177,24 @@ function SoldierMoveRequestedPacketAction(packetType, socket, io, stateManager, 
 }
 
 
+function SoldierSpawnRequestedPacketAction(
+    packetType,
+    socket,
+    io,
+    stateManager,
+    data
+  ) {
+    let player = stateManager.getPlayer(socket);
+    let { soldierType } = data;
+    let queuedSpawnRequest = player.queueSoldierSpawnRequest(soldierType);
+    var updatePacket = {
+      type: PacketType.ByServer.SOLDIER_SPAWN_SCHEDULED,
+      ...queuedSpawnRequest,
+      playerId: player.id,
+    };
+    stateManager.enqueueStateUpdate(updatePacket);
+  }
+  
 /**
  * data:
  * {
@@ -196,23 +232,6 @@ function SoldierCreateRequestedPacketAction(
   stateManager.enqueueStateUpdate(updatePacket);
 }
 
-function SoldierSpawnRequestedPacketAction(
-  packetType,
-  socket,
-  io,
-  stateManager,
-  data
-) {
-  let player = stateManager.getPlayer(socket);
-  let { soldierType } = data;
-  let queuedSpawnRequest = player.queueSoldierSpawnRequest(soldierType);
-  var updatePacket = {
-    type: PacketType.ByServer.SOLDIER_SPAWN_SCHEDULED,
-    ...queuedSpawnRequest,
-    playerId: player.id,
-  };
-  stateManager.enqueueStateUpdate(updatePacket);
-}
 
 function SoldierDeletedPacketAction(packetType, socket, io, stateManager, data){
     let {soldierId} = data;

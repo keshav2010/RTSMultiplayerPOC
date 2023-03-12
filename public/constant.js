@@ -4,6 +4,7 @@ module.exports = {
         LOAD: "LOAD",
         GAME: "GAME",
         RESULT:"RESULT",
+        SESSIONLOBBY: "SESSIONLOBBY",
         SPAWNSELECTSCENE: "SPAWNSELECT",
         MATCHMAKER: 'MATCHMAKER',
         HUD_SCORE: "SCOREHUD"

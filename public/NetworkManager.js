@@ -1,25 +1,23 @@
 const CONSTANT = require('./constant');
+const axios = require('axios');
 class NetworkManager {
-    constructor(phaserGame, phaserRegistry, OnDisconnect = null, OnConnect = null) {
+    constructor(phaserGame, phaserRegistry) {
         this.socket = null;
         this.game = phaserGame;
         this.scene = phaserGame.scene;
         this.registry = phaserRegistry;
 
         this.registry.set('socket', null);
-
-        this.cb_OnDisconnect = OnDisconnect;
-        this.cb_OnConnect = OnConnect;
         this.eventHandlersBinded = false;
+        this.currentActiveSession = null;
     }
 
     //connects to game server and launches spawn-select scene in parallel.
-    connectGameServer(serverUrl = null) {
-        this.socket = io(serverUrl);
-        if(!this.eventHandlersBinded) {
-            console.log(`binding event handlers`);
-            this.bindEventHandlers();
-        }
+    connectGameServer(url, onConnectCallback, onDisconnectCallback) {
+        this.socket = io(`${url}`,{
+            transports: ["websocket"],
+        });
+        this.bindEventHandlers(onConnectCallback, onDisconnectCallback);
     }
 
     isSocketConnected() {
@@ -45,7 +43,7 @@ class NetworkManager {
         this.socket = null;
     }
 
-    bindEventHandlers() {
+    bindEventHandlers(onConnectCallback, onDisconnectCallback) {
         if(!this.socket) {
             console.log(`[bindEventHandlers]: socket is null.`);
             return;
@@ -63,10 +61,8 @@ class NetworkManager {
             });
         });
         this.socket.on('connect', () => {
-            console.log('socket connect');
-            if(this.cb_OnConnect)
-                this.cb_OnConnect();
-            this.scene.start(CONSTANT.SCENES.SPAWNSELECTSCENE);
+            if(onConnectCallback)
+                onConnectCallback();
         });
         this.socket.on('disconnect', reason => {
             console.log(`[NetworkManager] Socket Disconnect (Reason: ${reason})`);
@@ -78,16 +74,29 @@ class NetworkManager {
                 activeScene.events.emit("shutdown", activeScene.scene);
             })
             this.registry.get('stateManager').clearState();
-            if(this.cb_OnDisconnect)
-                this.cb_OnDisconnect();
-
-            console.log('Launching Menu Scene since socket disconnected.', this.socket);
-            this.scene.start(CONSTANT.SCENES.MENU);
+            if(onDisconnectCallback)
+                onDisconnectCallback();
         });
     }
 
     sendEventToServer(eventType, data) {
         this.socket.emit(eventType, data);
+    }
+
+    setPlayerName(name) {
+        this.playerName = name.trim().replace(' ','-');
+    }
+    getPlayerName() {
+        return this.playerName || `RandomPlayer${Math.abs(Math.random()*1000).toFixed()}`;
+    }
+    async getAvailableSession() {
+        let session = await axios.get('/sessions?limit=1');
+        return session.data;
+    }
+    async hostSession() {
+        let session = await axios.post('/session');
+        this.currentActiveSession = session.data || null;
+        return this.currentActiveSession;
     }
 }
 module.exports = NetworkManager;
