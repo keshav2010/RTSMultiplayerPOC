@@ -50,13 +50,6 @@ class ClientStateManager
         player.removeSoldier(soldier);
         return;
     }
-    updateSoldierFromServerSnapshot(serverSoldierSnapshot){
-        let clientLocalSoldier = this.getPlayer(serverSoldierSnapshot.playerId).getSoldier(serverSoldierSnapshot.id);
-        if(clientLocalSoldier.length < 1)
-            return;
-        clientLocalSoldier = clientLocalSoldier[0];
-        clientLocalSoldier.setHealth(serverSoldierSnapshot.health);
-    }
     update(time, delta)
     {
         //update each player

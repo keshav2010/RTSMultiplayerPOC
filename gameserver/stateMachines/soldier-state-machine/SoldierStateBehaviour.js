@@ -40,16 +40,17 @@ module.exports = {
     nearbyUnits.forEach((unit) => {
       if (unit === soldier) return;
 
+      // if nearby unit (of same team) has same destination (approx.)
       let overlapExpectedPos =
         new SAT.Vector()
           .copy(unit.expectedPosition)
           .sub(soldier.expectedPosition)
           .len() <= SoldierConstants.MAX_TARGETPOS_OVERLAP_DIST;
 
-      let eitherAtDest =
+      let anyOneAtDest =
         unit.hasReachedDestination() || soldier.hasReachedDestination();
 
-      if (eitherAtDest && overlapExpectedPos) {
+      if (anyOneAtDest && overlapExpectedPos) {
         unit.isAtDestination = soldier.isAtDestination = true;
         soldier.expectedPosition.copy(soldier.pos);
         if (!stateMachineTrigged)
@@ -61,6 +62,7 @@ module.exports = {
   Attack: ({ delta, stateManager, soldier }) => {
     if (!soldier.AttackTargetSoldier) {
       soldier.stateMachine.controller.send("TargetLost");
+      return;
     }
     let distToTarget = new SAT.Vector()
       .copy(soldier.AttackTargetSoldier.pos)
@@ -87,10 +89,12 @@ module.exports = {
         playerId: soldier.AttackTargetSoldier.playerId,
         soldierId: soldier.AttackTargetSoldier.id,
       });
-      stateManager.removeSoldier(
+      let isRemoved = stateManager.removeSoldier(
         soldier.AttackTargetSoldier.playerId,
         soldier.AttackTargetSoldier.id
       );
+      if(!isRemoved)
+        console.log(`Soldier ID#${soldier.AttackTargetSoldier.id} is probably already removed.`);
       soldier.AttackTargetSoldier = null;
       soldier.stateMachine.controller.send("TargetKilled");
     }
@@ -107,8 +111,7 @@ module.exports = {
         SoldierConstants.ENEMY_SEARCH_RADIUS
       );
       if (nearbyUnits.length < 2) {
-        soldier.stateMachine.controller.send("TargetNotFound");
-        return;
+        throw new Error("[SoldierStateBehaviour | FindTarget]: No Nearby Units Found.")
       }
 
       //Go to unit with least distance instead of random unit.
@@ -132,16 +135,12 @@ module.exports = {
           unit = nearestUnit;
         }
       });
-
-      if (nearestUnit) {
-        soldier.AttackTargetSoldier = nearestUnit;
-        soldier.stateMachine.controller.send("TargetFound");
-      } else {
-        //TODO: what about expectedPosition / targetPosition
-        soldier.stateMachine.controller.send("TargetNotFound");
-      }
+      if(!nearestUnit)
+        throw new Error("[SoldierStateBehaviour | FindTarget]: No Enemy Unit nearby.")
+    
+      soldier.AttackTargetSoldier = nearestUnit;
+      soldier.stateMachine.controller.send("TargetFound");
     } catch (err) {
-      console.error(err);
       soldier.stateMachine.controller.send("TargetNotFound");
     }
   },

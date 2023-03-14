@@ -227,12 +227,12 @@ class Soldier extends SAT.Box {
     this.stateMachine.controller.send("Attack");
   }
 
-  attackMe(delta, attackedBySoldier) {
-    this.health -= delta * attackedBySoldier.damage;
+  attackMe(delta, attackerUnit) {
+    if(!attackerUnit)
+      throw new Error("attackerUnit parameter is undefined/null.");
+    this.health -= delta * attackerUnit.damage;
     this.health = Math.max(0, this.health);
-    if(attackedBySoldier)
-      this.AttackTargetSoldier = attackedBySoldier;
-
+    this.AttackTargetSoldier = attackerUnit;
     this.stateMachine.controller.send("PlayerAttacked");
   }
 

@@ -8,10 +8,11 @@
       "on": {
         "Move": {
           "target": "Move",
-          "description": "whenever velocity > 0"
+          "description": "whenever velocity > 0 or is not at destination"
         },
         "Attack": {
-          "target": "Attack"
+          "target": "Attack",
+          "description": "Triggered when Soldier.attackUnit() function is invoked in stateManager"
         },
         "PlayerAttacked": {
           "target": "Defend"
@@ -23,6 +24,14 @@
       "on": {
         "ReachedPosition": {
           "target": "Idle"
+        },
+        "Attack": {
+          "target": "Attack",
+          "description": "Triggered when Soldier.attackUnit() function is invoked in stateManager."
+        },
+        "PlayerAttacked": {
+          "target": "Defend",
+          "description": "Called when attacker invokes defender's attackMe() method. We can be sure that whenever this event is fired, both attacker and defender has their target unit set."
         }
       }
     },
@@ -35,7 +44,8 @@
           "target": "FindTarget"
         },
         "Move": {
-          "target": "Move"
+          "target": "Move",
+          "description": "triggered by Soldier.setTargetPosition()"
         },
         "TargetKilled": {
           "target": "FindTarget"
