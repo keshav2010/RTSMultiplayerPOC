@@ -13,6 +13,34 @@ module.exports = {
     soldier.applyForce(seperationForce);
     if (soldier.velocityVector.len() > 0 || !soldier.hasReachedDestination()) {
       soldier.stateMachine.controller.send("Move");
+      return;
+    }
+
+    // if nearby unit getting attacked.
+    let nearbyUnits = stateManager.scene.getNearbyUnits(
+      {
+        x: soldier.pos.x + soldier.width / 2,
+        y: soldier.pos.y + soldier.height / 2,
+      },
+      SoldierConstants.NEARBY_SEARCH_RADI
+    );
+    if (nearbyUnits.length < 2)
+      return;
+    
+    // if any nearby unit under attack
+    let nearbyAllies = nearbyUnits.filter(unit => unit !== soldier && unit.playerId === soldier.playerId);
+    for(let i=0; i<nearbyAllies.length; i++) {
+      let unit = nearbyAllies[i];
+      if (unit === soldier || unit.playerId !== soldier.playerId) continue;
+      unit = stateManager.getPlayerById(unit.playerId).getSoldier(unit.id);
+      if(['Defend', 'Attack'].includes(unit.getCurrentState())) {
+        let enemy = unit.getAttackTarget(stateManager);
+        if(!enemy)
+          continue;
+        soldier.setAttackTarget(stateManager, enemy.player.id, enemy.soldier.id);
+        soldier.stateMachine.controller.send("DefendAllyUnit");
+        break;
+      }
     }
   },
 
@@ -60,12 +88,13 @@ module.exports = {
   },
 
   Attack: ({ delta, stateManager, soldier }) => {
-    if (!soldier.AttackTargetSoldier) {
+    let attackTarget = soldier.getAttackTarget(stateManager);
+    if (!attackTarget) {
       soldier.stateMachine.controller.send("TargetLost");
       return;
     }
     let distToTarget = new SAT.Vector()
-      .copy(soldier.AttackTargetSoldier.pos)
+      .copy(attackTarget.soldier.pos)
       .sub(soldier.pos)
       .len();
     if (distToTarget > SoldierConstants.DESIRED_DIST_FROM_TARGET) {
@@ -73,36 +102,36 @@ module.exports = {
       return;
     }
 
-    soldier.AttackTargetSoldier.attackMe(delta, soldier);
+    attackTarget.soldier.attackMe(delta, soldier, stateManager);
 
     //schedule update to client about attack on enemy soldier.
     stateManager.enqueueStateUpdate({
       type: PacketType.ByServer.SOLDIER_ATTACKED,
       a: soldier.getSnapshot(),
-      b: soldier.AttackTargetSoldier.getSnapshot(),
+      b: attackTarget.soldier.getSnapshot(),
     });
 
     //if attacked soldier unit dead, update server-state and schedule update for client.
-    if (soldier.AttackTargetSoldier.health === 0) {
+    if (attackTarget.soldier.health === 0) {
       stateManager.enqueueStateUpdate({
         type: PacketType.ByServer.SOLDIER_KILLED,
-        playerId: soldier.AttackTargetSoldier.playerId,
-        soldierId: soldier.AttackTargetSoldier.id,
+        playerId: attackTarget.player.id,
+        soldierId: attackTarget.soldier.id,
       });
       let isRemoved = stateManager.removeSoldier(
-        soldier.AttackTargetSoldier.playerId,
-        soldier.AttackTargetSoldier.id
+        attackTarget.player.id,
+        attackTarget.soldier.id
       );
       if(!isRemoved)
-        console.log(`Soldier ID#${soldier.AttackTargetSoldier.id} is probably already removed.`);
-      soldier.AttackTargetSoldier = null;
+        console.log(`Soldier ID#${attackTarget?.soldier.id} is probably already removed.`);
+      soldier.setAttackTarget(stateManager, null, null);
       soldier.stateMachine.controller.send("TargetKilled");
     }
   },
 
   FindTarget: ({ delta, updateManager, stateManager, soldier }) => {
     try {
-      soldier.AttackTargetSoldier = null;
+      soldier.setAttackTarget(stateManager, null, null);
       var nearbyUnits = stateManager.scene.getNearbyUnits(
         {
           x: soldier.pos.x + soldier.width / 2,
@@ -138,7 +167,7 @@ module.exports = {
       if(!nearestUnit)
         throw new Error("[SoldierStateBehaviour | FindTarget]: No Enemy Unit nearby.")
     
-      soldier.AttackTargetSoldier = nearestUnit;
+      soldier.setAttackTarget(stateManager, nearestUnit.playerId, nearbyUnit.id);
       soldier.stateMachine.controller.send("TargetFound");
     } catch (err) {
       soldier.stateMachine.controller.send("TargetNotFound");
@@ -146,7 +175,7 @@ module.exports = {
   },
 
   Defend: ({ delta, updateManager, stateManager, soldier }) => {
-    if (!soldier.AttackTargetSoldier) {
+    if (!soldier.getAttackTarget(stateManager)) {
       soldier.stateMachine.controller.send("NoAttackerUnitNearby");
       return;
     }
@@ -155,18 +184,18 @@ module.exports = {
 
   ChaseTarget: ({ delta, stateManager, soldier }) => {
     try {
-      if (!soldier.AttackTargetSoldier) {
+      if (!soldier.getAttackTarget(stateManager)) {
         soldier.stateMachine.controller.send("TargetLost");
         return;
       }
 
       let seperationForce = soldier.getSeperationVector(stateManager);
-      let steerForce = soldier.getSteerVector(soldier.AttackTargetSoldier.pos);
+      let steerForce = soldier.getSteerVector(soldier.getAttackTarget(stateManager).soldier.pos);
       soldier.applyForce(seperationForce);
       soldier.applyForce(steerForce);
 
-      soldier.targetPosition.copy(soldier.AttackTargetSoldier.pos);
-      soldier.expectedPosition.copy(soldier.AttackTargetSoldier.pos);
+      soldier.targetPosition.copy(soldier.getAttackTarget(stateManager).soldier.pos);
+      soldier.expectedPosition.copy(soldier.getAttackTarget(stateManager).soldier.pos);
 
       stateManager.enqueueStateUpdate({
         type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
@@ -174,7 +203,7 @@ module.exports = {
       });
 
       let distToTarget = new SAT.Vector()
-        .copy(soldier.AttackTargetSoldier.pos)
+        .copy(soldier.getAttackTarget(stateManager).soldier.pos)
         .sub(soldier.pos)
         .len();
       if (distToTarget <= SoldierConstants.DESIRED_DIST_FROM_TARGET) {
@@ -182,9 +211,9 @@ module.exports = {
       }
     } catch (err) {
       console.log(err);
-      soldier.targetPosition.copy(soldier.AttackTargetSoldier.pos);
+      soldier.targetPosition.copy(soldier.getAttackTarget(stateManager).soldier.pos);
       soldier.expectedPosition.copy(soldier.targetPosition);
-      soldier.AttackTargetSoldier = null;
+      soldier.setAttackTarget(stateManager);
     }
   },
 };

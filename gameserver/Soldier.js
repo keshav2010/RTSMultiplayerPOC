@@ -7,6 +7,7 @@ const soldierStateBehaviours = require("./stateMachines/soldier-state-machine/So
 const StateMachine = require("./lib/StateMachine");
 const SoldierConstants = require("./unitConstants");
 const { AllianceTypes } = require("./lib/AllianceTracker");
+const { v4: uuidv4 } = require("uuid");
 
 function mapRange(
   val,
@@ -31,7 +32,6 @@ function mapRange(
  * getAABBAsBox()       |
  */
 class Soldier extends SAT.Box {
-  static sid = 0;
   constructor(type, params, parentObject) {
     // {pos:{x,y}}
     super(
@@ -53,9 +53,6 @@ class Soldier extends SAT.Box {
     //actual position requested by client
     this.targetPosition = new SAT.Vector(params.x, params.y);
 
-    //Soldier that this soldier unit is going to attack
-    this.AttackTargetSoldier = null;
-
     this.isAtDestination = true;
 
     this.soldierType = type;
@@ -65,9 +62,8 @@ class Soldier extends SAT.Box {
     this.cost = params.cost || 5;
     this.damage = params.damage || 5;
 
-    this.id = String(Soldier.sid);
+    this.id = `soldier${uuidv4()}`
     this.playerId = String(params.playerId);
-    ++Soldier.sid;
 
     this.stateMachine = new StateMachine(SoldierStateMachineJSON, soldierStateBehaviours);
 
@@ -75,6 +71,28 @@ class Soldier extends SAT.Box {
     this.steeringVector = new SAT.Vector(0, 0);
     this.accelerationVector = new SAT.Vector(0, 0);
     this.velocityVector = new SAT.Vector(0, 0);
+  }
+
+  setAttackTarget(stateManager, playerId, soldierId) {
+    let player = stateManager.getPlayerById(playerId);
+    let soldier = player?.getSoldier(soldierId);
+    if(!player || !soldier){
+      this.attackTarget = null;
+      return null;
+    }
+    this.attackTarget = { playerId, soldierId };
+    return this.attackTarget;
+  }
+  getAttackTarget(stateManager) {
+    if(!this.attackTarget)
+      return null;
+    let player = stateManager.getPlayerById(this.attackTarget.playerId);
+    let soldier = player?.getSoldier(this.attackTarget.soldierId);
+    if(!player || !soldier){
+      this.attackTarget = null;
+      return null;
+    }
+    return {player, soldier};
   }
 
   //get steering force
@@ -113,7 +131,7 @@ class Soldier extends SAT.Box {
     this.targetPosition = new SAT.Vector(x, y);
     this.expectedPosition = new SAT.Vector(x, y);
     this.hasReachedDestination();
-    this.AttackTargetSoldier = null;
+    this.attackTarget = null;
     this.stateMachine.controller.send("Move");
   }
 
@@ -222,20 +240,23 @@ class Soldier extends SAT.Box {
   }
 
   attackUnit(targetSoldier, stateManager) {
-    this.AttackTargetSoldier = targetSoldier;
+    this.setAttackTarget(stateManager, targetSoldier?.playerId, targetSoldier.id);
     stateManager.setAlliance(this.playerId, targetSoldier?.playerId, AllianceTypes.ENEMIES);
     this.stateMachine.controller.send("Attack");
   }
 
-  attackMe(delta, attackerUnit) {
-    if(!attackerUnit)
-      throw new Error("attackerUnit parameter is undefined/null.");
+  attackMe(delta, attackerUnit, stateManager) {
+    if(!attackerUnit || !stateManager)
+      throw new Error("attackerUnit or stateManager parameter is undefined/null.");
     this.health -= delta * attackerUnit.damage;
     this.health = Math.max(0, this.health);
-    this.AttackTargetSoldier = attackerUnit;
+    this.setAttackTarget(stateManager, attackerUnit.playerId, attackerUnit.id);
     this.stateMachine.controller.send("PlayerAttacked");
   }
 
+  getCurrentState() {
+      return `${this.stateMachine.currentState}`;
+  }
   //Returns a perfectly serializable object with no refs, this object can be shared between threads
   getSnapshot() {
     let soldierData = {

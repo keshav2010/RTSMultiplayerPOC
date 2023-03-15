@@ -16,6 +16,9 @@
         },
         "PlayerAttacked": {
           "target": "Defend"
+        },
+        "DefendAllyUnit": {
+          "target": "Attack"
         }
       }
     },
@@ -69,7 +72,8 @@
           "target": "Attack"
         },
         "TargetLost": {
-          "target": "FindTarget"
+          "target": "FindTarget",
+          "description": "This is different from \"TargetNotInRange\" in the sense that the attacker has completely lost its attack target during chase itself (when reference is set to null for example)"
         },
         "Move": {
           "target": "Move",
