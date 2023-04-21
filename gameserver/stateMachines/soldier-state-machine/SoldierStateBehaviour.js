@@ -6,10 +6,11 @@ module.exports = {
   Idle: ({ delta, updateManager, stateManager, soldier }) => {
     /*repel from only those units which are not yet at their destination.
      */
+    let steerForce = soldier.getSteerVector(soldier.expectedPosition);
     let seperationForce = soldier.getSeperationVector(stateManager, (a, b) => {
       return a.hasReachedDestination() && b.hasReachedDestination();
     });
-    
+    soldier.applyForce(steerForce);
     soldier.applyForce(seperationForce);
     if (!soldier.hasReachedDestination()) {
       soldier.stateMachine.controller.send("Move");
@@ -27,12 +28,14 @@ module.exports = {
     if (nearbyUnits.length < 2)
       return;
     
-    // if any nearby unit under attack
+    // if any nearby friendly unit under attack
     let nearbyAllies = nearbyUnits.filter(unit => unit !== soldier && unit.playerId === soldier.playerId);
     for(let i=0; i<nearbyAllies.length; i++) {
       let unit = nearbyAllies[i];
       if (unit === soldier || unit.playerId !== soldier.playerId) continue;
       unit = stateManager.getPlayerById(unit.playerId).getSoldier(unit.id);
+
+      //if nearby friendly unit is either defending/attacking, then assist it.
       if(['Defend', 'Attack'].includes(unit.getCurrentState())) {
         let enemy = unit.getAttackTarget(stateManager);
         if(!enemy)
