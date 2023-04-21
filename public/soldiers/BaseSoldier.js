@@ -73,9 +73,14 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
         this.scale = 1;
         this.hp = new LoadingBar(scene, this);
         this.highlightBackground = new BackgroundHighlight(scene, this, this.color[0],this.color[1],this.color[2]);
+
+        this.DEBUGTEXT = scene.add.text(x, y+40, `${this.id.substr(0, 15)}\n health:${this.initialParam.health}`, { font: "12px Arial", fill: "#ffffff" });
+        this.DEBUGTEXT.setOrigin(0.5);
+
         this.on('destroy', ()=>{
             this.hp.destroy();
             this.highlightBackground.destroy();
+            this.DEBUGTEXT.destroy();
             this.scene.registry.get('stateManager').selectedSoldiers.delete(this.id);
         })
     }
@@ -85,7 +90,9 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     }
     update(){
         this.hp.draw();
-        this.highlightBackground.draw()
+        this.highlightBackground.draw();
+        this.DEBUGTEXT.setPosition(this.x, this.y+40);
+        this.DEBUGTEXT.setText(`${this.initialParam.currentState}\n id:${this.id.substr(0, 15)}\n health:${this.initialParam.health}`)
     }
     markSelected(){
         this.scene.registry.get('stateManager').selectedSoldiers.set(this.id, this);

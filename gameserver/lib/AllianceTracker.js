@@ -19,8 +19,6 @@ class AllianceTracker {
             this.allianceMap[playerB_Id] = {};
         this.allianceMap[playerA_Id][playerB_Id] = allianceType;
         this.allianceMap[playerB_Id][playerA_Id] = allianceType;
-
-        console.log(this.allianceMap);
     }
     getAlliance(playerA_Id, playerB_Id) {
         if(playerA_Id === playerB_Id) return AllianceTypes.ALLY;

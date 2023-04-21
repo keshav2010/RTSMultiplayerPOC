@@ -16,7 +16,7 @@ class GameStateManager {
     this.io = io;
 
     this.GameStarted = false;
-    this.SocketToPlayerData = new Map();
+    this.SocketToPlayerMap = new Map();
     this.SocketsMap = new Map();
     this.lastSimulateTime_ms = Date.now();
 
@@ -96,20 +96,20 @@ class GameStateManager {
 
   registerPlayer(socket, player) {
     console.log("registering player : ", player.id);
-    if(!this.SocketToPlayerData.has(socket.id))
-      this.SocketToPlayerData.set(socket.id, player);
+    if(!this.SocketToPlayerMap.has(socket.id))
+      this.SocketToPlayerMap.set(socket.id, player);
     if(!this.SocketsMap.has(player.id))
       this.SocketsMap.set(player.id, socket);
   }
 
-  getPlayer(socket) {
-    return this.SocketToPlayerData.get(socket.id) || null;
+  getPlayer(socketId) {
+    return this.SocketToPlayerMap.get(socketId) || null;
   }
   getPlayers() {
-    return [...this.SocketToPlayerData.values()];
+    return [...this.SocketToPlayerMap.values()];
   }
   isPlayerRegistered(socket, player) {
-    return player?.id && socket?.id && this.SocketToPlayerData.has(socket.id) && this.SocketsMap.has(player?.id)
+    return player?.id && socket?.id && this.SocketToPlayerMap.has(socket.id) && this.SocketsMap.has(player?.id)
   }
 
   getPlayerSocket(playerId) {
@@ -117,13 +117,13 @@ class GameStateManager {
   }
   getPlayerById(playerId) {
     let socketId = this.SocketsMap.get(playerId)?.id;
-    return this.SocketToPlayerData.get(socketId) || null;
+    return this.SocketToPlayerMap.get(socketId) || null;
   }
-  removePlayer(socket) {
+  removePlayer(socketId) {
         //update for collision detection.
         this.scene.update();
-        const player = this.SocketToPlayerData.get(socket.id);
-        this.SocketToPlayerData.delete(socket.id);
+        const player = this.SocketToPlayerMap.get(socketId);
+        this.SocketToPlayerMap.delete(socketId);
         this.SocketsMap.delete(player.id);
   }
 
@@ -143,16 +143,9 @@ class GameStateManager {
     return { status, soldierId, soldier };
   }
   removeSoldier(playerId, soldierId) {
-    try {
-      this.SocketToPlayerData.get(playerId).removeSoldier(soldierId, this);
-
-      const deltaUpdate = {
-        type: PacketType.ByServer.SOLDIER_KILLED,
-        playerId: playerId,
-        soldierId: soldierId,
-      };
-      this.enqueueStateUpdate(deltaUpdate);
-    } catch (err) {}
+      let socketId = this.SocketsMap.get(playerId).id;
+      let isRemoved = this.SocketToPlayerMap.get(socketId).removeSoldier(soldierId, this);
+      return isRemoved;
   }
 
   setAlliance(playerAId, playerBId, allianceType) {

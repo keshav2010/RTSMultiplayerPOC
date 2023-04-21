@@ -8,13 +8,17 @@
       "on": {
         "Move": {
           "target": "Move",
-          "description": "whenever velocity > 0"
+          "description": "whenever velocity > 0 or is not at destination"
         },
         "Attack": {
-          "target": "Attack"
+          "target": "Attack",
+          "description": "Triggered when Soldier.attackUnit() function is invoked in stateManager"
         },
         "PlayerAttacked": {
           "target": "Defend"
+        },
+        "DefendAllyUnit": {
+          "target": "Attack"
         }
       }
     },
@@ -23,6 +27,14 @@
       "on": {
         "ReachedPosition": {
           "target": "Idle"
+        },
+        "Attack": {
+          "target": "Attack",
+          "description": "Triggered when Soldier.attackUnit() function is invoked in stateManager."
+        },
+        "PlayerAttacked": {
+          "target": "Defend",
+          "description": "Called when attacker invokes defender's attackMe() method. We can be sure that whenever this event is fired, both attacker and defender has their target unit set."
         }
       }
     },
@@ -35,7 +47,8 @@
           "target": "FindTarget"
         },
         "Move": {
-          "target": "Move"
+          "target": "Move",
+          "description": "triggered by Soldier.setTargetPosition()"
         },
         "TargetKilled": {
           "target": "FindTarget"
@@ -59,7 +72,8 @@
           "target": "Attack"
         },
         "TargetLost": {
-          "target": "FindTarget"
+          "target": "FindTarget",
+          "description": "This is different from \"TargetNotInRange\" in the sense that the attacker has completely lost its attack target during chase itself (when reference is set to null for example)"
         },
         "Move": {
           "target": "Move",

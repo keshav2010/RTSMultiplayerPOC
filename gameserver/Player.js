@@ -189,13 +189,12 @@ class Player {
   }
 
   removeSoldier(id, stateManager) {
-    try {
-      let soldierToRemove = this.SoldierMap.get(id);
-      if (soldierToRemove) stateManager.scene.remove(soldierToRemove);
-      this.SoldierMap.delete(id);
-    } catch (err) {
-      console.log(err);
-    }
+    let soldierToRemove = this.SoldierMap.get(id);
+    if (typeof soldierToRemove === 'undefined')
+      return false;
+    stateManager.scene.remove(soldierToRemove);
+    this.SoldierMap.delete(id);
+    return true;
   }
 
   destroy(stateManager) {

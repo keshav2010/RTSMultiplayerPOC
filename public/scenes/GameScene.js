@@ -106,6 +106,7 @@ export class GameScene extends BaseScene {
           for (let i = 0; i < enemySoldiers.length; i++) {
             let soldier = enemySoldiers[i];
             let bound = soldier.getBounds();
+            selectorGraphics.strokeRectShape(bound);
             if (Phaser.Geom.Intersects.RectangleToRectangle(bound, rect)) {
               targetSoldier = soldier;
               break;
@@ -243,11 +244,21 @@ export class GameScene extends BaseScene {
         );
       }
     );
+    
     this.AddSceneEvent(PacketType.ByServer.SOLDIER_ATTACKED, (data) => {
       let { a, b } = data;
-      StateManager.updateSoldierFromServerSnapshot(a);
-      StateManager.updateSoldierFromServerSnapshot(b);
+      let updateHealth = (player) => {
+        let clientLocalSoldier = StateManager.getPlayer(
+          player.playerId
+        ).getSoldier(player.id);
+        if (clientLocalSoldier.length < 1) return;
+        clientLocalSoldier = clientLocalSoldier[0];
+        clientLocalSoldier.setHealth(player.health);
+      };
+      updateHealth(a);
+      updateHealth(b);
     });
+
     this.AddSceneEvent(PacketType.ByServer.SOLDIER_KILLED, ({ playerId, soldierId }) => {
         console.log("Soldier Killed ", {playerId, soldierId});
         StateManager.removeSoldier(playerId, soldierId);
@@ -264,6 +275,7 @@ export class GameScene extends BaseScene {
           s.y = soldier.currentPositionY;
           s.expectedPositionX = soldier.currentPositionX;
           s.expectedPositionY = soldier.currentPositionY;
+          s.initialParam.currentState = soldier.currentState;
         }
       });
     });

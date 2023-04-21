@@ -73,7 +73,7 @@ function serverTick(stateManager, io) {
 }
 
 process.on("message", (message) => {
-  console.log("[worker] received message : ", message);
+  console.log(`[worker${message.workerId}] received message : `, message);
   //new session create
   if (message.type === "SESSION_CREATE_REQUESTED") {
     sessionManager.addSession(
@@ -325,8 +325,8 @@ process.on("message", (message) => {
   }
 });
 
-server.listen(0, () => {
+server.listen(3007, () => {
   console.log(
-    `[Worker${cluster.worker.id}] Online @ port ${server.address().port}`
+    `[Worker${cluster.worker.id}] Online @ port ${server.address()}`
   );
 });
