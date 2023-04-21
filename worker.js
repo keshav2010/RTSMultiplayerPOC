@@ -325,8 +325,8 @@ process.on("message", (message) => {
   }
 });
 
-server.listen(0, () => {
+server.listen(3007, () => {
   console.log(
-    `[Worker${cluster.worker.id}] Online @ port ${server.address().port}`
+    `[Worker${cluster.worker.id}] Online @ port ${server.address()}`
   );
 });

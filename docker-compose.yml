@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+  master_server:
+    build:
+      context: .
+    container_name: master_server
+    ports:
+      - "3000:3000"
+      - "3007:3007"
+    deploy:
+      restart_policy:
+        condition: on-failure
