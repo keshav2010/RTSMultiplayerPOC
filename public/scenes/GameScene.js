@@ -275,6 +275,7 @@ export class GameScene extends BaseScene {
           s.y = soldier.currentPositionY;
           s.expectedPositionX = soldier.currentPositionX;
           s.expectedPositionY = soldier.currentPositionY;
+          s.initialParam.currentState = soldier.currentState;
         }
       });
     });

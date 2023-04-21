@@ -34,7 +34,9 @@ const PacketType={
         'SOLDIER_POSITION_UPDATED':'spu',
 
         'COUNTDOWN_TIME':'cdwn',
-        'SPAWN_POINT_ACK': 'spwnpntack'
+        'SPAWN_POINT_ACK': 'spwnpntack',
+
+        'SOLDIER_STATE_DEBUG': 'debug_soldierState'
     }
 }
 module.exports = PacketType;

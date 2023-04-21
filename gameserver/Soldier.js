@@ -113,11 +113,16 @@ class Soldier extends SAT.Box {
     this.y = this.pos.y;
   }
 
-  hasReachedDestination() {
+  getDistanceFromMovePos() {
     let distanceToExpectedPos = new SAT.Vector()
       .copy(this.expectedPosition)
       .sub(this.pos)
       .len();
+    return distanceToExpectedPos;
+  }
+
+  hasReachedDestination() {
+    let distanceToExpectedPos = this.getDistanceFromMovePos();
     if (distanceToExpectedPos <= SoldierConstants.DESIRED_DIST_FROM_TARGET) {
       //this.expectedPosition.copy(this.pos);
       this.isAtDestination = true;
@@ -149,6 +154,7 @@ class Soldier extends SAT.Box {
           this.speed
         )
       );
+      desiredVector.scale(0);
     } else desiredVector.scale(this.speed);
 
     var steerVector = new SAT.Vector()
@@ -203,9 +209,13 @@ class Soldier extends SAT.Box {
   }
 
   tick(delta, stateManager) {
+    //if object is moving, we apply -2 frictionForce to it.
     this.velocityVector.add(this.accelerationVector);
     if (this.velocityVector.len() > this.speed)
       this.velocityVector.normalize().scale(this.speed);
+    let frictionForce = new SAT.Vector().copy(this.velocityVector).normalize().scale(-0.2);
+    this.velocityVector.add(frictionForce);
+    
     this.accelerationVector.scale(0);
     this.setPosition(new SAT.Vector().copy(this.pos).add(this.velocityVector));
 
@@ -279,6 +289,10 @@ class Soldier extends SAT.Box {
 
       id: this.id,
       playerId: this.playerId,
+
+
+      //DEBUG Purpose only.
+      currentState: this.getCurrentState()
     };
     return soldierData;
   }

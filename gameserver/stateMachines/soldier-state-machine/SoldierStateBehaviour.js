@@ -9,9 +9,9 @@ module.exports = {
     let seperationForce = soldier.getSeperationVector(stateManager, (a, b) => {
       return a.hasReachedDestination() && b.hasReachedDestination();
     });
-
+    
     soldier.applyForce(seperationForce);
-    if (soldier.velocityVector.len() > 0 || !soldier.hasReachedDestination()) {
+    if (!soldier.hasReachedDestination()) {
       soldier.stateMachine.controller.send("Move");
       return;
     }

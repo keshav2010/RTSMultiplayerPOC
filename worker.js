@@ -73,7 +73,7 @@ function serverTick(stateManager, io) {
 }
 
 process.on("message", (message) => {
-  console.log("[worker] received message : ", message);
+  console.log(`[worker${message.workerId}] received message : `, message);
   //new session create
   if (message.type === "SESSION_CREATE_REQUESTED") {
     sessionManager.addSession(

@@ -16,8 +16,6 @@ app.use(cors());
 app.use(express.static("dist"));
 app.use(express.static("public"));
 
-//worker id to session id
-const WorkerDict = {};
 var clusterWorkersPort = null;
 const WorkerIdToPendingHTTPRequest = {};
 
@@ -235,7 +233,7 @@ app.get("*", (req, res) => {
 //When any of the workers die
 cluster.on("exit", (worker, code, signal) => {
   console.log(`[cluster exit]: Worker #${worker.id} exited | [code:${code}] [signal:${signal}]`);
-  delete WorkerDict[worker.id];
+  workerManager.killWorker(worker.id);
 });
 
 //Emitted after the worker IPC channel has disconnected
