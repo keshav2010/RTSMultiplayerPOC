@@ -15,4 +15,5 @@ This is a timestep based approach that makes sure server only send delta updates
 
 # Preview (Debug info is displayed for each unit)
 
+[![Image from Gyazo](https://i.gyazo.com/feeede8b589d2119c8af020fd952c707.gif)](https://gyazo.com/feeede8b589d2119c8af020fd952c707)
 [![Image from Gyazo](https://i.gyazo.com/2dec336b740c0d9ecf454c53cac8991f.gif)](https://gyazo.com/2dec336b740c0d9ecf454c53cac8991f)
