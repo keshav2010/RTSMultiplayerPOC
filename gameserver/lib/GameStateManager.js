@@ -9,7 +9,7 @@ const { Queue } = require("../../common/Queue");
  * Manages entire game state.
  */
 class GameStateManager {
-  constructor(io, serverStateMachineJSON, serverStateMachineBehaviour) {
+  constructor(io, sessionStateMachineJSON, sessionStateMachineActions) {
     this.cumulativeUpdates = [];
     this.pendingClientRequests = new Queue();
 
@@ -25,8 +25,8 @@ class GameStateManager {
 
     this.countdown = process.env.COUNTDOWN; //seconds
     this.stateMachine = new StateMachine(
-      serverStateMachineJSON,
-      serverStateMachineBehaviour
+      sessionStateMachineJSON,
+      sessionStateMachineActions
     );
     this.alliances = new AllianceTracker();
   }

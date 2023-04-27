@@ -80,8 +80,8 @@ process.on("message", (message) => {
       message.sessionId,
       new GameStateManager(
         io.of(`/${message.sessionId}`),
-        require("./gameserver/stateMachines/server-state-machine/ServerStateMachine.json"),
-        require("./gameserver/stateMachines/server-state-machine/ServerStateBehaviour")
+        require("./gameserver/stateMachines/server-state-machine/SessionStateMachine.json"),
+        require("./gameserver/stateMachines/server-state-machine/SessionStateBehaviour")
       )
     );
     //whenever a client is connected to namespace/session

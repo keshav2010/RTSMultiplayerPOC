@@ -51,7 +51,12 @@ module.exports = {
         (Date.now() - gameStateManager.lastSimulateTime_ms) / 1000;
       gameStateManager.lastSimulateTime_ms = Date.now();
       //simulate all players.
-      gameStateManager.getPlayers().forEach((player) => {
+      const playersConnected = gameStateManager.getPlayers();
+      if(playersConnected.length == 0) {
+        gameStateManager.stateMachine.controller.send("BattleEnd");
+        return;
+      }
+      playersConnected.forEach((player) => {
         player.tick(deltaTime, gameStateManager);
       });
     } catch (err) {
@@ -59,5 +64,6 @@ module.exports = {
     }
   },
 
-  BattleEndState: ({ gameStateManager }) => {},
+  BattleEndState: ({ gameStateManager }) => {
+  },
 };
