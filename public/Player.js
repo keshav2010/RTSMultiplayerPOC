@@ -1,7 +1,3 @@
-
-/**
- * Pure Player Class
- */
 const SAT = require('sat');
 class Player
 {

@@ -147,6 +147,22 @@ function PlayerLeftPacketAction(packetType, socket, io, stateManager){
     }
 }
 
+function PlayerLostPacketAction(packetType, socket, io, stateManager){
+    try{
+        let player = stateManager.getPlayer(socket.id);
+        console.log(`Player ${player.id} Lost.`)
+        player?.destroy(stateManager);
+        const deltaUpdate={
+            type:packetType,
+            playerId: player.id
+        }
+        stateManager.enqueueStateUpdate(deltaUpdate);
+    }
+    catch(err){
+        console.log(err);
+    }
+}
+
 /**
  * data must be 
  * {
@@ -309,6 +325,7 @@ module.exports={
     PlayerUnreadyPacketAction,
     PlayerJoinedPacketAction,
     PlayerLeftPacketAction,
+    PlayerLostPacketAction,
     SoldierMoveRequestedPacketAction,
     SoldierCreateRequestedPacketAction,
     SoldierDeletedPacketAction,

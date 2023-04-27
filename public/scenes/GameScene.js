@@ -2,6 +2,7 @@ const CONSTANT = require("../constant");
 const { GAMEEVENTS } = CONSTANT;
 const PacketType = require("../../common/PacketType");
 const { Spearman } = require("../soldiers/Spearman");
+import { PlayerCastle } from "../gameObjects/playerCastle";
 import { BaseScene } from "./BaseScene";
 const SoldierType = require("../../common/SoldierType");
 var $ = require("jquery");
@@ -292,14 +293,19 @@ export class GameScene extends BaseScene {
     
     //show initial spawnpoint choice on map for player
     StateManager.getAllPlayers().forEach(({ playerId, spawnPosVec }) => {
-      let spawnPointFlag = this.add.image(spawnPosVec.x, spawnPosVec.y, "flag");
-        let playerIdText = this.add.text(
-            spawnPosVec.x - spawnPointFlag.width,
-            spawnPosVec.y + spawnPointFlag.height / 2,
-            StateManager.getPlayer(playerId).name
-          )
-        let objGroup = this.AddObject(this.add.group([spawnPointFlag, playerIdText]));
-        this.PlayerSpawnPointsTracker[playerId] = { phaserGroup: objGroup, spawnX: spawnPosVec.x, spawnY: spawnPosVec.y };
+      let spawnPointFlag = new PlayerCastle(
+        this,
+        spawnPosVec.x,
+        spawnPosVec.y,
+        "flag",
+        null,
+        {
+          health:500,
+          player: StateManager.getPlayer(playerId)
+        }
+      )
+      let objGroup = this.AddObject(spawnPointFlag);
+      this.PlayerSpawnPointsTracker[playerId] = { phaserGroup: objGroup, spawnX: spawnPosVec.x, spawnY: spawnPosVec.y };
     });
 
     this.AddSceneEvent('shutdown', (data)=>{

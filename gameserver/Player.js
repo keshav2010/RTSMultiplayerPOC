@@ -6,6 +6,7 @@ const Soldier = require('./Soldier');
 const nbLoop = require('../common/nonBlockingLoop');
 const PacketType = require('../common/PacketType');
 const SoldierType = require('../common/SoldierType');
+const PacketActions = require('./PacketActions');
 const { Queue } = require('../common/Queue');
 const { v4: uuidv4 } = require('uuid');
 
@@ -28,9 +29,11 @@ class Player {
 
     this.readyStatus = false;
 
-    //flag poss
+    //Spawn Flag Detail
     this.posX = 200 + Math.random() * 400;
     this.posY = 200 + Math.random() * 400;
+    this.spawnFlagHealth = 500;
+    this.playerState = 'InGame'; //is currently in game.
   }
 
   getSoldierCost(soldierType) {
@@ -96,6 +99,28 @@ class Player {
 
   tick(delta, stateManager) {
     try {
+      //if spawnFlag has been destroyed.
+      if(this.spawnFlagHealth <= 0) {
+        //player already lost the game, simply returns.
+        if(this.playerState === 'LostGame')
+          return;
+        
+        /*
+          Schedule a player-lost packet in client queue
+          (so server treats it as an update coming from client side)
+          The packet's action is defined in PacketActions.js file where further logic is executed.
+        */
+        this.playerState = 'LostGame';
+        let playerLostPacket = new Packet(
+            PacketType.ByServer.PLAYER_LOST,
+            stateManager.getPlayerSocket(this.id),
+            {},
+            PacketActions.PlayerLostPacketAction
+          )
+        stateManager.queueClientRequest(playerLostPacket);
+        return;
+      }
+
       this.resources += Player.resourceMultiplier * delta;
       this.resources = Math.min(this.resources, Player.maxResources);
 
@@ -154,6 +179,7 @@ class Player {
       resources: this.resources,
       posX: this.posX,
       posY: this.posY,
+      spawnPointHealth: this.spawnFlagHealth,
       readyStatus: this.readyStatus,
       soldiers: soldierSnapshots,
       color: [...this.color],

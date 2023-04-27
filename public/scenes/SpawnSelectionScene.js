@@ -3,6 +3,7 @@ const PacketType = require("../../common/PacketType");
 import { BaseScene } from "./BaseScene";
 const { Column } = require("phaser-ui-tools");
 const Player = require("../Player");
+const {PlayerCastle} = require('../gameObjects/playerCastle');
 var $ = require("jquery");
 const LoadingBar = require("../LoadingBar");
 
@@ -137,13 +138,18 @@ export class SpawnSelectionScene extends BaseScene {
         }
         
         //show new choice on map for player
-        let spawnPointFlag = this.add.image(spawnX, spawnY, "flag");
-        let playerIdText = this.add.text(
-            spawnX - spawnPointFlag.width,
-            spawnY + spawnPointFlag.height / 2,
-            StateManager.getPlayer(playerId).name
-          )
-        let objGroup = this.AddObject(this.add.group([spawnPointFlag, playerIdText]));
+        let spawnPointFlag = new PlayerCastle(
+          this,
+          spawnX,
+          spawnY,
+          "flag",
+          null,
+          {
+            health: 0,
+            player: StateManager.getPlayer(playerId)
+          }
+        )
+        let objGroup = this.AddObject(spawnPointFlag);
         this.PlayerSpawnPointsTracker[playerId] = { phaserGroup: objGroup, spawnX, spawnY };
         let player = StateManager.getPlayer(playerId);
         player.setSpawnPoint(spawnX, spawnY);

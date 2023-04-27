@@ -26,6 +26,7 @@ const PacketType={
 
         'PLAYER_LEFT':'pl',
         'PLAYER_INIT':'pi',
+        'PLAYER_LOST': 'plyrlost',
 
         'SOLDIER_ATTACK_ACK':'saa',
         'SOLDIER_ATTACKED':'sh',
