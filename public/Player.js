@@ -10,6 +10,7 @@ class Player
         this.name = prop.name;
         this.playerId = prop.id;
         this.color = [...prop.color];
+        this.health = prop.spawnPointHealth;
     }
     setSpawnPoint(x,y){
         this.spawnPosVec = new SAT.Vector(x,y);

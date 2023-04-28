@@ -131,14 +131,18 @@ export class SpawnSelectionScene extends BaseScene {
 
     this.AddSceneEvent(PacketType.ByServer.SPAWN_POINT_ACK,
       ({ spawnX, spawnY, playerId }) => {
-        //remove any previous choice of this player from scene.
-        if(this.PlayerSpawnPointsTracker[playerId]){
-          this.DestroyObject(this.PlayerSpawnPointsTracker[playerId].phaserGroup)
-          delete this.PlayerSpawnPointsTracker[playerId];
-        }
-        
         //show new choice on map for player
-        let spawnPointFlag = new PlayerCastle(
+        let player = StateManager.getPlayer(playerId);
+        player.setSpawnPoint(spawnX, spawnY);
+        
+        //if castle already created, just change its position.
+        if(this.PlayerSpawnPointsTracker[playerId]){
+          this.PlayerSpawnPointsTracker[playerId].spawnPoint.setPos(spawnX, spawnY);
+          return;
+        }
+
+        // spawn a castle.
+        let spawnPointFlag = this.AddObject(new PlayerCastle(
           this,
           spawnX,
           spawnY,
@@ -148,11 +152,8 @@ export class SpawnSelectionScene extends BaseScene {
             health: 0,
             player: StateManager.getPlayer(playerId)
           }
-        )
-        let objGroup = this.AddObject(spawnPointFlag);
-        this.PlayerSpawnPointsTracker[playerId] = { phaserGroup: objGroup, spawnX, spawnY };
-        let player = StateManager.getPlayer(playerId);
-        player.setSpawnPoint(spawnX, spawnY);
+        ));
+        this.PlayerSpawnPointsTracker[playerId] = { spawnPoint: spawnPointFlag, spawnX, spawnY };
       }
     );
     this.AddSceneEvent(PacketType.ByServer.COUNTDOWN_TIME, (data) => {
@@ -196,7 +197,8 @@ export class SpawnSelectionScene extends BaseScene {
       console.log("shutdown ", data.config.key);
       this.Destroy();
     });
-    this.AddSceneEvent("destroy", () => {
+    this.AddSceneEvent("destroy", (data) => {
+      console.log("destroy scene", data.config.key);
       this.input.removeAllListeners();
       this.events.removeAllListeners();
     });

@@ -293,7 +293,7 @@ export class GameScene extends BaseScene {
     
     //show initial spawnpoint choice on map for player
     StateManager.getAllPlayers().forEach(({ playerId, spawnPosVec }) => {
-      let spawnPointFlag = new PlayerCastle(
+      let spawnPointFlag = this.AddObject(new PlayerCastle(
         this,
         spawnPosVec.x,
         spawnPosVec.y,
@@ -303,9 +303,8 @@ export class GameScene extends BaseScene {
           health:500,
           player: StateManager.getPlayer(playerId)
         }
-      )
-      let objGroup = this.AddObject(spawnPointFlag);
-      this.PlayerSpawnPointsTracker[playerId] = { phaserGroup: objGroup, spawnX: spawnPosVec.x, spawnY: spawnPosVec.y };
+      ));
+      this.PlayerSpawnPointsTracker[playerId] = { spawnPoint: spawnPointFlag, spawnX: spawnPosVec.x, spawnY: spawnPosVec.y };
     });
 
     this.AddSceneEvent('shutdown', (data)=>{

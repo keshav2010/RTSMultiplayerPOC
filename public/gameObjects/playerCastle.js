@@ -12,26 +12,24 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
      */
     constructor (scene, x, y, texture, frame, initialParam) {
         super(scene, x, y, texture, frame);
-        console.log(initialParam.player);
         //add object to scene
         scene.add.existing(this);
         
-        this.initialParam = initialParam || {};
-        this.health = initialParam.player.health || 100;
-        this.playerName = initialParam.player.name;
-
+        this.player = initialParam.player;
         //this.setInteractive();
-        this.playerId=initialParam.player.id;
         scene.events.on('update', this.update, this);
         this.setPosition(x,y);
         this.scale = 1;
         this.hp = new LoadingBar(scene, this);
-        this.DEBUGTEXT = scene.add.text(x, y+this.height/2, `[${this.playerName}] - health:${this.initialParam.health}`, { font: "12px Arial", fill: "#ffffff" });
+        this.DEBUGTEXT = scene.add.text(x, y+this.height/2+15, `[${this.player.name}] - health:${this.player.health}`, { font: "12px Arial", fill: "#ffffff" });
         this.DEBUGTEXT.setOrigin(0.5);
         this.on('destroy', ()=>{
             this.hp.destroy();
             this.DEBUGTEXT.destroy();
         })
+    }
+    setPos(x,y) {
+        this.setPosition(x,y);
     }
     setHealth(newHealth) {
         this.health = newHealth;
@@ -39,7 +37,7 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     }
     update() {
         this.hp.draw();
-        this.DEBUGTEXT.setPosition(this.x, this.y+this.health/2);
-        this.DEBUGTEXT.setText(`[${this.playerName}] - health:${this.health}`);
+        this.DEBUGTEXT.setPosition(this.x, this.y+this.height/2+15);
+        this.DEBUGTEXT.setText(`[${this.player.name}] - health:${this.player.health}`);
     }
 }
