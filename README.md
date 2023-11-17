@@ -19,3 +19,17 @@ This is a timestep based approach that makes sure server only send delta updates
 
 Both the GIFs shows basic boid avoidance behaviour
 [![Image from Gyazo](https://i.gyazo.com/2dec336b740c0d9ecf454c53cac8991f.gif)](https://gyazo.com/2dec336b740c0d9ecf454c53cac8991f)
+
+
+# Getting Started
+
+1. Build the client side code, this includes phaser related code that is used to draw/render game on the browser.
+> npm run build
+
+
+2. Once done, simply run the server.
+> npx ts-node server.ts
+
+3. Check the port where server is running and you're good to go.
+   1. Create game room
+   2. open another window on same url, click on join room (it may take few seconds)
