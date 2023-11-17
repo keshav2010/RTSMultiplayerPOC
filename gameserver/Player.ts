@@ -5,7 +5,7 @@ import { Queue } from "../common/Queue";
 import { Soldier, SoldierSnapshot } from "./Soldier";
 import { GameStateManager } from "./lib/GameStateManager";
 import { Packet } from "./lib/Packet";
-import { SoldierType } from "../common/SoldierType";
+import { SoldierType, SoldierTypeConfig } from "../common/SoldierType";
 import { PacketType } from "../common/PacketType";
 import { v4 as uuidv4 } from "uuid";
 import PacketActions from "./PacketActions";
@@ -22,7 +22,7 @@ export class Player {
   SoldierSpawnRequestDetail: {
     [key: string]: {
       id: string;
-      soldierType: string;
+      soldierType: SoldierType;
       count: number;
       countdown: number;
     };
@@ -55,7 +55,7 @@ export class Player {
     this.playerState = "InGame"; //is currently in game.
   }
 
-  queueSoldierSpawnRequest(soldierType: string, spawnCount = 1) {
+  queueSoldierSpawnRequest(soldierType: SoldierType, spawnCount = 1) {
     const lastQueuedRequest = this.SoldierSpawnRequestIdQueue.peekEnd();
     const lastQueuedSoldierType =
       lastQueuedRequest &&
@@ -91,7 +91,7 @@ export class Player {
     let { soldierType } = this.SoldierSpawnRequestDetail[requestId];
     if (!soldierType) return;
     //resources are not sufficient for upcoming spawn
-    if (this.resources < SoldierType[soldierType].cost) return null;
+    if (this.resources < SoldierTypeConfig[soldierType].cost) return null;
     this.SoldierSpawnRequestDetail[requestId].countdown = Math.max(
       this.SoldierSpawnRequestDetail[requestId].countdown - deltaTime,
       0
@@ -211,11 +211,11 @@ export class Player {
       ),
     };
   }
-  createSoldier(type: string, x: number, y: number) {
+  createSoldier(type: SoldierType, x: number, y: number) {
     x = this.posX;
     y = this.posY;
-    type = type || SoldierType.SPEARMAN.id;
-    if (this.resources < SoldierType[type].cost) return { status: false };
+    type = type || SoldierType.SPEARMAN;
+    if (this.resources < SoldierTypeConfig[type].cost) return { status: false };
     let s = new Soldier(
       type,
       {
@@ -223,13 +223,13 @@ export class Player {
         y,
         health: 100,
         speed: 5,
-        cost: SoldierType[type].cost,
+        cost: SoldierTypeConfig[type].cost,
         damage: 5,
         playerId: this.id,
       },
       this
     );
-    this.resources -= SoldierType[type].cost;
+    this.resources -= SoldierTypeConfig[type].cost;
     this.SoldierMap.set(s.id, s);
     return { status: true, soldierId: s.id, soldier: s };
   }

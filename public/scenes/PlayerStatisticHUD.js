@@ -43,7 +43,7 @@ export class PlayerStatisticHUD extends BaseScene {
       networkManager.sendEventToServer(
         PacketType.ByClient.SOLDIER_SPAWN_REQUESTED,
         {
-          soldierType: SoldierType.SPEARMAN.id
+          soldierType: SoldierType.SPEARMAN
         }
       );
     });
@@ -51,7 +51,7 @@ export class PlayerStatisticHUD extends BaseScene {
       networkManager.sendEventToServer(
         PacketType.ByClient.SOLDIER_SPAWN_REQUESTED,
         {
-          soldierType: SoldierType.KNIGHT.id
+          soldierType: SoldierType.KNIGHT
         }
       );
     });

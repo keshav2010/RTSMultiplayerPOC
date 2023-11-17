@@ -57,7 +57,7 @@ export type SoldierSnapshot = {
  * getAABB()            |
  * getAABBAsBox()       |
  */
-export class Soldier extends SceneObject {
+export class Soldier extends SceneObject<Player> {
   expectedPosition: SAT.Vector;
   targetPosition: SAT.Vector;
   isAtDestination: boolean;
@@ -127,6 +127,10 @@ export class Soldier extends SceneObject {
     playerId?: string,
     soldierId?: string
   ) {
+    if (!playerId || !soldierId) {
+      this.attackTarget = null;
+      return null;
+    }
     let player = stateManager.getPlayerById(playerId);
     let soldier = player?.getSoldier(soldierId);
     if (!player || !soldier) {

@@ -1,7 +1,7 @@
 import { Queue } from "../../common/Queue";
 import { Player } from "../Player";
 import ServerLocalEvents from "../ServerLocalEvents";
-import { AllianceTracker } from "./AllianceTracker";
+import { AllianceTracker, AllianceTypes } from "./AllianceTracker";
 import { Packet } from "./Packet";
 import { Scene } from "./Scene";
 import { StateMachine } from "./StateMachine";
@@ -140,14 +140,14 @@ export class GameStateManager {
     );
   }
 
-  getPlayerSocket(playerId: any) {
+  getPlayerSocket(playerId: string) {
     return this.SocketsMap.get(playerId);
   }
-  getPlayerById(playerId: any) {
+  getPlayerById(playerId: string) {
     let socketId = this.SocketsMap.get(playerId)?.id;
     return this.SocketToPlayerMap.get(socketId) || null;
   }
-  removePlayer(socketId: any) {
+  removePlayer(socketId: string) {
     //update for collision detection.
     this.scene.update();
     const player = this.SocketToPlayerMap.get(socketId);
@@ -181,10 +181,14 @@ export class GameStateManager {
     return isRemoved;
   }
 
-  setAlliance(playerAId: any, playerBId: any, allianceType: any) {
+  setAlliance(
+    playerAId: string,
+    playerBId: string,
+    allianceType: AllianceTypes
+  ) {
     this.alliances.setAlliance(playerAId, playerBId, allianceType);
   }
-  getAlliance(playerAId: any, playerBId: any) {
+  getAlliance(playerAId: string, playerBId: string) {
     return this.alliances.getAlliance(playerAId, playerBId);
   }
   OnGameStart(callback: (...arg: any) => void) {

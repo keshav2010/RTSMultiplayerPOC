@@ -1,9 +1,9 @@
-import Quadtree, { QuadtreeItem } from 'quadtree-lib';
-import SAT from 'sat';
-import { GameStateManager } from './GameStateManager';
+import Quadtree, { QuadtreeItem } from "quadtree-lib";
+import SAT from "sat";
+import { GameStateManager } from "./GameStateManager";
 export class Scene extends Quadtree<any> {
   stateManager: GameStateManager;
-  constructor(stateManager: any, width?: number, height?: number) {
+  constructor(stateManager: GameStateManager, width?: number, height?: number) {
     width = width || 15;
     height = height || 15;
     super({ width, height });

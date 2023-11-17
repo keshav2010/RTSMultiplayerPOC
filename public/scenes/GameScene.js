@@ -84,7 +84,7 @@ export class GameScene extends BaseScene {
         networkManager.sendEventToServer(
           PacketType.ByClient.SOLDIER_CREATE_REQUESTED,
           {
-            soldierType: SoldierType.SPEARMAN.id,
+            soldierType: SoldierType.SPEARMAN,
             currentPositionX: pointer.worldX,
             currentPositionY: pointer.worldY,
           }

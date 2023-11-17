@@ -4,6 +4,7 @@ import SAT from "sat";
 const { AllianceTypes } = require("../../lib/AllianceTracker");
 import { GameStateManager } from "../../lib/GameStateManager";
 import { Soldier } from "../../Soldier";
+import { IStateActions } from "../../lib/StateMachine";
 export default {
   Idle: ({
     delta,
@@ -300,4 +301,4 @@ export default {
       soldier.setAttackTarget(stateManager);
     }
   },
-};
+} as IStateActions;

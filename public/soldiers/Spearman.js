@@ -11,7 +11,7 @@ export class Spearman extends BaseSoldier {
      */
     constructor(scene, x, y, texture, frame, initialParam) {
         super(scene, x, y, texture, frame, initialParam);
-        this.soldierType = SoldierType.SPEARMAN.id;
+        this.soldierType = SoldierType.SPEARMAN;
     }
     onClicked() {
     }
