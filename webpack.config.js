@@ -1,22 +1,30 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
-    entry:'./public/game.js',
-    output:{
+    entry: './public/game.js',
+    output: {
         path: path.resolve(__dirname, 'dist'),
-        filename:'bundle.js'
+        filename: 'bundle.js'
+    },
+    resolve: {
+        extensions: ['.ts', '.js'],
     },
     //loader for css
-    module:{
-        rules:[
+    module: {
+        rules: [
             {
-                test:/\.css$/i,
-                use:['style-loader', 'css-loader']
+                test: /\.css$/i,
+                use: ['style-loader', 'css-loader']
+            },
+            {
+                test: /\.ts$/,
+                use: 'ts-loader',
+                exclude: /node_modules/,
             }
         ]
     },
-    plugins:[
-        new HtmlWebpackPlugin({template:'./index.html'})
+    plugins: [
+        new HtmlWebpackPlugin({ template: './index.html' })
     ],
-    mode:"development"
+    mode: "development"
 }

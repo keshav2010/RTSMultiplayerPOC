@@ -1,15 +1,30 @@
-const SoldierConstants = require("../../unitConstants");
-const SAT = require("sat");
-const PacketType = require("../../../common/PacketType");
-const {AllianceTypes} = require("../../lib/AllianceTracker");
-module.exports = {
-  Idle: ({ delta, updateManager, stateManager, soldier }) => {
+import SoldierConstants from "../../unitConstants";
+import { PacketType } from "../../../common/PacketType";
+import SAT from "sat";
+const { AllianceTypes } = require("../../lib/AllianceTracker");
+import { GameStateManager } from "../../lib/GameStateManager";
+import { Soldier } from "../../Soldier";
+export default {
+  Idle: ({
+    delta,
+    updateManager,
+    stateManager,
+    soldier,
+  }: {
+    delta: any;
+    updateManager: any;
+    stateManager: GameStateManager;
+    soldier: Soldier;
+  }) => {
     /*repel from only those units which are not yet at their destination.
      */
     let steerForce = soldier.getSteerVector(soldier.expectedPosition);
-    let seperationForce = soldier.getSeperationVector(stateManager, (a, b) => {
-      return a.hasReachedDestination() && b.hasReachedDestination();
-    });
+    let seperationForce = soldier.getSeperationVector(
+      stateManager,
+      (a: Soldier, b: Soldier) => {
+        return a.hasReachedDestination() && b.hasReachedDestination();
+      }
+    );
     soldier.applyForce(steerForce);
     soldier.applyForce(seperationForce);
     if (!soldier.hasReachedDestination()) {
@@ -25,29 +40,46 @@ module.exports = {
       },
       SoldierConstants.NEARBY_SEARCH_RADI
     );
-    if (nearbyUnits.length < 2)
-      return;
-    
+    if (nearbyUnits.length < 2) return;
+
     // if any nearby friendly unit under attack
-    let nearbyAllies = nearbyUnits.filter(unit => unit !== soldier && unit.playerId === soldier.playerId);
-    for(let i=0; i<nearbyAllies.length; i++) {
+    let nearbyAllies = nearbyUnits.filter(
+      (unit: Soldier) => unit !== soldier && unit.playerId === soldier.playerId
+    );
+    for (let i = 0; i < nearbyAllies.length; i++) {
       let unit = nearbyAllies[i];
       if (unit === soldier || unit.playerId !== soldier.playerId) continue;
-      unit = stateManager.getPlayerById(unit.playerId).getSoldier(unit.id);
 
+      unit = stateManager.getPlayerById(unit.playerId)?.getSoldier(unit.id);
+      if (!unit) {
+        continue;
+      }
       //if nearby friendly unit is either defending/attacking, then assist it.
-      if(['Defend', 'Attack'].includes(unit.getCurrentState())) {
+      if (["Defend", "Attack"].includes(unit.getCurrentState())) {
         let enemy = unit.getAttackTarget(stateManager);
-        if(!enemy)
-          continue;
-        soldier.setAttackTarget(stateManager, enemy.player.id, enemy.soldier.id);
+        if (!enemy) continue;
+        soldier.setAttackTarget(
+          stateManager,
+          enemy.player.id,
+          enemy.soldier.id
+        );
         soldier.stateMachine.controller.send("DefendAllyUnit");
         break;
       }
     }
   },
 
-  Move: ({ delta, updateManager, stateManager, soldier }) => {
+  Move: ({
+    delta,
+    updateManager,
+    stateManager,
+    soldier,
+  }: {
+    delta: number;
+    updateManager: any;
+    stateManager: GameStateManager;
+    soldier: Soldier;
+  }) => {
     let seperationForce = soldier.getSeperationVector(stateManager);
     let steerForce = soldier.getSteerVector(soldier.expectedPosition);
     soldier.applyForce(seperationForce);
@@ -68,7 +100,7 @@ module.exports = {
     );
     if (nearbyUnits.length < 2) return;
 
-    nearbyUnits.forEach((unit) => {
+    nearbyUnits.forEach((unit: Soldier) => {
       if (unit === soldier) return;
 
       // if nearby unit (of same team) has same destination (approx.)
@@ -90,7 +122,15 @@ module.exports = {
     });
   },
 
-  Attack: ({ delta, stateManager, soldier }) => {
+  Attack: ({
+    delta,
+    stateManager,
+    soldier,
+  }: {
+    delta: number;
+    stateManager: GameStateManager;
+    soldier: Soldier;
+  }) => {
     let attackTarget = soldier.getAttackTarget(stateManager);
     if (!attackTarget) {
       soldier.stateMachine.controller.send("TargetLost");
@@ -125,16 +165,28 @@ module.exports = {
         attackTarget.player.id,
         attackTarget.soldier.id
       );
-      if(!isRemoved)
-        console.log(`Soldier ID#${attackTarget?.soldier.id} is probably already removed.`);
-      soldier.setAttackTarget(stateManager, null, null);
+      if (!isRemoved)
+        console.log(
+          `Soldier ID#${attackTarget?.soldier.id} is probably already removed.`
+        );
+      soldier.setAttackTarget(stateManager);
       soldier.stateMachine.controller.send("TargetKilled");
     }
   },
 
-  FindTarget: ({ delta, updateManager, stateManager, soldier }) => {
+  FindTarget: ({
+    delta,
+    updateManager,
+    stateManager,
+    soldier,
+  }: {
+    delta: number;
+    updateManager: any;
+    stateManager: GameStateManager;
+    soldier: Soldier;
+  }) => {
     try {
-      soldier.setAttackTarget(stateManager, null, null);
+      soldier.setAttackTarget(stateManager);
       var nearbyUnits = stateManager.scene.getNearbyUnits(
         {
           x: soldier.pos.x + soldier.width / 2,
@@ -143,18 +195,20 @@ module.exports = {
         SoldierConstants.ENEMY_SEARCH_RADIUS
       );
       if (nearbyUnits.length < 2) {
-        throw new Error("[SoldierStateBehaviour | FindTarget]: No Nearby Units Found.")
+        throw new Error(
+          "[SoldierStateBehaviour | FindTarget]: No Nearby Units Found."
+        );
       }
 
       //Go to unit with least distance instead of random unit.
-      let minDist = Math.infinity;
-      let nearestUnit = null;
-      nearbyUnits.forEach((unit) => {
+      let minDist = Number.POSITIVE_INFINITY;
+      let nearestUnit: any = null;
+      nearbyUnits.forEach((unit: { playerId: any; pos: any } | undefined) => {
         //consider only if unit belongs to enemy team
         if (
           unit === this ||
           stateManager.getAlliance(soldier.playerId, unit.playerId) !==
-          AllianceTypes.ENEMIES
+            AllianceTypes.ENEMIES
         )
           return;
 
@@ -167,17 +221,33 @@ module.exports = {
           unit = nearestUnit;
         }
       });
-      if(!nearestUnit)
-        throw new Error("[SoldierStateBehaviour | FindTarget]: No Enemy Unit nearby.")
-    
-      soldier.setAttackTarget(stateManager, nearestUnit.playerId, nearbyUnit.id);
+      if (!nearestUnit)
+        throw new Error(
+          "[SoldierStateBehaviour | FindTarget]: No Enemy Unit nearby."
+        );
+
+      soldier.setAttackTarget(
+        stateManager,
+        nearestUnit.playerId,
+        nearestUnit.id
+      );
       soldier.stateMachine.controller.send("TargetFound");
     } catch (err) {
       soldier.stateMachine.controller.send("TargetNotFound");
     }
   },
 
-  Defend: ({ delta, updateManager, stateManager, soldier }) => {
+  Defend: ({
+    delta,
+    updateManager,
+    stateManager,
+    soldier,
+  }: {
+    delta: number;
+    updateManager: any;
+    stateManager: GameStateManager;
+    soldier: Soldier;
+  }) => {
     if (!soldier.getAttackTarget(stateManager)) {
       soldier.stateMachine.controller.send("NoAttackerUnitNearby");
       return;
@@ -185,20 +255,29 @@ module.exports = {
     soldier.stateMachine.controller.send("AttackerUnitNearby");
   },
 
-  ChaseTarget: ({ delta, stateManager, soldier }) => {
+  ChaseTarget: ({
+    delta,
+    stateManager,
+    soldier,
+  }: {
+    delta: number;
+    stateManager: GameStateManager;
+    soldier: Soldier;
+  }) => {
+    const soldierAttackTarget = soldier.getAttackTarget(stateManager);
     try {
-      if (!soldier.getAttackTarget(stateManager)) {
+      if (!soldierAttackTarget) {
         soldier.stateMachine.controller.send("TargetLost");
         return;
       }
 
       let seperationForce = soldier.getSeperationVector(stateManager);
-      let steerForce = soldier.getSteerVector(soldier.getAttackTarget(stateManager).soldier.pos);
+      let steerForce = soldier.getSteerVector(soldierAttackTarget.soldier.pos);
       soldier.applyForce(seperationForce);
       soldier.applyForce(steerForce);
 
-      soldier.targetPosition.copy(soldier.getAttackTarget(stateManager).soldier.pos);
-      soldier.expectedPosition.copy(soldier.getAttackTarget(stateManager).soldier.pos);
+      soldier.targetPosition.copy(soldierAttackTarget.soldier.pos);
+      soldier.expectedPosition.copy(soldierAttackTarget.soldier.pos);
 
       stateManager.enqueueStateUpdate({
         type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
@@ -206,7 +285,7 @@ module.exports = {
       });
 
       let distToTarget = new SAT.Vector()
-        .copy(soldier.getAttackTarget(stateManager).soldier.pos)
+        .copy(soldierAttackTarget.soldier.pos)
         .sub(soldier.pos)
         .len();
       if (distToTarget <= SoldierConstants.DESIRED_DIST_FROM_TARGET) {
@@ -214,8 +293,10 @@ module.exports = {
       }
     } catch (err) {
       console.log(err);
-      soldier.targetPosition.copy(soldier.getAttackTarget(stateManager).soldier.pos);
-      soldier.expectedPosition.copy(soldier.targetPosition);
+      if (soldierAttackTarget) {
+        soldier.targetPosition.copy(soldierAttackTarget.soldier.pos);
+        soldier.expectedPosition.copy(soldier.targetPosition);
+      }
       soldier.setAttackTarget(stateManager);
     }
   },

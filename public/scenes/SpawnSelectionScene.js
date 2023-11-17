@@ -1,5 +1,5 @@
 const CONSTANT = require("../constant");
-const PacketType = require("../../common/PacketType");
+const { PacketType } = require("../../common/PacketType");
 import { BaseScene } from "./BaseScene";
 const { Column } = require("phaser-ui-tools");
 const Player = require("../Player");

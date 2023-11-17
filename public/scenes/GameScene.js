@@ -1,10 +1,10 @@
 const CONSTANT = require("../constant");
 const { GAMEEVENTS } = CONSTANT;
-const PacketType = require("../../common/PacketType");
+const { PacketType } = require("../../common/PacketType");
 const { Spearman } = require("../soldiers/Spearman");
 import { PlayerCastle } from "../gameObjects/playerCastle";
 import { BaseScene } from "./BaseScene";
-const SoldierType = require("../../common/SoldierType");
+const { SoldierType } = require("../../common/SoldierType");
 var $ = require("jquery");
 
 var selectorGraphics;

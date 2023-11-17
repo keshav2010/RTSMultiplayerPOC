@@ -1,23 +1,41 @@
 const http = require("http");
 const express = require("express");
-const socketio = require("socket.io");
-const cluster = require("cluster");
-const PacketType = require("./common/PacketType");
-const Packet = require("./gameserver/lib/Packet");
-const PacketActions = require("./gameserver/PacketActions");
-const GameStateManager = require("./gameserver/lib/GameStateManager");
-const nbLoop = require("./common/nonBlockingLoop");
-const { v4: uuidv4 } = require("uuid");
-
+import { Namespace, Server } from "socket.io";
+import cluster from "cluster";
+import { PacketType } from "./common/PacketType";
+import { Packet } from "./gameserver/lib/Packet";
+import { ProcessMessage } from './interfaces/processMessage';
+import {
+  ClientToServerEvents,
+  ServerToClientEvents,
+  InterServerEvents,
+  SocketData,
+} from "./interfaces/socket";
+import { GameStateManager } from "./gameserver/lib/GameStateManager";
+import ServerStateMachine from './gameserver/stateMachines/server-state-machine/SessionStateMachine.json';
+import ServerStateMachineHandlers from './gameserver/stateMachines/server-state-machine/SessionStateBehaviour';
+import PacketActions from "./gameserver/PacketActions";
+import { nbLoop } from "./common/nonBlockingLoop";
 const app = express();
 const server = http.createServer(app);
-const io = socketio(server);
+const io = new Server<
+  ClientToServerEvents,
+  ServerToClientEvents,
+  InterServerEvents,
+  SocketData
+>(server);
 
 class SessionManager {
+  sessions: {
+    [key: string]: {
+      sessionId: string;
+      stateManager: GameStateManager;
+    };
+  };
   constructor() {
     this.sessions = {};
   }
-  addSession(sid, gameStateManagerInstance) {
+  addSession(sid: string, gameStateManagerInstance: GameStateManager) {
     this.sessions[sid] = {
       sessionId: sid,
       stateManager: gameStateManagerInstance,
@@ -25,12 +43,14 @@ class SessionManager {
   }
   getSessions(sid = null) {
     if (!sid) return Object.values(this.sessions);
-    return this.sessions[sid] || null;
+    return [this.sessions[sid]] || null;
   }
-  getStateManager(sid) {
-    return this.sessions.hasOwnProperty(sid) ? this.sessions[sid].stateManager : null;
+  getStateManager(sid: string) {
+    return this.sessions.hasOwnProperty(sid)
+      ? this.sessions[sid].stateManager
+      : null;
   }
-  killSession(sid) {
+  killSession(sid: string) {
     if (!this.sessions.hasOwnProperty(sid)) {
       console.warn(`Session ${sid} not found, unable to kill.`);
       return;
@@ -39,8 +59,16 @@ class SessionManager {
   }
 }
 const sessionManager = new SessionManager();
-const MAX_MS_PER_TICK = 1000 / process.env.TICKRATE;
-function serverTick(stateManager, io) {
+const MAX_MS_PER_TICK = 1000 / Number(process.env.TICKRATE || 20);
+function serverTick(
+  stateManager: GameStateManager,
+  io: Namespace<
+    ClientToServerEvents,
+    ServerToClientEvents,
+    InterServerEvents,
+    SocketData
+  >
+) {
   //tick start time
   var startTime = Date.now();
   var timeUtilised = 0;
@@ -72,7 +100,7 @@ function serverTick(stateManager, io) {
   nbLoop(test, loop, onEnd);
 }
 
-process.on("message", (message) => {
+process.on("message", (message : ProcessMessage) => {
   console.log(`[worker${message.workerId}] received message : `, message);
   //new session create
   if (message.type === "SESSION_CREATE_REQUESTED") {
@@ -80,8 +108,8 @@ process.on("message", (message) => {
       message.sessionId,
       new GameStateManager(
         io.of(`/${message.sessionId}`),
-        require("./gameserver/stateMachines/server-state-machine/SessionStateMachine.json"),
-        require("./gameserver/stateMachines/server-state-machine/SessionStateBehaviour")
+        ServerStateMachine,
+        ServerStateMachineHandlers
       )
     );
     //whenever a client is connected to namespace/session
@@ -91,44 +119,45 @@ process.on("message", (message) => {
         io.of(`/${message.sessionId}`).sockets.size
       );
 
-      const stateManager = sessionManager.getStateManager(
-        message.sessionId
-      );
+      const stateManager = sessionManager.getStateManager(message.sessionId);
+      if(!stateManager) {
+        return;
+      }
       stateManager.sessionId = message.sessionId;
 
-      process.send({
+      process.send!({
         type: "SESSION_UPDATED",
         sessionId: message.sessionId,
-        gameStarted: stateManager.GameStarted,
-        players: stateManager.getPlayers().length,
-      });
+        gameStarted: stateManager!.GameStarted,
+        players: stateManager!.getPlayers().length,
+      } as unknown as ProcessMessage);
 
       // send update to master process whenever game starts, so it marks session as unavailable/busy.
-      stateManager.OnGameStart(() => {
-        process.send({
+      stateManager!.OnGameStart(() => {
+        process.send!({
           type: "SESSION_UPDATED",
           sessionId: message.sessionId,
-          gameStarted: stateManager.GameStarted,
-          players: stateManager.getPlayers().length,
-        });
+          gameStarted: stateManager!.GameStarted,
+          players: stateManager!.getPlayers().length,
+        } as unknown as ProcessMessage);
       });
 
-      stateManager.OnGameEnd(() => {
+      stateManager!.OnGameEnd(() => {
         console.log(
-          `--- OnGameEnd : session ${stateManager.sessionId} ended, signalling master (SESSION_DESTROYED)`
+          `--- OnGameEnd : session ${stateManager!.sessionId} ended, signalling master (SESSION_DESTROYED)`
         );
-        process.send({
+        process.send!({
           type: "SESSION_DESTROYED",
-          sessionId: stateManager.sessionId,
-          workerId: cluster.worker.id,
+          sessionId: stateManager!.sessionId,
+          workerId: cluster.worker!.id,
         });
 
         // clear session from worker's entry.
         const before = sessionManager.getSessions().length;
-        sessionManager.killSession(stateManager.sessionId);
+        sessionManager.killSession(stateManager!.sessionId!);
         const after = sessionManager.getSessions().length;
 
-        const sessionNamespace = io.of(`/${stateManager.sessionId}`);
+        const sessionNamespace = io.of(`/${stateManager!.sessionId}`);
         console.log(
           `--- Clearing up namespace (disconnectSockets & removeAllListeners) [${before} earlier, -> ${after} sessions remaining]`
         );
@@ -136,8 +165,8 @@ process.on("message", (message) => {
         sessionNamespace.removeAllListeners();
 
         // check how many sessions are pending
-        if(sessionManager.getSessions().length === 0) {
-          cluster.worker.disconnect();
+        if (sessionManager.getSessions().length === 0) {
+          cluster.worker!.disconnect();
         }
       });
 
@@ -145,7 +174,7 @@ process.on("message", (message) => {
       if (io.of(`/${message.sessionId}`).sockets.size === 1) {
         setImmediate(() => {
           serverTick(
-            sessionManager.getStateManager(message.sessionId),
+            sessionManager.getStateManager(message.sessionId)!,
             io.of(`/${message.sessionId}`)
           );
         });
@@ -314,11 +343,11 @@ process.on("message", (message) => {
     let trySendAck = () => {
       // console.log('attempting to send ack for sessionId ', message.sessionId);
       if (server.listening)
-        process.send({
+        process.send!({
           type: "SESSION_CREATED_ACK",
           sessionId: message.sessionId,
-          workerId: cluster.worker.id,
-        });
+          workerId: cluster!.worker!.id,
+        } as unknown as ProcessMessage);
       else setTimeout(trySendAck, 0);
     };
     trySendAck();
@@ -326,7 +355,5 @@ process.on("message", (message) => {
 });
 
 server.listen(3007, () => {
-  console.log(
-    `[Worker${cluster.worker.id}] Online @ port ${server.address()}`
-  );
+  console.log(`[Worker${cluster.worker!.id}] Online @ port ${server.address()}`);
 });

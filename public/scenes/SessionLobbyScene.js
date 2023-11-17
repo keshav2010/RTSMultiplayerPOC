@@ -3,7 +3,7 @@ const ClientStateManager = require("../ClientStateManager");
 import { BaseScene } from "./BaseScene";
 const { Column } = require("phaser-ui-tools");
 const Player = require("../Player");
-const PacketType = require("../../common/PacketType");
+const {PacketType} = require("../../common/PacketType");
 
 var StateManager;
 var NetworkManager;

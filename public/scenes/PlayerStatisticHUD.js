@@ -1,8 +1,8 @@
 const CONSTANT = require("../constant");
 import { BaseScene } from "./BaseScene";
-const PacketType = require("../../common/PacketType");
+const { PacketType } = require("../../common/PacketType");
 const { Viewport, Row } = require('phaser-ui-tools');
-const SoldierType = require("../../common/SoldierType");
+const { SoldierType } = require("../../common/SoldierType");
 var $ = require("jquery");
 
 export class PlayerStatisticHUD extends BaseScene {

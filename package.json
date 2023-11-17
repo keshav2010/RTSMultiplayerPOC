@@ -5,8 +5,8 @@
   "main": "server.js",
   "scripts": {
     "build": "webpack",
-    "start": "webpack && jest && nodemon server.js",
-    "test": "jest",
+    "start": "webpack && jest && nodemon server.ts",
+    "test": "ts-jest",
     "run_server": "docker-compose up -d --build --remove-orphans",
     "stop_server": "docker-compose down"
   },
@@ -27,14 +27,20 @@
     "sat": "^0.9.0",
     "socket.io": "^4.4.1",
     "uuid": "^8.3.2",
-    "webpack": "^5.70.0",
     "xstate": "^4.32.0"
   },
   "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.8",
+    "@types/sat": "^0.0.35",
+    "@types/uuid": "^9.0.7",
     "css-loader": "^6.7.1",
     "html-webpack-plugin": "^5.5.0",
     "jest": "^29.3.1",
     "style-loader": "^3.3.1",
-    "webpack-cli": "^4.9.2"
+    "ts-loader": "^9.5.0",
+    "typescript": "^5.2.2",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^4.10.0"
   }
 }

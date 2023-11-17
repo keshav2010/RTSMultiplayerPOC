@@ -1,26 +1,52 @@
-const PacketType = require("../common/PacketType");
-const SAT = require("sat"); //(w,h)
+import { PacketType } from "../common/PacketType";
+import SAT from "sat";
+import SoldierStateMachineJSON from "./stateMachines/soldier-state-machine/SoldierStateMachine.json";
+import soldierStateBehaviours from "./stateMachines/soldier-state-machine/SoldierStateBehaviour";
 
-const SoldierStateMachineJSON = require("./stateMachines/soldier-state-machine/SoldierStateMachine.json");
-const soldierStateBehaviours = require("./stateMachines/soldier-state-machine/SoldierStateBehaviour");
-
-const StateMachine = require("./lib/StateMachine");
-const SoldierConstants = require("./unitConstants");
-const { AllianceTypes } = require("./lib/AllianceTracker");
-const { v4: uuidv4 } = require("uuid");
-
+import SoldierConstants from "./unitConstants";
+import { GameStateManager } from "./lib/GameStateManager";
+import { v4 as uuidv4 } from "uuid";
+import { SceneObject } from "./lib/SceneObject";
+import { AllianceTypes } from "./lib/AllianceTracker";
+import { StateMachine } from "./lib/StateMachine";
+import { Player } from "./Player";
 function mapRange(
-  val,
-  mapRangeStart,
-  mapRangeEnd,
-  targetRangeStart,
-  targetRangeEnd
+  val: number,
+  mapRangeStart: number,
+  mapRangeEnd: number,
+  targetRangeStart: number,
+  targetRangeEnd: number
 ) {
   let givenRange = mapRangeEnd - mapRangeStart;
   let targetRange = targetRangeEnd - targetRangeStart;
   let normalizedGivenRange = (val - mapRangeStart) / givenRange;
   return targetRangeStart + normalizedGivenRange * targetRange;
 }
+
+export type SoldierSnapshot = {
+  currentPositionX: number;
+  currentPositionY: number;
+
+  expectedPositionX: number;
+  expectedPositionY: number;
+
+  type: string;
+
+  //Collider
+  width: number;
+  height: number;
+
+  health: number;
+  speed: number;
+  damage: number;
+  cost: number;
+
+  id: string;
+  playerId: string;
+
+  //DEBUG Purpose only.
+  currentState: string;
+};
 /**
  * SAT BOX Interface    |   * QUADTREE Object Interface
  * ---------            |   * ---------
@@ -31,21 +57,41 @@ function mapRange(
  * getAABB()            |
  * getAABBAsBox()       |
  */
-class Soldier extends SAT.Box {
-  constructor(type, params, parentObject) {
+export class Soldier extends SceneObject {
+  expectedPosition: SAT.Vector;
+  targetPosition: SAT.Vector;
+  isAtDestination: boolean;
+  soldierType: any;
+  health: number;
+  speed: number;
+  cost: number;
+  damage: number;
+  id: string;
+  playerId: string;
+  stateMachine: any;
+  steeringVector: SAT.Vector;
+  accelerationVector: SAT.Vector;
+  velocityVector: SAT.Vector;
+  attackTarget: { playerId: string; soldierId: string } | null | undefined;
+  targetVector: SAT.Vector | null | undefined;
+  constructor(
+    type: string,
+    params: {
+      x: number;
+      y: number;
+      health: number;
+      speed: number;
+      cost: number;
+      damage: number;
+      playerId: string;
+    } & Partial<{
+      width: number;
+      height: number;
+    }>,
+    parentObject: Player
+  ) {
     // {pos:{x,y}}
-    super(
-      new SAT.Vector(params.x, params.y),
-      params.width || 35,
-      params.height || 35
-    );
-    this.parent = parentObject;
-
-    //used by quadtrees
-    this.x = this.pos.x;
-    this.y = this.pos.y;
-    this.width = this.w;
-    this.height = this.h;
+    super(params.x, params.y, params.width, params.height, parentObject);
 
     //position possible for agent
     this.expectedPosition = new SAT.Vector(params.x, params.y);
@@ -62,10 +108,13 @@ class Soldier extends SAT.Box {
     this.cost = params.cost || 5;
     this.damage = params.damage || 5;
 
-    this.id = `soldier${uuidv4()}`
+    this.id = `soldier${uuidv4()}`;
     this.playerId = String(params.playerId);
 
-    this.stateMachine = new StateMachine(SoldierStateMachineJSON, soldierStateBehaviours);
+    this.stateMachine = new StateMachine(
+      SoldierStateMachineJSON,
+      soldierStateBehaviours
+    );
 
     //Boid
     this.steeringVector = new SAT.Vector(0, 0);
@@ -73,33 +122,36 @@ class Soldier extends SAT.Box {
     this.velocityVector = new SAT.Vector(0, 0);
   }
 
-  setAttackTarget(stateManager, playerId, soldierId) {
+  setAttackTarget(
+    stateManager: GameStateManager,
+    playerId?: string,
+    soldierId?: string
+  ) {
     let player = stateManager.getPlayerById(playerId);
     let soldier = player?.getSoldier(soldierId);
-    if(!player || !soldier){
+    if (!player || !soldier) {
       this.attackTarget = null;
       return null;
     }
-    this.attackTarget = { playerId, soldierId };
+    this.attackTarget = { playerId: playerId!, soldierId: soldierId! };
     return this.attackTarget;
   }
-  getAttackTarget(stateManager) {
-    if(!this.attackTarget)
-      return null;
+  getAttackTarget(stateManager: GameStateManager) {
+    if (!this.attackTarget) return null;
     let player = stateManager.getPlayerById(this.attackTarget.playerId);
     let soldier = player?.getSoldier(this.attackTarget.soldierId);
-    if(!player || !soldier){
+    if (!player || !soldier) {
       this.attackTarget = null;
       return null;
     }
-    return {player, soldier};
+    return { player, soldier };
   }
 
   //get steering force
-  setTargetVector(targetVector) {
+  setTargetVector(targetVector: SAT.Vector) {
     this.targetVector = targetVector;
   }
-  applyForce(forceVector) {
+  applyForce(forceVector: any) {
     this.accelerationVector.add(forceVector);
     if (this.accelerationVector.len() > SoldierConstants.MAX_ACCELERATION) {
       this.accelerationVector
@@ -107,7 +159,7 @@ class Soldier extends SAT.Box {
         .scale(SoldierConstants.MAX_ACCELERATION);
     }
   }
-  setPosition(vec) {
+  setPosition(vec: any) {
     this.pos = new SAT.Vector().copy(vec);
     this.x = this.pos.x;
     this.y = this.pos.y;
@@ -132,7 +184,7 @@ class Soldier extends SAT.Box {
     return this.isAtDestination;
   }
 
-  setTargetPosition(x, y) {
+  setTargetPosition(x: any, y: any) {
     this.targetPosition = new SAT.Vector(x, y);
     this.expectedPosition = new SAT.Vector(x, y);
     this.hasReachedDestination();
@@ -140,7 +192,7 @@ class Soldier extends SAT.Box {
     this.stateMachine.controller.send("Move");
   }
 
-  getSteerVector(expectedPos) {
+  getSteerVector(expectedPos: any) {
     var desiredVector = new SAT.Vector().copy(expectedPos).sub(this.pos);
     var distance = desiredVector.len();
     desiredVector.normalize();
@@ -165,7 +217,10 @@ class Soldier extends SAT.Box {
     return steerVector;
   }
 
-  getSeperationVector(stateManager, excludeUnitPredicate) {
+  getSeperationVector(
+    stateManager: GameStateManager,
+    excludeUnitPredicate?: any
+  ) {
     let nearbyUnits = stateManager.scene.getNearbyUnits(
       {
         x: this.pos.x + this.width / 2,
@@ -177,7 +232,7 @@ class Soldier extends SAT.Box {
     let sumVec = new SAT.Vector(0);
     if (nearbyUnits.length < 2) return sumVec;
 
-    nearbyUnits.forEach((unit) => {
+    nearbyUnits.forEach((unit: this) => {
       if (this === unit) return;
       if (
         excludeUnitPredicate &&
@@ -208,40 +263,49 @@ class Soldier extends SAT.Box {
     return steer;
   }
 
-  tick(delta, stateManager) {
+  tick(delta: any, stateManager: any) {
     //if object is moving, we apply -2 frictionForce to it.
     this.velocityVector.add(this.accelerationVector);
     if (this.velocityVector.len() > this.speed)
       this.velocityVector.normalize().scale(this.speed);
-    let frictionForce = new SAT.Vector().copy(this.velocityVector).normalize().scale(-0.2);
+    let frictionForce = new SAT.Vector()
+      .copy(this.velocityVector)
+      .normalize()
+      .scale(-0.2);
     this.velocityVector.add(frictionForce);
-    
+
     this.accelerationVector.scale(0);
     this.setPosition(new SAT.Vector().copy(this.pos).add(this.velocityVector));
 
     //hard collisions
-    stateManager.scene.checkOne(this, (res, collidingBodies) => {
-      let a = res.a;
-      let b = res.b;
-      a.setPosition(
-        new SAT.Vector(a.pos.x - res.overlapV.x, a.pos.y - res.overlapV.y)
-      );
+    stateManager.scene.checkOne(
+      this,
+      (
+        res: { a: any; b: any; overlapV: { x: number; y: number } },
+        collidingBodies: any
+      ) => {
+        let a = res.a;
+        let b = res.b;
+        a.setPosition(
+          new SAT.Vector(a.pos.x - res.overlapV.x, a.pos.y - res.overlapV.y)
+        );
 
-      let overlappingTargetPos =
-        new SAT.Vector()
-          .copy(a.expectedPosition)
-          .sub(b.expectedPosition)
-          .len() <= SoldierConstants.MAX_TARGETPOS_OVERLAP_DIST;
+        let overlappingTargetPos =
+          new SAT.Vector()
+            .copy(a.expectedPosition)
+            .sub(b.expectedPosition)
+            .len() <= SoldierConstants.MAX_TARGETPOS_OVERLAP_DIST;
 
-      var eitherReachedDest =
-        a.hasReachedDestination() || b.hasReachedDestination();
-      if (overlappingTargetPos && eitherReachedDest) {
-        a.expectedPosition.copy(a.pos);
-        b.expectedPosition.copy(b.pos);
+        var eitherReachedDest =
+          a.hasReachedDestination() || b.hasReachedDestination();
+        if (overlappingTargetPos && eitherReachedDest) {
+          a.expectedPosition.copy(a.pos);
+          b.expectedPosition.copy(b.pos);
+        }
       }
-    });
+    );
 
-    this.stateMachine.tick({delta, stateManager, soldier: this});
+    this.stateMachine.tick({ delta, stateManager, soldier: this });
 
     stateManager.enqueueStateUpdate({
       type: PacketType.ByServer.SOLDIER_POSITION_UPDATED,
@@ -249,15 +313,29 @@ class Soldier extends SAT.Box {
     });
   }
 
-  attackUnit(targetSoldier, stateManager) {
-    this.setAttackTarget(stateManager, targetSoldier?.playerId, targetSoldier.id);
-    stateManager.setAlliance(this.playerId, targetSoldier?.playerId, AllianceTypes.ENEMIES);
+  attackUnit(targetSoldier: Soldier, stateManager: GameStateManager) {
+    this.setAttackTarget(
+      stateManager,
+      targetSoldier?.playerId,
+      targetSoldier.id
+    );
+    stateManager.setAlliance(
+      this.playerId,
+      targetSoldier?.playerId,
+      AllianceTypes.ENEMIES
+    );
     this.stateMachine.controller.send("Attack");
   }
 
-  attackMe(delta, attackerUnit, stateManager) {
-    if(!attackerUnit || !stateManager)
-      throw new Error("attackerUnit or stateManager parameter is undefined/null.");
+  attackMe(
+    delta: number,
+    attackerUnit: { damage: number; playerId: any; id: any },
+    stateManager: any
+  ) {
+    if (!attackerUnit || !stateManager)
+      throw new Error(
+        "attackerUnit or stateManager parameter is undefined/null."
+      );
     this.health -= delta * attackerUnit.damage;
     this.health = Math.max(0, this.health);
     this.setAttackTarget(stateManager, attackerUnit.playerId, attackerUnit.id);
@@ -265,7 +343,7 @@ class Soldier extends SAT.Box {
   }
 
   getCurrentState() {
-      return `${this.stateMachine.currentState}`;
+    return `${this.stateMachine.currentState}`;
   }
   //Returns a perfectly serializable object with no refs, this object can be shared between threads
   getSnapshot() {
@@ -290,11 +368,9 @@ class Soldier extends SAT.Box {
       id: this.id,
       playerId: this.playerId,
 
-
       //DEBUG Purpose only.
-      currentState: this.getCurrentState()
-    };
+      currentState: this.getCurrentState(),
+    } as SoldierSnapshot;
     return soldierData;
   }
 }
-module.exports = Soldier;

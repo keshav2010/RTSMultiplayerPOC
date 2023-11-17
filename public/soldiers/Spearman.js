@@ -1,6 +1,6 @@
-const {GAMEEVENTS} = require('../constant');
-import {BaseSoldier} from './BaseSoldier';
-const SoldierType = require('../../common/SoldierType')
+const { GAMEEVENTS } = require('../constant');
+import { BaseSoldier } from './BaseSoldier';
+const { SoldierType } = require('../../common/SoldierType')
 export class Spearman extends BaseSoldier {
     /**
      * @param {*} scene 
@@ -9,23 +9,22 @@ export class Spearman extends BaseSoldier {
      * @param {string|Phaser.Textures.Texture} texture 
      * @param {string|number <optional>} frame
      */
-    constructor (scene, x, y, texture, frame, initialParam)
-    {
+    constructor(scene, x, y, texture, frame, initialParam) {
         super(scene, x, y, texture, frame, initialParam);
-        this.soldierType=SoldierType.SPEARMAN.id;
+        this.soldierType = SoldierType.SPEARMAN.id;
     }
-    onClicked(){
+    onClicked() {
     }
-    update(elapsedTime, deltaTime){
-        if(super.update)
+    update(elapsedTime, deltaTime) {
+        if (super.update)
             super.update();
-        let diffX = this.expectedPositionX- this.x;
+        let diffX = this.expectedPositionX - this.x;
         let diffY = this.expectedPositionY - this.y;
-        let mag = Math.sqrt(diffX*diffX + diffY*diffY);
-        if(mag === 0)
+        let mag = Math.sqrt(diffX * diffX + diffY * diffY);
+        if (mag === 0)
             return;
-        diffX = diffX/mag;
-        diffY = diffY/mag;
-        this.setPosition(this.x+diffX*100*deltaTime, this.y+diffY*100*deltaTime);
+        diffX = diffX / mag;
+        diffY = diffY / mag;
+        this.setPosition(this.x + diffX * 100 * deltaTime, this.y + diffY * 100 * deltaTime);
     }
 }

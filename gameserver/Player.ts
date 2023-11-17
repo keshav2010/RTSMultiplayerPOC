@@ -1,19 +1,38 @@
-
 /**
  * Stores soldiers in a map ds
  */
-const Soldier = require('./Soldier');
-const nbLoop = require('../common/nonBlockingLoop');
-const PacketType = require('../common/PacketType');
-const SoldierType = require('../common/SoldierType');
-const PacketActions = require('./PacketActions');
-const { Queue } = require('../common/Queue');
-const { v4: uuidv4 } = require('uuid');
+import { Queue } from "../common/Queue";
+import { Soldier, SoldierSnapshot } from "./Soldier";
+import { GameStateManager } from "./lib/GameStateManager";
+import { Packet } from "./lib/Packet";
+import { SoldierType } from "../common/SoldierType";
+import { PacketType } from "../common/PacketType";
+import { v4 as uuidv4 } from "uuid";
+import PacketActions from "./PacketActions";
 
-class Player {
+export class Player {
   static maxResources = 200;
   static resourceMultiplier = 1; //per second
-  constructor(id, name) {
+  id: string;
+  name: string;
+  SoldierMap: Map<string, Soldier>;
+  resources: number;
+  color: number[];
+  SoldierSpawnRequestIdQueue: Queue<string>;
+  SoldierSpawnRequestDetail: {
+    [key: string]: {
+      id: string;
+      soldierType: string;
+      count: number;
+      countdown: number;
+    };
+  };
+  readyStatus: boolean;
+  posX: number;
+  posY: number;
+  spawnFlagHealth: number;
+  playerState: string;
+  constructor(id: string, name: string) {
     this.id = id;
     this.name = name || `UnnamedPlayer${id.substr(0, 4)}`;
     this.SoldierMap = new Map();
@@ -33,14 +52,10 @@ class Player {
     this.posX = 200 + Math.random() * 400;
     this.posY = 200 + Math.random() * 400;
     this.spawnFlagHealth = 500;
-    this.playerState = 'InGame'; //is currently in game.
+    this.playerState = "InGame"; //is currently in game.
   }
 
-  getSoldierCost(soldierType) {
-    return SoldierCost[soldierType];
-  }
-
-  queueSoldierSpawnRequest(soldierType, spawnCount = 1) {
+  queueSoldierSpawnRequest(soldierType: string, spawnCount = 1) {
     const lastQueuedRequest = this.SoldierSpawnRequestIdQueue.peekEnd();
     const lastQueuedSoldierType =
       lastQueuedRequest &&
@@ -50,8 +65,12 @@ class Player {
     if (lastQueuedSoldierType === soldierType) {
       requestId = lastQueuedRequest;
     } else {
-      requestId = uuidv4();
+      requestId = uuidv4() as string;
       this.SoldierSpawnRequestIdQueue.enqueue(requestId);
+    }
+
+    if (!requestId) {
+      return;
     }
 
     this.SoldierSpawnRequestDetail[requestId] = {
@@ -59,28 +78,26 @@ class Player {
       soldierType,
       count:
         (this.SoldierSpawnRequestDetail[requestId]?.count || 0) + spawnCount,
-      countdown: (this.SoldierSpawnRequestDetail[requestId]?.countdown || 10),
+      countdown: this.SoldierSpawnRequestDetail[requestId]?.countdown || 10,
     };
     return this.SoldierSpawnRequestDetail[requestId];
   }
 
-  processPendingSpawnRequests(deltaTime) {
-    if (this.SoldierSpawnRequestIdQueue.getSize() < 1)
-      return null;
+  processPendingSpawnRequests(deltaTime: number) {
+    if (this.SoldierSpawnRequestIdQueue.getSize() < 1) return null;
 
     let requestId = this.SoldierSpawnRequestIdQueue.peekFront();
+    if (!requestId) return null;
     let { soldierType } = this.SoldierSpawnRequestDetail[requestId];
-
+    if (!soldierType) return;
     //resources are not sufficient for upcoming spawn
-    if(this.resources < SoldierType[soldierType].cost)
-      return null;
+    if (this.resources < SoldierType[soldierType].cost) return null;
     this.SoldierSpawnRequestDetail[requestId].countdown = Math.max(
       this.SoldierSpawnRequestDetail[requestId].countdown - deltaTime,
       0
     );
 
-    if (this.SoldierSpawnRequestDetail[requestId].countdown > 0)
-      return null;
+    if (this.SoldierSpawnRequestDetail[requestId].countdown > 0) return null;
     //reset countdown.
     this.SoldierSpawnRequestDetail[requestId].countdown = 10;
     this.SoldierSpawnRequestDetail[requestId].count -= 1;
@@ -92,31 +109,30 @@ class Player {
     return soldierType;
   }
 
-  setSpawnPoint(x, y) {
+  setSpawnPoint(x: number, y: number) {
     this.posX = x;
     this.posY = y;
   }
 
-  tick(delta, stateManager) {
+  tick(delta: number, stateManager: GameStateManager) {
     try {
       //if spawnFlag has been destroyed.
-      if(this.spawnFlagHealth <= 0) {
+      if (this.spawnFlagHealth <= 0) {
         //player already lost the game, simply returns.
-        if(this.playerState === 'LostGame')
-          return;
-        
+        if (this.playerState === "LostGame") return;
+
         /*
           Schedule a player-lost packet in client queue
           (so server treats it as an update coming from client side)
           The packet's action is defined in PacketActions.js file where further logic is executed.
         */
-        this.playerState = 'LostGame';
+        this.playerState = "LostGame";
         let playerLostPacket = new Packet(
-            PacketType.ByServer.PLAYER_LOST,
-            stateManager.getPlayerSocket(this.id),
-            {},
-            PacketActions.PlayerLostPacketAction
-          )
+          PacketType.ByServer.PLAYER_LOST,
+          stateManager.getPlayerSocket(this.id),
+          {},
+          PacketActions.PlayerLostPacketAction
+        );
         stateManager.queueClientRequest(playerLostPacket);
         return;
       }
@@ -130,7 +146,9 @@ class Player {
         socket: stateManager.getPlayerSocket(this.id),
         playerId: this.id,
         resources: this.resources,
-        spawnQueue: this.SoldierSpawnRequestIdQueue.toArray().map(id => this.SoldierSpawnRequestDetail[id])
+        spawnQueue: this.SoldierSpawnRequestIdQueue.toArray().map(
+          (id: string) => this.SoldierSpawnRequestDetail[id]
+        ),
       });
 
       let soldierTypeToSpawn = this.processPendingSpawnRequests(delta);
@@ -141,14 +159,17 @@ class Player {
           soldierTypeToSpawn,
           this.id
         );
-        let updatePacket = {
+        if (!createStatus) {
+          return;
+        }
+        let updatePacket: any = {
           type: PacketType.ByServer.SOLDIER_CREATE_ACK,
           isCreated: createStatus.status,
         };
         if (createStatus.status) {
           updatePacket = {
             ...updatePacket,
-            soldier: createStatus.soldier.getSnapshot(),
+            soldier: createStatus.soldier!.getSnapshot(),
             playerId: this.id, //person who created soldier
             soldierType: soldierTypeToSpawn,
           };
@@ -168,11 +189,13 @@ class Player {
   }
   getSnapshot() {
     //get snapshot for each soldier
-    var soldierSnapshots = [];
-    if (this.SoldierMap.size > 0)
-      soldierSnapshots = [
-        ...this.SoldierMap.values().map((soldier) => soldier.getSnapshot()),
-      ];
+    var soldierSnapshots: SoldierSnapshot[] = [];
+    if (this.SoldierMap.size > 0) {
+      const soldierMapVal = this.SoldierMap.values();
+      for (const soldier of soldierMapVal) {
+        soldierSnapshots.push(soldier.getSnapshot());
+      }
+    }
     return {
       name: this.name,
       id: this.id,
@@ -188,7 +211,7 @@ class Player {
       ),
     };
   }
-  createSoldier(type, x, y) {
+  createSoldier(type: string, x: number, y: number) {
     x = this.posX;
     y = this.posY;
     type = type || SoldierType.SPEARMAN.id;
@@ -210,24 +233,23 @@ class Player {
     this.SoldierMap.set(s.id, s);
     return { status: true, soldierId: s.id, soldier: s };
   }
-  getSoldier(soldierId) {
+  getSoldier(soldierId?: string) {
+    if (!soldierId) return null;
     return this.SoldierMap.get(soldierId);
   }
 
-  removeSoldier(id, stateManager) {
+  removeSoldier(id: string, stateManager: GameStateManager) {
     let soldierToRemove = this.SoldierMap.get(id);
-    if (typeof soldierToRemove === 'undefined')
-      return false;
+    if (typeof soldierToRemove === "undefined") return false;
     stateManager.scene.remove(soldierToRemove);
     this.SoldierMap.delete(id);
     return true;
   }
 
-  destroy(stateManager) {
+  destroy(stateManager: GameStateManager) {
     this.SoldierMap.forEach((soldier) => {
       stateManager.scene.remove(soldier);
     });
     this.SoldierMap = new Map();
   }
 }
-module.exports = Player;
