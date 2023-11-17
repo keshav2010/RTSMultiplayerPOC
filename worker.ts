@@ -3,7 +3,7 @@ const express = require("express");
 import { Namespace, Server } from "socket.io";
 import cluster from "cluster";
 import { PacketType } from "./common/PacketType";
-import { Packet } from "./gameserver/lib/Packet";
+import { Packet } from "./gameserver/core/Packet";
 import { ProcessMessage } from './interfaces/processMessage';
 import {
   ClientToServerEvents,
@@ -11,7 +11,7 @@ import {
   InterServerEvents,
   SocketData,
 } from "./interfaces/socket";
-import { GameStateManager } from "./gameserver/lib/GameStateManager";
+import { GameStateManager } from "./gameserver/core/GameStateManager";
 import ServerStateMachine from './gameserver/stateMachines/server-state-machine/SessionStateMachine.json';
 import ServerStateMachineHandlers from './gameserver/stateMachines/server-state-machine/SessionStateBehaviour';
 import PacketActions from "./gameserver/PacketActions";

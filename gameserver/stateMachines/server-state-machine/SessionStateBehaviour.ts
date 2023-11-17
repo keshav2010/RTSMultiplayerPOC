@@ -1,5 +1,5 @@
 import { PacketType } from "../../../common/PacketType";
-import { GameStateManager } from "../../lib/GameStateManager";
+import { GameStateManager } from "../../core/GameStateManager";
 
 export default {
   SessionLobbyState: ({

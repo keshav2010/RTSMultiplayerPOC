@@ -3,8 +3,8 @@
  */
 import { Queue } from "../common/Queue";
 import { Soldier, SoldierSnapshot } from "./Soldier";
-import { GameStateManager } from "./lib/GameStateManager";
-import { Packet } from "./lib/Packet";
+import { GameStateManager } from "./core/GameStateManager";
+import { Packet } from "./core/Packet";
 import { SoldierType, SoldierTypeConfig } from "../common/SoldierType";
 import { PacketType } from "../common/PacketType";
 import { v4 as uuidv4 } from "uuid";

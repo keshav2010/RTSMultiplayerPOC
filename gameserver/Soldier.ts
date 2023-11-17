@@ -4,11 +4,11 @@ import SoldierStateMachineJSON from "./stateMachines/soldier-state-machine/Soldi
 import soldierStateBehaviours from "./stateMachines/soldier-state-machine/SoldierStateBehaviour";
 
 import SoldierConstants from "./unitConstants";
-import { GameStateManager } from "./lib/GameStateManager";
+import { GameStateManager } from "./core/GameStateManager";
 import { v4 as uuidv4 } from "uuid";
-import { SceneObject } from "./lib/SceneObject";
-import { AllianceTypes } from "./lib/AllianceTracker";
-import { StateMachine } from "./lib/StateMachine";
+import { SceneObject } from "./core/SceneObject";
+import { AllianceTypes } from "./core/AllianceTracker";
+import { StateMachine } from "./core/StateMachine";
 import { Player } from "./Player";
 function mapRange(
   val: number,

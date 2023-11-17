@@ -10,7 +10,7 @@
 import { Socket } from "socket.io";
 import { PacketType } from "../common/PacketType";
 import { Player } from "./Player";
-import { GameStateManager } from "./lib/GameStateManager";
+import { GameStateManager } from "./core/GameStateManager";
 import {
   ClientToServerEvents,
   ServerToClientEvents,

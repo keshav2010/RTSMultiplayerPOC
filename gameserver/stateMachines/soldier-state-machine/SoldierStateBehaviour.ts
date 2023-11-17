@@ -1,10 +1,10 @@
 import SoldierConstants from "../../unitConstants";
 import { PacketType } from "../../../common/PacketType";
 import SAT from "sat";
-const { AllianceTypes } = require("../../lib/AllianceTracker");
-import { GameStateManager } from "../../lib/GameStateManager";
+const { AllianceTypes } = require("../../core/AllianceTracker");
+import { GameStateManager } from "../../core/GameStateManager";
 import { Soldier } from "../../Soldier";
-import { IStateActions } from "../../lib/StateMachine";
+import { IStateActions } from "../../core/StateMachine";
 export default {
   Idle: ({
     delta,
