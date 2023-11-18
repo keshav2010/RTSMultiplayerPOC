@@ -1,4 +1,4 @@
-import { Interpreter, StateSchema, createMachine, interpret } from "xstate";
+import { createMachine, interpret } from "xstate";
 
 export interface IMachineJSON {
   id: string;

@@ -1,11 +1,12 @@
 import { PacketType } from "../../../common/PacketType";
+import { Soldier } from "../../Soldier";
 import { GameStateManager } from "../../core/GameStateManager";
 
 export default {
   SessionLobbyState: ({
     gameStateManager,
   }: {
-    gameStateManager: GameStateManager;
+    gameStateManager: GameStateManager<Soldier>;
   }) => {
     var deltaTime = (Date.now() - gameStateManager.lastSimulateTime_ms) / 1000;
     gameStateManager.lastSimulateTime_ms = Date.now();
@@ -30,7 +31,7 @@ export default {
   SpawnSelectionState: ({
     gameStateManager,
   }: {
-    gameStateManager: GameStateManager;
+    gameStateManager: GameStateManager<Soldier>;
   }) => {
     try {
       if (!gameStateManager.GameStarted) {
@@ -59,7 +60,7 @@ export default {
   BattleState: ({
     gameStateManager,
   }: {
-    gameStateManager: GameStateManager;
+    gameStateManager: GameStateManager<Soldier>;
   }) => {
     try {
       var deltaTime =
@@ -82,6 +83,6 @@ export default {
   BattleEndState: ({
     gameStateManager,
   }: {
-    gameStateManager: GameStateManager;
+    gameStateManager: GameStateManager<Soldier>;
   }) => {},
 };

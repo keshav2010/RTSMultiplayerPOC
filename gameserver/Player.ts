@@ -114,7 +114,7 @@ export class Player {
     this.posY = y;
   }
 
-  tick(delta: number, stateManager: GameStateManager) {
+  tick(delta: number, stateManager: GameStateManager<Soldier>) {
     try {
       //if spawnFlag has been destroyed.
       if (this.spawnFlagHealth <= 0) {
@@ -238,17 +238,17 @@ export class Player {
     return this.SoldierMap.get(soldierId);
   }
 
-  removeSoldier(id: string, stateManager: GameStateManager) {
+  removeSoldier(id: string, stateManager: GameStateManager<Soldier>) {
     let soldierToRemove = this.SoldierMap.get(id);
     if (typeof soldierToRemove === "undefined") return false;
-    stateManager.scene.remove(soldierToRemove);
+    stateManager.scene.removeSceneItem(soldierToRemove);
     this.SoldierMap.delete(id);
     return true;
   }
 
-  destroy(stateManager: GameStateManager) {
+  destroy(stateManager: GameStateManager<Soldier>) {
     this.SoldierMap.forEach((soldier) => {
-      stateManager.scene.remove(soldier);
+      stateManager.scene.removeSceneItem(soldier);
     });
     this.SoldierMap = new Map();
   }

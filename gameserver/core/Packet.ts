@@ -5,11 +5,15 @@ import {
   InterServerEvents,
   SocketData,
 } from "../../interfaces/socket";
+import {
+  ClientToServerPacketType,
+  ServerToClientPacketType,
+} from "../../common/PacketType";
 
 export class Packet {
   //socketio's io reference
   static io: any;
-  type: any;
+  type: ClientToServerPacketType | ServerToClientPacketType;
   data: any;
   socket: Socket<
     ClientToServerEvents,
@@ -28,7 +32,7 @@ export class Packet {
    * @param {array} StateSpecificPacket
    */
   constructor(
-    type: any,
+    type: ClientToServerPacketType | ServerToClientPacketType,
     socket: Socket<
       ClientToServerEvents,
       ServerToClientEvents,

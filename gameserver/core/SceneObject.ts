@@ -1,30 +1,35 @@
 import Quadtree from "quadtree-lib";
 import SAT from "sat";
+import { v4 as uuidv4 } from "uuid";
+import { Scene } from "./Scene";
 
-export class SceneObject<ParentType = any>
-  extends SAT.Box
-  implements Quadtree.QuadtreeItem
-{
+/**
+ * @class SceneObject
+ * @classdesc Any object that is meant to be part of the Scene should extend this class.
+ */
+export type TypeQuadtreeItem = Quadtree.QuadtreeItem & { id: string };
+export class SceneObject<ParentType = any> extends SAT.Box {
+  id: string;
   parent: ParentType;
-  x: number;
-  width: number;
-  height: number;
-  y: number;
   constructor(
     x: number,
     y: number,
     width = 35,
     height = 35,
-    parent: ParentType
+    parent: ParentType,
   ) {
     // {pos:{x,y}}
     super(new SAT.Vector(x, y), width, height);
+    this.id = uuidv4();
     this.parent = parent;
-
-    //used by quadtrees
-    this.x = this.pos.x;
-    this.y = this.pos.y;
-    this.width = this.w;
-    this.height = this.h;
+  }
+  getQuadtreeItem(): TypeQuadtreeItem {
+    return {
+      id: this.id,
+      x: this.pos.x,
+      y: this.pos.y,
+      width: this.w,
+      height: this.h,
+    } as TypeQuadtreeItem;
   }
 }

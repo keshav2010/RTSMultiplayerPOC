@@ -4,7 +4,7 @@ import { Namespace, Server } from "socket.io";
 import cluster from "cluster";
 import { PacketType } from "./common/PacketType";
 import { Packet } from "./gameserver/core/Packet";
-import { ProcessMessage } from './interfaces/processMessage';
+import { ProcessMessage } from "./interfaces/processMessage";
 import {
   ClientToServerEvents,
   ServerToClientEvents,
@@ -12,10 +12,11 @@ import {
   SocketData,
 } from "./interfaces/socket";
 import { GameStateManager } from "./gameserver/core/GameStateManager";
-import ServerStateMachine from './gameserver/stateMachines/server-state-machine/SessionStateMachine.json';
-import ServerStateMachineHandlers from './gameserver/stateMachines/server-state-machine/SessionStateBehaviour';
+import ServerStateMachine from "./gameserver/stateMachines/server-state-machine/SessionStateMachine.json";
+import ServerStateMachineHandlers from "./gameserver/stateMachines/server-state-machine/SessionStateBehaviour";
 import PacketActions from "./gameserver/PacketActions";
 import { nbLoop } from "./common/nonBlockingLoop";
+import { Soldier } from "./gameserver/Soldier";
 const app = express();
 const server = http.createServer(app);
 const io = new Server<
@@ -29,13 +30,13 @@ class SessionManager {
   sessions: {
     [key: string]: {
       sessionId: string;
-      stateManager: GameStateManager;
+      stateManager: GameStateManager<Soldier>;
     };
   };
   constructor() {
     this.sessions = {};
   }
-  addSession(sid: string, gameStateManagerInstance: GameStateManager) {
+  addSession(sid: string, gameStateManagerInstance: GameStateManager<Soldier>) {
     this.sessions[sid] = {
       sessionId: sid,
       stateManager: gameStateManagerInstance,
@@ -61,7 +62,7 @@ class SessionManager {
 const sessionManager = new SessionManager();
 const MAX_MS_PER_TICK = 1000 / Number(process.env.TICKRATE || 20);
 function serverTick(
-  stateManager: GameStateManager,
+  stateManager: GameStateManager<Soldier>,
   io: Namespace<
     ClientToServerEvents,
     ServerToClientEvents,
@@ -100,13 +101,13 @@ function serverTick(
   nbLoop(test, loop, onEnd);
 }
 
-process.on("message", (message : ProcessMessage) => {
+process.on("message", (message: ProcessMessage) => {
   console.log(`[worker${message.workerId}] received message : `, message);
   //new session create
   if (message.type === "SESSION_CREATE_REQUESTED") {
     sessionManager.addSession(
       message.sessionId,
-      new GameStateManager(
+      new GameStateManager<Soldier>(
         io.of(`/${message.sessionId}`),
         ServerStateMachine,
         ServerStateMachineHandlers
@@ -120,7 +121,7 @@ process.on("message", (message : ProcessMessage) => {
       );
 
       const stateManager = sessionManager.getStateManager(message.sessionId);
-      if(!stateManager) {
+      if (!stateManager) {
         return;
       }
       stateManager.sessionId = message.sessionId;
@@ -144,7 +145,9 @@ process.on("message", (message : ProcessMessage) => {
 
       stateManager!.OnGameEnd(() => {
         console.log(
-          `--- OnGameEnd : session ${stateManager!.sessionId} ended, signalling master (SESSION_DESTROYED)`
+          `--- OnGameEnd : session ${
+            stateManager!.sessionId
+          } ended, signalling master (SESSION_DESTROYED)`
         );
         process.send!({
           type: "SESSION_DESTROYED",
@@ -355,5 +358,7 @@ process.on("message", (message : ProcessMessage) => {
 });
 
 server.listen(3007, () => {
-  console.log(`[Worker${cluster.worker!.id}] Online @ port ${server.address()}`);
+  console.log(
+    `[Worker${cluster.worker!.id}] Online @ port ${server.address()}`
+  );
 });

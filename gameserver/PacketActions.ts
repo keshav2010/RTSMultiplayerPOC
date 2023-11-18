@@ -17,6 +17,7 @@ import {
   InterServerEvents,
   SocketData,
 } from "../interfaces/socket";
+import { Soldier } from "./Soldier";
 const { v4: uuidv4 } = require("uuid");
 
 function PlayerInitPacketAction(
@@ -33,7 +34,7 @@ function PlayerInitPacketAction(
     InterServerEvents,
     SocketData
   >,
-  stateManager: GameStateManager,
+  stateManager: GameStateManager<Soldier>,
   { playerName }: { playerName: string }
 ) {
   try {
@@ -90,7 +91,7 @@ function PlayerJoinedPacketAction(
   packetType: any,
   socket: any,
   io: any,
-  stateManager: GameStateManager
+  stateManager: GameStateManager<Soldier>
 ) {
   try {
     const player = stateManager.getPlayer(socket.id);
@@ -115,7 +116,7 @@ function PlayerReadyPacketAction(
   packetType: any,
   socket: any,
   io: any,
-  stateManager: GameStateManager
+  stateManager: GameStateManager<Soldier>
 ) {
   try {
     const player = stateManager.getPlayer(socket.id);
@@ -143,7 +144,7 @@ function PlayerUnreadyPacketAction(
   packetType: any,
   socket: any,
   io: any,
-  stateManager: GameStateManager
+  stateManager: GameStateManager<Soldier>
 ) {
   try {
     const player = stateManager.getPlayer(socket.id);
@@ -177,7 +178,7 @@ function PlayerLeftPacketAction(
   packetType: any,
   socket: any,
   io: any,
-  stateManager: GameStateManager
+  stateManager: GameStateManager<Soldier>
 ) {
   try {
     let player = stateManager.getPlayer(socket.id);
@@ -205,7 +206,7 @@ function PlayerLostPacketAction(
   packetType: any,
   socket: any,
   io: any,
-  stateManager: GameStateManager
+  stateManager: GameStateManager<Soldier>
 ) {
   try {
     let player = stateManager.getPlayer(socket.id);
@@ -234,7 +235,7 @@ function SoldierMoveRequestedPacketAction(
   packetType: any,
   socket: any,
   io: any,
-  stateManager: GameStateManager,
+  stateManager: GameStateManager<Soldier>,
   data: any
 ) {
   try {
@@ -270,7 +271,7 @@ function SoldierSpawnRequestedPacketAction(
     InterServerEvents,
     SocketData
   >,
-  stateManager: GameStateManager,
+  stateManager: GameStateManager<Soldier>,
   data: { soldierType: any }
 ) {
   let player = stateManager.getPlayer(socket.id);
@@ -305,7 +306,7 @@ function SoldierCreateRequestedPacketAction(
     InterServerEvents,
     SocketData
   >,
-  stateManager: GameStateManager,
+  stateManager: GameStateManager<Soldier>,
   data: any
 ) {
   let playerId = stateManager.getPlayer(socket.id)?.id;
@@ -338,7 +339,7 @@ function SoldierDeletedPacketAction(
   packetType: any,
   socket: any,
   io: any,
-  stateManager: GameStateManager,
+  stateManager: GameStateManager<Soldier>,
   data: any
 ) {
   let { soldierId }: { soldierId: string } = data;
@@ -369,7 +370,7 @@ function AttackRequestedPacketAction(
     InterServerEvents,
     SocketData
   >,
-  stateManager: GameStateManager,
+  stateManager: GameStateManager<Soldier>,
   data: any
 ) {
   try {
@@ -399,7 +400,7 @@ function ChatMessagePacketAction(
   packetType: any,
   socket: any,
   io: any,
-  stateManager: GameStateManager,
+  stateManager: GameStateManager<Soldier>,
   data: any
 ) {
   let { message } = data;
@@ -418,7 +419,7 @@ function SpawnPointRequestedAction(
   packetType: any,
   socket: any,
   io: any,
-  stateManager: GameStateManager,
+  stateManager: GameStateManager<Soldier>,
   data: any
 ) {
   let { spawnX, spawnY } = data;

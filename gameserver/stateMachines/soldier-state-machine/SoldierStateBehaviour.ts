@@ -1,10 +1,10 @@
 import SoldierConstants from "../../unitConstants";
 import { PacketType } from "../../../common/PacketType";
 import SAT from "sat";
-const { AllianceTypes } = require("../../core/AllianceTracker");
 import { GameStateManager } from "../../core/GameStateManager";
 import { Soldier } from "../../Soldier";
 import { IStateActions } from "../../core/StateMachine";
+import { AllianceTypes } from "../../AllianceTracker";
 export default {
   Idle: ({
     delta,
@@ -14,7 +14,7 @@ export default {
   }: {
     delta: any;
     updateManager: any;
-    stateManager: GameStateManager;
+    stateManager: GameStateManager<Soldier>;
     soldier: Soldier;
   }) => {
     /*repel from only those units which are not yet at their destination.
@@ -36,8 +36,8 @@ export default {
     // if nearby unit getting attacked.
     let nearbyUnits = stateManager.scene.getNearbyUnits(
       {
-        x: soldier.pos.x + soldier.width / 2,
-        y: soldier.pos.y + soldier.height / 2,
+        x: soldier.pos.x + soldier.w / 2,
+        y: soldier.pos.y + soldier.h / 2,
       },
       SoldierConstants.NEARBY_SEARCH_RADI
     );
@@ -45,11 +45,11 @@ export default {
 
     // if any nearby friendly unit under attack
     let nearbyAllies = nearbyUnits.filter(
-      (unit: Soldier) => unit !== soldier && unit.playerId === soldier.playerId
+      (unit) => unit.id !== soldier.id && unit.playerId === soldier.playerId
     );
     for (let i = 0; i < nearbyAllies.length; i++) {
       let unit = nearbyAllies[i];
-      if (unit === soldier || unit.playerId !== soldier.playerId) continue;
+      if (unit.id === soldier.id || unit.playerId !== soldier.playerId) continue;
 
       unit = stateManager.getPlayerById(unit.playerId)?.getSoldier(unit.id);
       if (!unit) {
@@ -78,7 +78,7 @@ export default {
   }: {
     delta: number;
     updateManager: any;
-    stateManager: GameStateManager;
+    stateManager: GameStateManager<Soldier>;
     soldier: Soldier;
   }) => {
     let seperationForce = soldier.getSeperationVector(stateManager);
@@ -129,7 +129,7 @@ export default {
     soldier,
   }: {
     delta: number;
-    stateManager: GameStateManager;
+    stateManager: GameStateManager<Soldier>;
     soldier: Soldier;
   }) => {
     let attackTarget = soldier.getAttackTarget(stateManager);
@@ -183,7 +183,7 @@ export default {
   }: {
     delta: number;
     updateManager: any;
-    stateManager: GameStateManager;
+    stateManager: GameStateManager<Soldier>;
     soldier: Soldier;
   }) => {
     try {
@@ -246,7 +246,7 @@ export default {
   }: {
     delta: number;
     updateManager: any;
-    stateManager: GameStateManager;
+    stateManager: GameStateManager<Soldier>;
     soldier: Soldier;
   }) => {
     if (!soldier.getAttackTarget(stateManager)) {
@@ -262,7 +262,7 @@ export default {
     soldier,
   }: {
     delta: number;
-    stateManager: GameStateManager;
+    stateManager: GameStateManager<Soldier>;
     soldier: Soldier;
   }) => {
     const soldierAttackTarget = soldier.getAttackTarget(stateManager);

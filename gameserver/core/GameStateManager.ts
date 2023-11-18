@@ -1,16 +1,17 @@
 import { Queue } from "../../common/Queue";
 import { Player } from "../Player";
 import ServerLocalEvents from "../ServerLocalEvents";
-import { AllianceTracker, AllianceTypes } from "./AllianceTracker";
+import { AllianceTracker, AllianceTypes } from "../AllianceTracker";
 import { Packet } from "./Packet";
 import { Scene } from "./Scene";
-import { StateMachine } from "./StateMachine";
-import { PacketType } from "../../common/PacketType";
-const EventEmitter = require("events");
+import { IMachineJSON, IStateActions, StateMachine } from "./StateMachine";
+import { ClientToServerPacketType, ServerToClientPacketType } from "../../common/PacketType";
+import { SceneObject } from "./SceneObject";
+import EventEmitter from 'events';
 /**
  * Manages entire game state.
  */
-export class GameStateManager {
+export class GameStateManager<SceneItemType extends SceneObject> {
   cumulativeUpdates: any[];
   pendingClientRequests: Queue<Packet>;
   io: any;
@@ -19,7 +20,7 @@ export class GameStateManager {
   SocketsMap: Map<string, any>;
   lastSimulateTime_ms: number;
   event: any;
-  scene: Scene;
+  scene: Scene<SceneItemType>;
   countdown: number;
   stateMachine: StateMachine;
   alliances: AllianceTracker;
@@ -28,8 +29,8 @@ export class GameStateManager {
   sessionId: string | null;
   constructor(
     io: any,
-    sessionStateMachineJSON: any,
-    sessionStateMachineActions: any
+    sessionStateMachineJSON: IMachineJSON,
+    sessionStateMachineActions: IStateActions
   ) {
     this.sessionId = null;
     this.cumulativeUpdates = [];
@@ -43,7 +44,10 @@ export class GameStateManager {
     this.lastSimulateTime_ms = Date.now();
 
     this.event = new EventEmitter();
-    this.scene = new Scene(this);
+    this.scene = new Scene<SceneItemType>({
+      width: 15,
+      height: 15,
+    });
 
     this.countdown = Number(process.env.COUNTDOWN) || 10; //seconds
     this.stateMachine = new StateMachine(
@@ -69,7 +73,10 @@ export class GameStateManager {
     return request;
   }
 
-  enqueueStateUpdate(packet: { type: string; [key: string]: any }) {
+  enqueueStateUpdate(packet: {
+    type: ServerToClientPacketType | ClientToServerPacketType;
+    [key: string]: any;
+  }) {
     this.cumulativeUpdates.push(packet);
   }
 
@@ -162,7 +169,7 @@ export class GameStateManager {
     }
     let { status, soldierId, soldier } = player.createSoldier(type, x, y);
     if (status) {
-      this.scene.insertSoldier(soldier);
+      this.scene.addSceneItem(soldier);
       this.event.emit(ServerLocalEvents.SOLDIER_CREATED, {
         x,
         y,

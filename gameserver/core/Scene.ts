@@ -1,19 +1,27 @@
 import Quadtree, { QuadtreeItem } from "quadtree-lib";
 import SAT from "sat";
-import { GameStateManager } from "./GameStateManager";
-export class Scene extends Quadtree<any> {
-  stateManager: GameStateManager;
-  constructor(stateManager: GameStateManager, width?: number, height?: number) {
-    width = width || 15;
-    height = height || 15;
-    super({ width, height });
-    this.stateManager = stateManager;
+import { SceneObject, TypeQuadtreeItem } from "./SceneObject";
+export class Scene<
+  ItemType extends SceneObject
+> extends Quadtree<TypeQuadtreeItem> {
+  itemIdToItemTypeMap: Map<string, ItemType>;
+  constructor(opts: {
+    x?: number;
+    y?: number;
+    width: number;
+    height: number;
+    maxElements?: number;
+  }) {
+    super(opts);
+    this.itemIdToItemTypeMap = new Map<string, ItemType>();
   }
-  removeSoldier(soldierObject: any) {
-    this.remove(soldierObject);
+  removeSceneItem(item: ItemType) {
+    this.itemIdToItemTypeMap.delete(item.getQuadtreeItem().id);
+    this.remove(item.getQuadtreeItem());
   }
-  insertSoldier(soldierObject: any) {
-    this.push(soldierObject, true);
+  addSceneItem(item: ItemType, doObserve: boolean = true) {
+    this.itemIdToItemTypeMap.set(item.id, item);
+    this.push(item.getQuadtreeItem(), doObserve);
   }
 
   /**
@@ -22,40 +30,28 @@ export class Scene extends Quadtree<any> {
    * @param {*} searchRadius
    * @returns
    */
-  getNearbyUnits({ x, y }: any, searchRadius: number) {
-    let result = this.colliding(
-      { x, y },
-      function (
-        a: { x: any; y: any },
-        b: { x: number; w: number; y: number; h: number }
-      ) {
-        // a=> 1st arg, b => actual quadtree object
-        let aPos = new SAT.Vector(a.x, a.y);
-        let bPos = new SAT.Vector(b.x + b.w / 2, b.y + b.h / 2);
-        let distance = new SAT.Vector().copy(aPos).sub(bPos).len();
-        return distance <= 2 * searchRadius;
-      }
-    );
+  getNearbyUnits({ x, y }: { x: number; y: number }, searchRadius: number) {
+    let result = this.colliding({ x, y }, function (a, b) {
+      // a=> 1st arg, b => actual quadtree object
+      let aPos = new SAT.Vector(a.x, a.y);
+      let bPos = new SAT.Vector(b.x + b.w / 2, b.y + b.h / 2);
+      let distance = new SAT.Vector().copy(aPos).sub(bPos).len();
+      return distance <= 2 * searchRadius;
+    });
     return result;
   }
 
-  //Check if soldier is colliding with other units/soldiers
+  //Check if unit/sceneItem is colliding with other units/soldiers
   checkOne(
-    soldier: {
-      pos: { x: any; y: any };
-      w: any;
-      h: any;
-      id: any;
-      toPolygon: () => any;
-    },
-    callback: (arg0: any, arg1: any) => void
+    sceneItem: ItemType,
+    callback: (arg0: SAT.Response, arg1: ItemType[]) => void
   ) {
     //fetch all bodies with which soldier is colliding in Quadtree
     let collidingBodies = this.colliding({
-      x: soldier.pos.x,
-      y: soldier.pos.y,
-      width: soldier.w,
-      height: soldier.h,
+      x: sceneItem.pos.x,
+      y: sceneItem.pos.y,
+      width: sceneItem.w,
+      height: sceneItem.h,
     });
 
     //Colliding Bodies will always have 1 element, which is the soldier itself.
@@ -63,25 +59,30 @@ export class Scene extends Quadtree<any> {
 
     //Obtain "SAT.Response" for each collision.
     var satBoxPolygons = collidingBodies;
-    satBoxPolygons.forEach(
-      (collidingSoldier: { id: any; toPolygon: () => any }) => {
-        //skip collision with self
-        if (collidingSoldier.id === soldier.id) {
-          return;
-        }
-        var res = new SAT.Response();
-        SAT.testPolygonPolygon(
-          soldier.toPolygon(),
-          collidingSoldier.toPolygon(),
-          res
-        );
-
-        res.a = soldier;
-        res.b = collidingSoldier;
-
-        callback(res, collidingBodies);
+    satBoxPolygons.forEach((collidingSoldier) => {
+      //skip collision with self
+      if (collidingSoldier.id === sceneItem.id) {
+        return;
       }
-    );
+      var res = new SAT.Response();
+      SAT.testPolygonPolygon(
+        sceneItem.toPolygon(),
+        collidingSoldier.toPolygon(),
+        res
+      );
+
+      res.a = sceneItem;
+      res.b = collidingSoldier;
+
+      // get corresponding items.
+      const itemsInMap = collidingBodies.filter((d) =>
+        this.itemIdToItemTypeMap.has(d.id)
+      );
+      const callbackItemArg = itemsInMap.map(
+        (item) => this.itemIdToItemTypeMap.get(item.id)!
+      );
+      callback(res, callbackItemArg);
+    });
   }
   update() {
     //this.system.update();

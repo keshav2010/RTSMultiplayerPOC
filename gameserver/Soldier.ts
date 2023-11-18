@@ -7,7 +7,7 @@ import SoldierConstants from "./unitConstants";
 import { GameStateManager } from "./core/GameStateManager";
 import { v4 as uuidv4 } from "uuid";
 import { SceneObject } from "./core/SceneObject";
-import { AllianceTypes } from "./core/AllianceTracker";
+import { AllianceTypes } from "./AllianceTracker";
 import { StateMachine } from "./core/StateMachine";
 import { Player } from "./Player";
 function mapRange(
@@ -123,7 +123,7 @@ export class Soldier extends SceneObject<Player> {
   }
 
   setAttackTarget(
-    stateManager: GameStateManager,
+    stateManager: GameStateManager<Soldier>,
     playerId?: string,
     soldierId?: string
   ) {
@@ -140,7 +140,7 @@ export class Soldier extends SceneObject<Player> {
     this.attackTarget = { playerId: playerId!, soldierId: soldierId! };
     return this.attackTarget;
   }
-  getAttackTarget(stateManager: GameStateManager) {
+  getAttackTarget(stateManager: GameStateManager<Soldier>) {
     if (!this.attackTarget) return null;
     let player = stateManager.getPlayerById(this.attackTarget.playerId);
     let soldier = player?.getSoldier(this.attackTarget.soldierId);
@@ -155,7 +155,7 @@ export class Soldier extends SceneObject<Player> {
   setTargetVector(targetVector: SAT.Vector) {
     this.targetVector = targetVector;
   }
-  applyForce(forceVector: any) {
+  applyForce(forceVector: SAT.Vector) {
     this.accelerationVector.add(forceVector);
     if (this.accelerationVector.len() > SoldierConstants.MAX_ACCELERATION) {
       this.accelerationVector
@@ -163,10 +163,8 @@ export class Soldier extends SceneObject<Player> {
         .scale(SoldierConstants.MAX_ACCELERATION);
     }
   }
-  setPosition(vec: any) {
+  setPosition(vec: SAT.Vector) {
     this.pos = new SAT.Vector().copy(vec);
-    this.x = this.pos.x;
-    this.y = this.pos.y;
   }
 
   getDistanceFromMovePos() {
@@ -222,13 +220,13 @@ export class Soldier extends SceneObject<Player> {
   }
 
   getSeperationVector(
-    stateManager: GameStateManager,
+    stateManager: GameStateManager<Soldier>,
     excludeUnitPredicate?: any
   ) {
     let nearbyUnits = stateManager.scene.getNearbyUnits(
       {
-        x: this.pos.x + this.width / 2,
-        y: this.pos.y + this.height / 2,
+        x: this.pos.x + this.w / 2,
+        y: this.pos.y + this.h / 2,
       },
       SoldierConstants.NEARBY_SEARCH_RADI
     );
@@ -236,8 +234,8 @@ export class Soldier extends SceneObject<Player> {
     let sumVec = new SAT.Vector(0);
     if (nearbyUnits.length < 2) return sumVec;
 
-    nearbyUnits.forEach((unit: this) => {
-      if (this === unit) return;
+    nearbyUnits.forEach((unit) => {
+      if (this.id === unit.id) return;
       if (
         excludeUnitPredicate &&
         typeof excludeUnitPredicate === "function" &&
@@ -317,7 +315,7 @@ export class Soldier extends SceneObject<Player> {
     });
   }
 
-  attackUnit(targetSoldier: Soldier, stateManager: GameStateManager) {
+  attackUnit(targetSoldier: Soldier, stateManager: GameStateManager<Soldier>) {
     this.setAttackTarget(
       stateManager,
       targetSoldier?.playerId,
