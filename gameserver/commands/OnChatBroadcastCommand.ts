@@ -1,0 +1,21 @@
+// OnJoinCommand.ts
+import { Command } from "@colyseus/command";
+import { SessionRoom } from "../SessionRoom";
+import { CommandPayload } from "./CommandPayloadType";
+import { Client } from "colyseus";
+import { nanoid } from "nanoid";
+export class OnChatBroadcastCommand extends Command<
+  SessionRoom,
+  CommandPayload
+> {
+  execute({ client, message }: { client: Client; message: any }) {
+    const sessionId = client.sessionId;
+    this.state.addPlayer(
+      sessionId,
+      message.name || `Player_${nanoid()}`,
+      message?.x || 0,
+      message?.y || 0
+    );
+    console.log(`[OnChatBroadcastCommand]: Added player. ${message.name}`);
+  }
+}

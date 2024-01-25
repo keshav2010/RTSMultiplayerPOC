@@ -1,101 +1,86 @@
-const CONSTANT = require('./constant');
-const axios = require('axios');
+import * as Colyseus from "colyseus.js";
 class NetworkManager {
     constructor(phaserGame, phaserRegistry) {
-        this.socket = null;
+        this.client = new Colyseus.Client(`ws://${process.env.HOST || 'localhost'}:2567`);;
+        this.room = null;
+
         this.game = phaserGame;
         this.scene = phaserGame.scene;
         this.registry = phaserRegistry;
 
-        this.registry.set('socket', null);
+        this.registry.set('socket', this.client);
         this.eventHandlersBinded = false;
         this.currentActiveSession = null;
     }
 
-    //connects to game server and launches spawn-select scene in parallel.
-    connectGameServer(url, onConnectCallback, onDisconnectCallback) {
-        this.socket = io(`${url}`,{
-            transports: ["websocket"],
+    setupRoomListener(roomEventHandlerCallback) {
+        if (!this.room)
+            return;
+        this.room.onStateChange((state) => {
+            roomEventHandlerCallback('onStateChange', state);
         });
-        this.bindEventHandlers(onConnectCallback, onDisconnectCallback);
+        this.room.onMessage("*", (type, message) => {
+            roomEventHandlerCallback('onMessage', { type, message });
+        })
+        this.room.onLeave((code) => {
+            roomEventHandlerCallback('onLeave', code);
+            this.disconnectGameServer();
+        });
+        this.room.onError((code, message) => {
+            roomEventHandlerCallback('onError', { code, message });
+        });
+    }
+
+    async connectGameServer(roomId, roomEventHandlerCallback) {
+        const room = await this.client.joinById(roomId);
+        this.room = room;
+        this.setupRoomListener(roomEventHandlerCallback);
+        return room;
     }
 
     isSocketConnected() {
-        return this.socket && this.socket.connected;
+        return this.room != null;
     }
 
-    disconnectPreviousSession() {
-        if(this.socket && this.socket.connected)
-        {
-            this.socket.disconnect();
-            this.socket = null;
-            this.eventHandlersBinded = false;
-        }
-    }
-
-    disconnectGameServer() {
-        this.eventHandlersBinded = false;
-        if(!this.socket) {
-            console.log(`[disconnectGameServer]: socket is null already!`);
+    async disconnectPreviousSession() {
+        if (!this.room) {
             return;
         }
-        this.socket.disconnect();
-        this.socket = null;
+        await this.room.leave();
+        this.room.removeAllListeners();
+        this.room = null;
     }
 
-    bindEventHandlers(onConnectCallback, onDisconnectCallback) {
-        if(!this.socket) {
-            console.log(`[bindEventHandlers]: socket is null.`);
+    async disconnectGameServer() {
+        if (!this.room) {
             return;
         }
-        this.eventHandlersBinded = true;
-        this.socket.on('tick', (d) => {
-            let deltaChanges = JSON.parse(d).data;
-            deltaChanges.forEach(deltaUpdate => {
-                this.game.scene.getScenes().forEach(activeScene => {
-                    if (activeScene !== this) {
-                        activeScene.events.emit(deltaUpdate.type, deltaUpdate);
-                    }
-                })
-            });
-        });
-        this.socket.on('connect', () => {
-            if(onConnectCallback)
-                onConnectCallback();
-        });
-        this.socket.on('disconnect', reason => {
-            console.log(`[NetworkManager] Socket Disconnect (Reason: ${reason})`);
-
-            console.log(`Active Scenes : ${this.game.scene.getScenes().map(v => v.scene.key).join(',')}`);
-            this.game.scene.getScenes().forEach(activeScene => {
-                console.log(`Closing Scene : ${activeScene.scene.key}`);
-                this.scene.stop(activeScene.scene.key);
-                activeScene.events.emit("shutdown", activeScene.scene);
-            })
-            this.registry.get('stateManager').clearState();
-            if(onDisconnectCallback)
-                onDisconnectCallback();
-        });
+        await this.room.leave();
+        this.room.removeAllListeners();
+        this.room = null;
     }
 
     sendEventToServer(eventType, data) {
-        this.socket.emit(eventType, data);
+        this.room?.send(eventType, data);
     }
 
     setPlayerName(name) {
-        this.playerName = name.trim().replace(' ','-');
+        this.playerName = name.trim().replace(' ', '-');
     }
     getPlayerName() {
-        return this.playerName || `RandomPlayer${Math.abs(Math.random()*1000).toFixed()}`;
+        return this.playerName || `RandomPlayer${Math.abs(Math.random() * 1000).toFixed()}`;
     }
-    async getAvailableSession() {
-        let session = await axios.get('/sessions?limit=1');
-        return session.data;
+    async getAvailableSession(roomName) {
+        let rooms = await this.client.getAvailableRooms(roomName);
+        return rooms;
     }
-    async hostSession() {
-        let session = await axios.post('/session');
-        this.currentActiveSession = session.data || null;
-        return this.currentActiveSession;
+    async hostSession(roomName) {
+        if (this.room) {
+            await this.disconnectGameServer();
+        }
+        this.room = await this.client.create(roomName || `RandomPlayer${Math.abs(Math.random() * 1000).toFixed()}'s Room`);
+        this.setupRoomListener(roomEventHandlerCallback);
+        console.log('joined successfully', this.room);
     }
 }
 module.exports = NetworkManager;

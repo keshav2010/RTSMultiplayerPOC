@@ -9,7 +9,7 @@
 
 import { Socket } from "socket.io";
 import { PacketType } from "../common/PacketType";
-import { Player } from "./Player";
+import { Player } from "./Objects/Player";
 import { GameStateManager } from "./core/GameStateManager";
 import {
   ClientToServerEvents,
@@ -17,8 +17,8 @@ import {
   InterServerEvents,
   SocketData,
 } from "../interfaces/socket";
-import { Soldier } from "./Soldier";
-const { v4: uuidv4 } = require("uuid");
+import { Soldier } from "./Objects/Soldier";
+import { nanoid } from "nanoid";
 
 function PlayerInitPacketAction(
   packetType: any,
@@ -34,16 +34,16 @@ function PlayerInitPacketAction(
     InterServerEvents,
     SocketData
   >,
-  stateManager: GameStateManager<Soldier>,
+    stateManager: GameStateManager<Soldier>,
   { playerName }: { playerName: string }
 ) {
   try {
-    const playerId = `pid${uuidv4()}`;
+    const playerId = `pid${nanoid()}`;
     console.log(
       `[INIT_PACKET setup]-Player ${playerName} (${playerId}) Joined.`
     );
     let player = new Player(playerId, playerName);
-    stateManager.registerPlayer(socket, player);
+    stateManager.registerClient(socket, player);
 
     //the main init packet, the "socket" property is added to ensure packet is only
     //delivered over this specified socket instead of broadcast to all clients.
@@ -52,7 +52,7 @@ function PlayerInitPacketAction(
       type: packetType,
       socket,
       playerId,
-      players: players.map((player) => player.getSnapshot()),
+      players: players.map((player) => (player as Player).getSnapshot()),
     };
     stateManager.enqueueStateUpdate(deltaUpdate);
 
@@ -60,8 +60,9 @@ function PlayerInitPacketAction(
     players
       .filter((p) => p.id !== playerId)
       .forEach((opponent) => {
-        if (opponent.SoldierMap.size < 1) return;
-        [...opponent.SoldierMap.values()].forEach((s) => {
+        const player = opponent as Player;
+        if (player.SoldierMap.size < 1) return;
+        [...player.SoldierMap.values()].forEach((s) => {
           let soldierSnapshot = s.getSnapshot();
 
           let initPacket = {
@@ -91,10 +92,10 @@ function PlayerJoinedPacketAction(
   packetType: any,
   socket: any,
   io: any,
-  stateManager: GameStateManager<Soldier>
+  stateManager: GameStateManager<Soldier, Player>
 ) {
   try {
-    const player = stateManager.getPlayer(socket.id);
+    const player = stateManager.getClient(socket.id);
     if (!player) return;
     console.log(`Player ${player.id} Attempting to Join.`);
     if (stateManager.GameStarted) {
@@ -116,10 +117,10 @@ function PlayerReadyPacketAction(
   packetType: any,
   socket: any,
   io: any,
-  stateManager: GameStateManager<Soldier>
+  stateManager: GameStateManager<Soldier, Player>
 ) {
   try {
-    const player = stateManager.getPlayer(socket.id);
+    const player = stateManager.getClient(socket.id);
     if (!player) return null;
     console.log(`Player ${player.id} Marked ready.`);
     player.readyStatus = true;
@@ -144,10 +145,10 @@ function PlayerUnreadyPacketAction(
   packetType: any,
   socket: any,
   io: any,
-  stateManager: GameStateManager<Soldier>
+  stateManager: GameStateManager<Soldier, Player>
 ) {
   try {
-    const player = stateManager.getPlayer(socket.id);
+    const player = stateManager.getClient(socket.id);
     if (!player) {
       return;
     }
@@ -178,10 +179,10 @@ function PlayerLeftPacketAction(
   packetType: any,
   socket: any,
   io: any,
-  stateManager: GameStateManager<Soldier>
+  stateManager: GameStateManager<Soldier, Player>
 ) {
   try {
-    let player = stateManager.getPlayer(socket.id);
+    let player = stateManager.getClient(socket.id);
     if (!player) return;
     console.log(`Player ${player.id} Left/Disconnected.`);
     player?.destroy(stateManager);
@@ -206,10 +207,10 @@ function PlayerLostPacketAction(
   packetType: any,
   socket: any,
   io: any,
-  stateManager: GameStateManager<Soldier>
+  stateManager: GameStateManager<Soldier, Player>
 ) {
   try {
-    let player = stateManager.getPlayer(socket.id);
+    let player = stateManager.getClient(socket.id);
     if (!player) return;
     console.log(`Player ${player.id} Lost.`);
     player?.destroy(stateManager);
@@ -235,7 +236,7 @@ function SoldierMoveRequestedPacketAction(
   packetType: any,
   socket: any,
   io: any,
-  stateManager: GameStateManager<Soldier>,
+  stateManager: GameStateManager<Soldier, Player>,
   data: any
 ) {
   try {
@@ -246,7 +247,7 @@ function SoldierMoveRequestedPacketAction(
     else soldiers = data.soldiers;
     soldiers.forEach((soldierId: string) => {
       soldierId = `${soldierId}`;
-      let soldier = stateManager.getPlayer(socket.id)?.getSoldier(soldierId);
+      let soldier = stateManager.getClient(socket.id)?.getSoldier(soldierId);
       soldier?.setTargetPosition(expectedPositionX, expectedPositionY);
     });
   } catch (err) {
@@ -271,10 +272,10 @@ function SoldierSpawnRequestedPacketAction(
     InterServerEvents,
     SocketData
   >,
-  stateManager: GameStateManager<Soldier>,
+  stateManager: GameStateManager<Soldier, Player>,
   data: { soldierType: any }
 ) {
-  let player = stateManager.getPlayer(socket.id);
+  let player = stateManager.getClient(socket.id);
   let { soldierType } = data;
   if (!player) return;
   let queuedSpawnRequest = player.queueSoldierSpawnRequest(soldierType);
@@ -306,10 +307,10 @@ function SoldierCreateRequestedPacketAction(
     InterServerEvents,
     SocketData
   >,
-  stateManager: GameStateManager<Soldier>,
+  stateManager: GameStateManager<Soldier, Player>,
   data: any
 ) {
-  let playerId = stateManager.getPlayer(socket.id)?.id;
+  let playerId = stateManager.getClient(socket.id)?.id;
   if (!playerId) return;
   let { soldierType, currentPositionX, currentPositionY } = data;
   let createStatus = stateManager.createSoldier(
@@ -339,11 +340,11 @@ function SoldierDeletedPacketAction(
   packetType: any,
   socket: any,
   io: any,
-  stateManager: GameStateManager<Soldier>,
+  stateManager: GameStateManager<Soldier, Player>,
   data: any
 ) {
   let { soldierId }: { soldierId: string } = data;
-  let player = stateManager.getPlayer(socket.id);
+  let player = stateManager.getClient(socket.id);
   if (!player) return;
   let isRemoved = player.removeSoldier(soldierId, stateManager);
   if (!isRemoved) return;
@@ -370,7 +371,7 @@ function AttackRequestedPacketAction(
     InterServerEvents,
     SocketData
   >,
-  stateManager: GameStateManager<Soldier>,
+  stateManager: GameStateManager<Soldier, Player>,
   data: any
 ) {
   try {
@@ -378,7 +379,7 @@ function AttackRequestedPacketAction(
     soldiers = soldiers.split(",");
 
     //Attack Initiator
-    let playerA = stateManager.getPlayer(socket.id);
+    let playerA = stateManager.getClient(socket.id);
 
     //Target Player's attacked unit.
     let playerB = stateManager.getPlayerById(targetPlayerId);
@@ -400,11 +401,11 @@ function ChatMessagePacketAction(
   packetType: any,
   socket: any,
   io: any,
-  stateManager: GameStateManager<Soldier>,
+  stateManager: GameStateManager<Soldier, Player>,
   data: any
 ) {
   let { message } = data;
-  let senderId = stateManager.getPlayer(socket.id)?.id;
+  let senderId = stateManager.getClient(socket.id)?.id;
   if (!senderId) return;
   //broadcast data to all the players.
   const deltaPacket = {
@@ -419,13 +420,13 @@ function SpawnPointRequestedAction(
   packetType: any,
   socket: any,
   io: any,
-  stateManager: GameStateManager<Soldier>,
+  stateManager: GameStateManager<Soldier, Player>,
   data: any
 ) {
   let { spawnX, spawnY } = data;
-  let playerId = stateManager.getPlayer(socket.id)?.id;
+  let playerId = stateManager.getClient(socket.id)?.id;
   if (!playerId) return;
-  stateManager.getPlayer(socket.id)?.setSpawnPoint(spawnX, spawnY);
+  stateManager.getClient(socket.id)?.setSpawnPoint(spawnX, spawnY);
   const deltaPacket = {
     type: PacketType.ByServer.SPAWN_POINT_ACK,
     spawnX,

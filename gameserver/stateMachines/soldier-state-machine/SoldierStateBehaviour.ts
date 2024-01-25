@@ -45,16 +45,16 @@ export default {
 
     // if any nearby friendly unit under attack
     let nearbyAllies = nearbyUnits.filter(
-      (unit) => unit.id !== soldier.id && unit.playerId === soldier.playerId
+      (unit) =>
+        unit.id !== soldier.id &&
+        stateManager.scene.getSceneItemById(unit.id)?.playerId ===
+          soldier.playerId
     );
     for (let i = 0; i < nearbyAllies.length; i++) {
-      let unit = nearbyAllies[i];
-      if (unit.id === soldier.id || unit.playerId !== soldier.playerId) continue;
-
-      unit = stateManager.getPlayerById(unit.playerId)?.getSoldier(unit.id);
-      if (!unit) {
+      let unit = stateManager.scene.getSceneItemById(nearbyAllies[i].id);
+      if (!unit || unit.id === soldier.id || unit.playerId !== soldier.playerId)
         continue;
-      }
+
       //if nearby friendly unit is either defending/attacking, then assist it.
       if (["Defend", "Attack"].includes(unit.getCurrentState())) {
         let enemy = unit.getAttackTarget(stateManager);
@@ -94,28 +94,31 @@ export default {
 
     var nearbyUnits = stateManager.scene.getNearbyUnits(
       {
-        x: soldier.pos.x + soldier.width / 2,
-        y: soldier.pos.y + soldier.height / 2,
+        x: soldier.pos.x + soldier.w / 2,
+        y: soldier.pos.y + soldier.h / 2,
       },
       SoldierConstants.NEARBY_SEARCH_RADI
     );
     if (nearbyUnits.length < 2) return;
 
-    nearbyUnits.forEach((unit: Soldier) => {
-      if (unit === soldier) return;
+    nearbyUnits.forEach((unit) => {
+      if (unit.id === soldier.id) return;
 
+      const nearbySoldierUnit = stateManager.scene.getSceneItemById(unit.id);
+      if (!nearbySoldierUnit) return;
       // if nearby unit (of same team) has same destination (approx.)
       let overlapExpectedPos =
         new SAT.Vector()
-          .copy(unit.expectedPosition)
+          .copy(nearbySoldierUnit.expectedPosition)
           .sub(soldier.expectedPosition)
           .len() <= SoldierConstants.MAX_TARGETPOS_OVERLAP_DIST;
 
       let anyOneAtDest =
-        unit.hasReachedDestination() || soldier.hasReachedDestination();
+        nearbySoldierUnit.hasReachedDestination() ||
+        soldier.hasReachedDestination();
 
       if (anyOneAtDest && overlapExpectedPos) {
-        unit.isAtDestination = soldier.isAtDestination = true;
+        nearbySoldierUnit.isAtDestination = soldier.isAtDestination = true;
         soldier.expectedPosition.copy(soldier.pos);
         if (!stateMachineTrigged)
           soldier.stateMachine.controller.send("ReachedPosition");
@@ -190,8 +193,8 @@ export default {
       soldier.setAttackTarget(stateManager);
       var nearbyUnits = stateManager.scene.getNearbyUnits(
         {
-          x: soldier.pos.x + soldier.width / 2,
-          y: soldier.pos.y + soldier.height / 2,
+          x: soldier.pos.x + soldier.w / 2,
+          y: soldier.pos.y + soldier.h / 2,
         },
         SoldierConstants.ENEMY_SEARCH_RADIUS
       );
@@ -203,25 +206,27 @@ export default {
 
       //Go to unit with least distance instead of random unit.
       let minDist = Number.POSITIVE_INFINITY;
-      let nearestUnit: any = null;
-      nearbyUnits.forEach((unit: { playerId: any; pos: any } | undefined) => {
-        //consider only if unit belongs to enemy team
+      let nearestUnit: Soldier | null = null;
+      for (const unit of nearbyUnits) {
+        let unitSoldier = stateManager.scene.getSceneItemById(unit.id);
         if (
-          unit === this ||
-          stateManager.getAlliance(soldier.playerId, unit.playerId) !==
+          !unitSoldier ||
+          unit.id === soldier.id ||
+          stateManager.getAlliance(soldier.playerId, unitSoldier.playerId) !==
             AllianceTypes.ENEMIES
         )
           return;
 
         let distBetweenUnits = new SAT.Vector()
-          .copy(unit.pos)
+          .copy(unitSoldier.pos)
           .sub(soldier.pos)
           .len();
         if (distBetweenUnits < minDist) {
           minDist = distBetweenUnits;
-          unit = nearestUnit;
+          nearestUnit = unitSoldier;
         }
-      });
+      }
+
       if (!nearestUnit)
         throw new Error(
           "[SoldierStateBehaviour | FindTarget]: No Enemy Unit nearby."

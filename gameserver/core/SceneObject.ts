@@ -1,14 +1,20 @@
 import Quadtree from "quadtree-lib";
 import SAT from "sat";
-import { v4 as uuidv4 } from "uuid";
-import { Scene } from "./Scene";
+import { Schema } from '@colyseus/schema'
+import { nanoid } from "nanoid";
 
 /**
  * @class SceneObject
  * @classdesc Any object that is meant to be part of the Scene should extend this class.
  */
-export type TypeQuadtreeItem = Quadtree.QuadtreeItem & { id: string };
-export class SceneObject<ParentType = any> extends SAT.Box {
+export type TypeQuadtreeItem = {
+  x: Quadtree.QuadtreeItem["x"];
+  y: Quadtree.QuadtreeItem["y"];
+  width?: Quadtree.QuadtreeItem["width"];
+  height?: Quadtree.QuadtreeItem["height"];
+  id: string;
+};
+export class SceneObject<ParentType = any> extends SAT.Box implements Schema {
   id: string;
   parent: ParentType;
   constructor(
@@ -16,11 +22,11 @@ export class SceneObject<ParentType = any> extends SAT.Box {
     y: number,
     width = 35,
     height = 35,
-    parent: ParentType,
+    parent: ParentType
   ) {
     // {pos:{x,y}}
     super(new SAT.Vector(x, y), width, height);
-    this.id = uuidv4();
+    this.id = nanoid();
     this.parent = parent;
   }
   getQuadtreeItem(): TypeQuadtreeItem {

@@ -75,8 +75,9 @@ export class MenuScene extends BaseScene {
       }
       try {
         // this.scene.start(CONSTANT.SCENES.MATCHMAKER);
-        let { sessions, port } = await networkManager.getAvailableSession();
-        if (!sessions || sessions.length === 0) {
+        let rooms = await networkManager.getAvailableSession();
+        if (!rooms || sessions.length === 0) {
+          console.log('no hosted room');
           return;
         }
         let sessionId = sessions[0];

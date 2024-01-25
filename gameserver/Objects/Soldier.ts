@@ -1,14 +1,14 @@
-import { PacketType } from "../common/PacketType";
+import { PacketType } from "../../common/PacketType";
 import SAT from "sat";
-import SoldierStateMachineJSON from "./stateMachines/soldier-state-machine/SoldierStateMachine.json";
-import soldierStateBehaviours from "./stateMachines/soldier-state-machine/SoldierStateBehaviour";
+import SoldierStateMachineJSON from "../stateMachines/soldier-state-machine/SoldierStateMachine.json";
+import soldierStateBehaviours from "../stateMachines/soldier-state-machine/SoldierStateBehaviour";
 
-import SoldierConstants from "./unitConstants";
-import { GameStateManager } from "./core/GameStateManager";
-import { v4 as uuidv4 } from "uuid";
-import { SceneObject } from "./core/SceneObject";
-import { AllianceTypes } from "./AllianceTracker";
-import { StateMachine } from "./core/StateMachine";
+import SoldierConstants from "../unitConstants";
+import { GameStateManager } from "../core/GameStateManager";
+import { nanoid } from "nanoid";
+import { SceneObject } from "../core/SceneObject";
+import { AllianceTypes } from "../AllianceTracker";
+import { StateMachine } from "../core/StateMachine";
 import { Player } from "./Player";
 function mapRange(
   val: number,
@@ -108,7 +108,7 @@ export class Soldier extends SceneObject<Player> {
     this.cost = params.cost || 5;
     this.damage = params.damage || 5;
 
-    this.id = `soldier${uuidv4()}`;
+    this.id = `soldier${nanoid()}`;
     this.playerId = String(params.playerId);
 
     this.stateMachine = new StateMachine(

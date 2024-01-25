@@ -1,5 +1,5 @@
 import LinkedList from "dbly-linked-list";
-export class Queue<T extends object | number | string> {
+export class Queue<T extends object | number | string = string> {
   mList: LinkedList;
   constructor() {
     this.mList = new LinkedList();

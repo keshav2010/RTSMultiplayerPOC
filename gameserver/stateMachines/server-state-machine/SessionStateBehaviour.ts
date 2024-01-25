@@ -1,54 +1,55 @@
-import { PacketType } from "../../../common/PacketType";
-import { Soldier } from "../../Soldier";
+import { Soldier } from "../../Objects/Soldier";
 import { GameStateManager } from "../../core/GameStateManager";
+import { SessionState } from "../../schema/SessionState";
 
 export default {
-  SessionLobbyState: ({
-    gameStateManager,
-  }: {
-    gameStateManager: GameStateManager<Soldier>;
-  }) => {
-    var deltaTime = (Date.now() - gameStateManager.lastSimulateTime_ms) / 1000;
-    gameStateManager.lastSimulateTime_ms = Date.now();
+  SessionLobbyState: (
+    {
+      gameStateManager,
+      delta,
+    }: {
+      gameStateManager: GameStateManager<Soldier>;
+      delta: number;
+    },
+    sessionState: SessionState
+  ) => {
+    const deltaTime = delta / 1000;
+    if (sessionState.sessionState !== "SESSION_LOBBY_STATE")
+      sessionState.sessionState = "SESSION_LOBBY_STATE";
     if (
-      gameStateManager.getPlayers().length >=
+      sessionState.players.size >=
       Number(process.env.MINIMUM_PLAYERS_PER_SESSION)
     ) {
-      gameStateManager.countdown -= deltaTime;
-      gameStateManager.countdown = Math.max(0, gameStateManager.countdown);
-      gameStateManager.enqueueStateUpdate({
-        type: PacketType.ByServer.COUNTDOWN_TIME,
-        time: gameStateManager.countdown,
-      });
-      if (gameStateManager.countdown <= 0) {
-        gameStateManager.countdown = Number(process.env.COUNTDOWN);
+      sessionState.countdown -= deltaTime;
+      sessionState.countdown = Math.max(0, sessionState.countdown);
+      if (sessionState.countdown <= 0) {
+        sessionState.countdown = Number(process.env.COUNTDOWN);
         gameStateManager.stateMachine.controller.send("StartMatch");
       }
     } else {
-      gameStateManager.countdown = 5;
+      sessionState.countdown = 5;
     }
   },
-  SpawnSelectionState: ({
-    gameStateManager,
-  }: {
-    gameStateManager: GameStateManager<Soldier>;
-  }) => {
-    try {
-      if (!gameStateManager.GameStarted) {
-        gameStateManager.startGame();
-      }
-      //in seconds
-      var deltaTime =
-        (Date.now() - gameStateManager.lastSimulateTime_ms) / 1000;
-      gameStateManager.lastSimulateTime_ms = Date.now();
-      gameStateManager.countdown -= deltaTime;
-      gameStateManager.countdown = Math.max(0, gameStateManager.countdown);
 
-      gameStateManager.enqueueStateUpdate({
-        type: PacketType.ByServer.COUNTDOWN_TIME,
-        time: gameStateManager.countdown,
-      });
-      if (gameStateManager.countdown <= 0) {
+  SpawnSelectionState: (
+    {
+      gameStateManager,
+      delta,
+    }: {
+      gameStateManager: GameStateManager<Soldier>;
+      delta: number;
+    },
+    sessionState: SessionState
+  ) => {
+    try {
+      if (sessionState.sessionState !== "SPAWN_SELECTION_STATE")
+        sessionState.sessionState = "SPAWN_SELECTION_STATE";
+      //in seconds
+      const deltaTime = delta / 1000;
+      sessionState.countdown -= deltaTime;
+      sessionState.countdown = Math.max(0, sessionState.countdown);
+
+      if (sessionState.countdown <= 0) {
         console.log("countdown completed for spawn-selection");
         gameStateManager.stateMachine.controller.send("TIMEOUT");
       }
@@ -57,18 +58,24 @@ export default {
     }
   },
 
-  BattleState: ({
-    gameStateManager,
-  }: {
-    gameStateManager: GameStateManager<Soldier>;
-  }) => {
+  BattleState: (
+    {
+      gameStateManager,
+      delta,
+    }: {
+      gameStateManager: GameStateManager<Soldier>;
+      delta: number;
+    },
+    sessionState: SessionState
+  ) => {
     try {
-      var deltaTime =
-        (Date.now() - gameStateManager.lastSimulateTime_ms) / 1000;
-      gameStateManager.lastSimulateTime_ms = Date.now();
+      if (sessionState.sessionState !== "BATTLE_STATE")
+        sessionState.sessionState = "BATTLE_STATE";
+      var deltaTime = delta / 1000;
+      
       //simulate all players.
-      const playersConnected = gameStateManager.getPlayers();
-      if (playersConnected.length == 0) {
+      const playersConnected = sessionState.players;
+      if (playersConnected.size == 0) {
         gameStateManager.stateMachine.controller.send("BattleEnd");
         return;
       }
@@ -80,9 +87,14 @@ export default {
     }
   },
 
-  BattleEndState: ({
-    gameStateManager,
-  }: {
-    gameStateManager: GameStateManager<Soldier>;
-  }) => {},
+  BattleEndState: (
+    {
+      gameStateManager,
+      delta,
+    }: {
+      gameStateManager: GameStateManager<Soldier>;
+      delta: number;
+    },
+    sessionState: SessionState
+  ) => {},
 };

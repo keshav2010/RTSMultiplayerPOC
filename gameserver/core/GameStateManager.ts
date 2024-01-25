@@ -1,25 +1,14 @@
-import { Queue } from "../../common/Queue";
-import { Player } from "../Player";
-import ServerLocalEvents from "../ServerLocalEvents";
 import { AllianceTracker, AllianceTypes } from "../AllianceTracker";
-import { Packet } from "./Packet";
 import { Scene } from "./Scene";
 import { IMachineJSON, IStateActions, StateMachine } from "./StateMachine";
-import { ClientToServerPacketType, ServerToClientPacketType } from "../../common/PacketType";
 import { SceneObject } from "./SceneObject";
-import EventEmitter from 'events';
+import { SessionState } from "../schema/SessionState";
+
 /**
  * Manages entire game state.
  */
 export class GameStateManager<SceneItemType extends SceneObject> {
-  cumulativeUpdates: any[];
-  pendingClientRequests: Queue<Packet>;
-  io: any;
   GameStarted: boolean;
-  SocketToPlayerMap: Map<string, Player>;
-  SocketsMap: Map<string, any>;
-  lastSimulateTime_ms: number;
-  event: any;
   scene: Scene<SceneItemType>;
   countdown: number;
   stateMachine: StateMachine;
@@ -28,22 +17,13 @@ export class GameStateManager<SceneItemType extends SceneObject> {
   onGameEndCallback: (() => void) | null | undefined;
   sessionId: string | null;
   constructor(
-    io: any,
     sessionStateMachineJSON: IMachineJSON,
     sessionStateMachineActions: IStateActions
   ) {
     this.sessionId = null;
-    this.cumulativeUpdates = [];
-    this.pendingClientRequests = new Queue();
-
-    this.io = io;
 
     this.GameStarted = false;
-    this.SocketToPlayerMap = new Map();
-    this.SocketsMap = new Map();
-    this.lastSimulateTime_ms = Date.now();
 
-    this.event = new EventEmitter();
     this.scene = new Scene<SceneItemType>({
       width: 15,
       height: 15,
@@ -57,135 +37,19 @@ export class GameStateManager<SceneItemType extends SceneObject> {
     this.alliances = new AllianceTracker();
   }
 
-  startGame() {
-    this.GameStarted = true;
-    if (this.onGameStartCallback) this.onGameStartCallback();
-    // we'd like to call this only once.
-    this.onGameStartCallback = null;
+  tick(delta: number, state: SessionState) {
+    const args = {
+      gameStateManager: this,
+      delta,
+    };
+    this.stateMachine.tick(args, state);
   }
 
-  queueClientRequest(clientRequest: Packet) {
-    this.pendingClientRequests.enqueue(clientRequest);
+  addSceneItem(item: SceneItemType) {
+    this.scene.addSceneItem(item);
   }
-  getClientRequest() {
-    let request = this.pendingClientRequests.peekFront();
-    this.pendingClientRequests.dequeue();
-    return request;
-  }
-
-  enqueueStateUpdate(packet: {
-    type: ServerToClientPacketType | ClientToServerPacketType;
-    [key: string]: any;
-  }) {
-    this.cumulativeUpdates.push(packet);
-  }
-
-  broadcastUpdates() {
-    //removes socket property from packet.
-    function cleanPacket(packet: { [x: string]: any; socket: any }) {
-      const { socket, ...cleanPacket } = packet;
-      return cleanPacket;
-    }
-
-    let batches: any[] = [];
-    for (const packet of this.cumulativeUpdates) {
-      let isBroadcastPacket = !packet.hasOwnProperty("socket");
-      if (isBroadcastPacket) {
-        if (
-          !batches.length ||
-          !batches[batches.length - 1][0]?.hasOwnProperty("socket")
-        ) {
-          batches.push({ packets: [cleanPacket(packet)] });
-        } else {
-          batches[batches.length - 1].packets.push(cleanPacket(packet));
-        }
-        continue;
-      }
-
-      const lastBatch = batches[batches.length - 1];
-      if (lastBatch && lastBatch?.socket?.id === packet.socket.id) {
-        lastBatch.packets.push(cleanPacket(packet));
-        continue;
-      }
-      batches.push({ socket: packet.socket, packets: [cleanPacket(packet)] });
-    }
-
-    for (const batch of batches) {
-      let isBroadcastPackets = !batch.hasOwnProperty("socket");
-      if (isBroadcastPackets) {
-        this.io.emit("tick", JSON.stringify({ data: batch.packets }));
-      } else {
-        batch.socket.emit("tick", JSON.stringify({ data: batch.packets }));
-      }
-    }
-    this.cumulativeUpdates = [];
-  }
-
-  simulate() {
-    this.stateMachine.tick({ gameStateManager: this });
-  }
-
-  registerPlayer(socket: any, player: Player) {
-    console.log("registering player : ", player.id);
-    if (!this.SocketToPlayerMap.has(socket.id))
-      this.SocketToPlayerMap.set(socket.id, player);
-    if (!this.SocketsMap.has(player.id)) this.SocketsMap.set(player.id, socket);
-  }
-
-  getPlayer(socketId: any) {
-    return this.SocketToPlayerMap.get(socketId) || null;
-  }
-  getPlayers() {
-    return [...this.SocketToPlayerMap.values()];
-  }
-  isPlayerRegistered(socket: { id: any }, player: { id: any }) {
-    return (
-      player?.id &&
-      socket?.id &&
-      this.SocketToPlayerMap.has(socket.id) &&
-      this.SocketsMap.has(player?.id)
-    );
-  }
-
-  getPlayerSocket(playerId: string) {
-    return this.SocketsMap.get(playerId);
-  }
-  getPlayerById(playerId: string) {
-    let socketId = this.SocketsMap.get(playerId)?.id;
-    return this.SocketToPlayerMap.get(socketId) || null;
-  }
-  removePlayer(socketId: string) {
-    //update for collision detection.
-    this.scene.update();
-    const player = this.SocketToPlayerMap.get(socketId);
-    this.SocketToPlayerMap.delete(socketId);
-    if (player) this.SocketsMap.delete(player.id);
-  }
-
-  createSoldier(x: number, y: number, type: any, playerId: string) {
-    let player = this.getPlayerById(playerId);
-    if (!player) {
-      return null;
-    }
-    let { status, soldierId, soldier } = player.createSoldier(type, x, y);
-    if (status) {
-      this.scene.addSceneItem(soldier);
-      this.event.emit(ServerLocalEvents.SOLDIER_CREATED, {
-        x,
-        y,
-        type,
-        playerId,
-        soldierId,
-      });
-    }
-    return { status, soldierId, soldier };
-  }
-  removeSoldier(playerId: string, soldierId: string) {
-    let socketId = this.SocketsMap.get(playerId).id as string;
-    const player = this.SocketToPlayerMap.get(socketId);
-    if (!player) return true;
-    let isRemoved = player.removeSoldier(soldierId, this);
-    return isRemoved;
+  removeSceneItem(itemId: string) {
+    this.scene.removeSceneItem(itemId);
   }
 
   setAlliance(
@@ -197,20 +61,5 @@ export class GameStateManager<SceneItemType extends SceneObject> {
   }
   getAlliance(playerAId: string, playerBId: string) {
     return this.alliances.getAlliance(playerAId, playerBId);
-  }
-  OnGameStart(callback: (...arg: any) => void) {
-    this.onGameStartCallback = callback || null;
-  }
-  OnGameEnd(callback: (...arg: any) => void) {
-    this.onGameEndCallback = callback || null;
-  }
-  destroySession() {
-    if (this.onGameEndCallback) {
-      console.log(
-        "Destroying Session | Invoking onGameEndCallback ",
-        this.sessionId
-      );
-      this.onGameEndCallback();
-    }
   }
 }

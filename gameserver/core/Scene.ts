@@ -15,13 +15,19 @@ export class Scene<
     super(opts);
     this.itemIdToItemTypeMap = new Map<string, ItemType>();
   }
-  removeSceneItem(item: ItemType) {
-    this.itemIdToItemTypeMap.delete(item.getQuadtreeItem().id);
+  removeSceneItem(itemId: string) {
+    const item = this.itemIdToItemTypeMap.get(itemId);
+    if (!item) return;
+    this.itemIdToItemTypeMap.delete(itemId);
     this.remove(item.getQuadtreeItem());
   }
   addSceneItem(item: ItemType, doObserve: boolean = true) {
     this.itemIdToItemTypeMap.set(item.id, item);
     this.push(item.getQuadtreeItem(), doObserve);
+  }
+
+  getSceneItemById(id: string) {
+    return this.itemIdToItemTypeMap.get(id) || null;
   }
 
   /**
@@ -31,10 +37,17 @@ export class Scene<
    * @returns
    */
   getNearbyUnits({ x, y }: { x: number; y: number }, searchRadius: number) {
-    let result = this.colliding({ x, y }, function (a, b) {
+    const result = this.colliding({ x, y }, (a, b) => {
       // a=> 1st arg, b => actual quadtree object
-      let aPos = new SAT.Vector(a.x, a.y);
-      let bPos = new SAT.Vector(b.x + b.w / 2, b.y + b.h / 2);
+      const itemA = this.itemIdToItemTypeMap.get(a.id);
+      const itemB = this.itemIdToItemTypeMap.get(b.id);
+      if (!itemA || !itemB) return false;
+
+      let aPos = new SAT.Vector(itemA.pos.x, itemA.pos.y);
+      let bPos = new SAT.Vector(
+        itemB.pos.x + itemB.w / 2,
+        itemB.pos.y + itemB.h / 2
+      );
       let distance = new SAT.Vector().copy(aPos).sub(bPos).len();
       return distance <= 2 * searchRadius;
     });
@@ -58,8 +71,12 @@ export class Scene<
     if (collidingBodies.length < 2) return;
 
     //Obtain "SAT.Response" for each collision.
-    var satBoxPolygons = collidingBodies;
+    var satBoxPolygons = collidingBodies.map((d) =>
+      this.itemIdToItemTypeMap.get(d.id)
+    );
     satBoxPolygons.forEach((collidingSoldier) => {
+      if (!collidingSoldier) return;
+
       //skip collision with self
       if (collidingSoldier.id === sceneItem.id) {
         return;
