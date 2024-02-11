@@ -6,35 +6,13 @@
  *
  * These functions should only update game state variables.
  */
-
-import { Socket } from "socket.io";
 import { PacketType } from "../common/PacketType";
-import { Player } from "./Objects/Player";
 import { GameStateManager } from "./core/GameStateManager";
-import {
-  ClientToServerEvents,
-  ServerToClientEvents,
-  InterServerEvents,
-  SocketData,
-} from "../interfaces/socket";
-import { Soldier } from "./Objects/Soldier";
 import { nanoid } from "nanoid";
 
 function PlayerInitPacketAction(
   packetType: any,
-  socket: Socket<
-    ClientToServerEvents,
-    ServerToClientEvents,
-    InterServerEvents,
-    SocketData
-  >,
-  io: Socket<
-    ClientToServerEvents,
-    ServerToClientEvents,
-    InterServerEvents,
-    SocketData
-  >,
-    stateManager: GameStateManager<Soldier>,
+  stateManager: GameStateManager,
   { playerName }: { playerName: string }
 ) {
   try {
@@ -54,7 +32,6 @@ function PlayerInitPacketAction(
       playerId,
       players: players.map((player) => (player as Player).getSnapshot()),
     };
-    stateManager.enqueueStateUpdate(deltaUpdate);
 
     //inform new player about existing units.
     players
@@ -73,16 +50,8 @@ function PlayerInitPacketAction(
             playerId: soldierSnapshot.playerId, //person who created soldier
             soldierType: soldierSnapshot.type,
           };
-          stateManager.enqueueStateUpdate(initPacket);
         });
       });
-
-    process!.send!({
-      type: "SESSION_UPDATED",
-      sessionId: stateManager.sessionId,
-      gameStarted: stateManager.GameStarted,
-      players: stateManager.getPlayers().length,
-    });
   } catch (err) {
     console.log(err);
   }
@@ -90,9 +59,7 @@ function PlayerInitPacketAction(
 
 function PlayerJoinedPacketAction(
   packetType: any,
-  socket: any,
-  io: any,
-  stateManager: GameStateManager<Soldier, Player>
+  stateManager: GameStateManager
 ) {
   try {
     const player = stateManager.getClient(socket.id);
@@ -107,7 +74,6 @@ function PlayerJoinedPacketAction(
       type: packetType,
       player: player.getSnapshot(),
     };
-    stateManager.enqueueStateUpdate(deltaUpdate);
   } catch (err) {
     console.log(err);
   }
@@ -115,9 +81,7 @@ function PlayerJoinedPacketAction(
 
 function PlayerReadyPacketAction(
   packetType: any,
-  socket: any,
-  io: any,
-  stateManager: GameStateManager<Soldier, Player>
+  stateManager: GameStateManager
 ) {
   try {
     const player = stateManager.getClient(socket.id);
@@ -135,7 +99,6 @@ function PlayerReadyPacketAction(
       playerId: player.id,
       startGame: stateManager.GameStarted,
     };
-    stateManager.enqueueStateUpdate(deltaUpdate);
   } catch (err) {
     console.log(err);
   }
@@ -143,9 +106,7 @@ function PlayerReadyPacketAction(
 
 function PlayerUnreadyPacketAction(
   packetType: any,
-  socket: any,
-  io: any,
-  stateManager: GameStateManager<Soldier, Player>
+  stateManager: GameStateManager
 ) {
   try {
     const player = stateManager.getClient(socket.id);
@@ -169,7 +130,6 @@ function PlayerUnreadyPacketAction(
       playerId: player.id,
       startGame: stateManager.GameStarted,
     };
-    stateManager.enqueueStateUpdate(deltaUpdate);
   } catch (err) {
     console.log(err);
   }
@@ -177,9 +137,7 @@ function PlayerUnreadyPacketAction(
 
 function PlayerLeftPacketAction(
   packetType: any,
-  socket: any,
-  io: any,
-  stateManager: GameStateManager<Soldier, Player>
+  stateManager: GameStateManager
 ) {
   try {
     let player = stateManager.getClient(socket.id);
@@ -191,13 +149,6 @@ function PlayerLeftPacketAction(
       type: packetType,
       playerId: player.id,
     };
-    stateManager.enqueueStateUpdate(deltaUpdate);
-    process.send!({
-      type: "SESSION_UPDATED",
-      sessionId: stateManager.sessionId,
-      gameStarted: stateManager.GameStarted,
-      players: stateManager.getPlayers().length,
-    });
   } catch (err) {
     console.log(err);
   }
@@ -205,9 +156,7 @@ function PlayerLeftPacketAction(
 
 function PlayerLostPacketAction(
   packetType: any,
-  socket: any,
-  io: any,
-  stateManager: GameStateManager<Soldier, Player>
+  stateManager: GameStateManager
 ) {
   try {
     let player = stateManager.getClient(socket.id);
@@ -218,7 +167,6 @@ function PlayerLostPacketAction(
       type: packetType,
       playerId: player.id,
     };
-    stateManager.enqueueStateUpdate(deltaUpdate);
   } catch (err) {
     console.log(err);
   }
@@ -234,9 +182,7 @@ function PlayerLostPacketAction(
  */
 function SoldierMoveRequestedPacketAction(
   packetType: any,
-  socket: any,
-  io: any,
-  stateManager: GameStateManager<Soldier, Player>,
+  stateManager: GameStateManager,
   data: any
 ) {
   try {
@@ -249,6 +195,7 @@ function SoldierMoveRequestedPacketAction(
       soldierId = `${soldierId}`;
       let soldier = stateManager.getClient(socket.id)?.getSoldier(soldierId);
       soldier?.setTargetPosition(expectedPositionX, expectedPositionY);
+      soldier?.stateMachine.controller.send("Move");
     });
   } catch (err) {
     console.log(err);
@@ -260,19 +207,7 @@ function SoldierMoveRequestedPacketAction(
 
 function SoldierSpawnRequestedPacketAction(
   packetType: any,
-  socket: Socket<
-    ClientToServerEvents,
-    ServerToClientEvents,
-    InterServerEvents,
-    SocketData
-  >,
-  io: Socket<
-    ClientToServerEvents,
-    ServerToClientEvents,
-    InterServerEvents,
-    SocketData
-  >,
-  stateManager: GameStateManager<Soldier, Player>,
+  stateManager: GameStateManager,
   data: { soldierType: any }
 ) {
   let player = stateManager.getClient(socket.id);
@@ -284,7 +219,6 @@ function SoldierSpawnRequestedPacketAction(
     ...queuedSpawnRequest,
     playerId: player.id,
   };
-  stateManager.enqueueStateUpdate(updatePacket);
 }
 
 /**
@@ -295,19 +229,7 @@ function SoldierSpawnRequestedPacketAction(
  */
 function SoldierCreateRequestedPacketAction(
   packetType: string,
-  socket: Socket<
-    ClientToServerEvents,
-    ServerToClientEvents,
-    InterServerEvents,
-    SocketData
-  >,
-  io: Socket<
-    ClientToServerEvents,
-    ServerToClientEvents,
-    InterServerEvents,
-    SocketData
-  >,
-  stateManager: GameStateManager<Soldier, Player>,
+  stateManager: GameStateManager,
   data: any
 ) {
   let playerId = stateManager.getClient(socket.id)?.id;
@@ -333,14 +255,11 @@ function SoldierCreateRequestedPacketAction(
       soldierType,
     };
   }
-  stateManager.enqueueStateUpdate(updatePacket);
 }
 
 function SoldierDeletedPacketAction(
   packetType: any,
-  socket: any,
-  io: any,
-  stateManager: GameStateManager<Soldier, Player>,
+  stateManager: GameStateManager,
   data: any
 ) {
   let { soldierId }: { soldierId: string } = data;
@@ -354,24 +273,11 @@ function SoldierDeletedPacketAction(
     soldierId,
     playerId: player.id,
   };
-  stateManager.enqueueStateUpdate(deltaPacket);
 }
 
 function AttackRequestedPacketAction(
   packetType: string,
-  socket: Socket<
-    ClientToServerEvents,
-    ServerToClientEvents,
-    InterServerEvents,
-    SocketData
-  >,
-  io: Socket<
-    ClientToServerEvents,
-    ServerToClientEvents,
-    InterServerEvents,
-    SocketData
-  >,
-  stateManager: GameStateManager<Soldier, Player>,
+  stateManager: GameStateManager,
   data: any
 ) {
   try {
@@ -399,9 +305,7 @@ function AttackRequestedPacketAction(
 
 function ChatMessagePacketAction(
   packetType: any,
-  socket: any,
-  io: any,
-  stateManager: GameStateManager<Soldier, Player>,
+  stateManager: GameStateManager,
   data: any
 ) {
   let { message } = data;
@@ -413,14 +317,11 @@ function ChatMessagePacketAction(
     message,
     playerId: senderId,
   };
-  stateManager.enqueueStateUpdate(deltaPacket);
 }
 
 function SpawnPointRequestedAction(
   packetType: any,
-  socket: any,
-  io: any,
-  stateManager: GameStateManager<Soldier, Player>,
+  stateManager: GameStateManager,
   data: any
 ) {
   let { spawnX, spawnY } = data;
@@ -433,7 +334,6 @@ function SpawnPointRequestedAction(
     spawnY,
     playerId,
   };
-  stateManager.enqueueStateUpdate(deltaPacket);
 }
 
 export default {

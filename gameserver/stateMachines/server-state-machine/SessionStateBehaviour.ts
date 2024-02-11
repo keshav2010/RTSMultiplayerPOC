@@ -1,21 +1,21 @@
-import { Soldier } from "../../Objects/Soldier";
 import { GameStateManager } from "../../core/GameStateManager";
 import { SessionState } from "../../schema/SessionState";
+import { SoldierState } from "../../schema/SoldierState";
 
 export default {
-  SessionLobbyState: (
-    {
-      gameStateManager,
-      delta,
-    }: {
-      gameStateManager: GameStateManager<Soldier>;
-      delta: number;
-    },
-    sessionState: SessionState
-  ) => {
-    const deltaTime = delta / 1000;
+  SessionLobbyState: ({
+    gameStateManager,
+    delta,
+    sessionState,
+  }: {
+    gameStateManager: GameStateManager<SoldierState>;
+    delta: number;
+    sessionState: SessionState;
+  }) => {
+    const deltaTime = delta;
     if (sessionState.sessionState !== "SESSION_LOBBY_STATE")
       sessionState.sessionState = "SESSION_LOBBY_STATE";
+
     if (
       sessionState.players.size >=
       Number(process.env.MINIMUM_PLAYERS_PER_SESSION)
@@ -23,29 +23,29 @@ export default {
       sessionState.countdown -= deltaTime;
       sessionState.countdown = Math.max(0, sessionState.countdown);
       if (sessionState.countdown <= 0) {
-        sessionState.countdown = Number(process.env.COUNTDOWN);
+        console.log("session-lobby-state timed out, starting match/game");
+        sessionState.countdown = Number(process.env.COUNTDOWN_SPAWN_SELECTION);
         gameStateManager.stateMachine.controller.send("StartMatch");
       }
-    } else {
-      sessionState.countdown = 5;
+      return;
     }
+
   },
 
-  SpawnSelectionState: (
-    {
-      gameStateManager,
-      delta,
-    }: {
-      gameStateManager: GameStateManager<Soldier>;
-      delta: number;
-    },
-    sessionState: SessionState
-  ) => {
+  SpawnSelectionState: ({
+    gameStateManager,
+    delta,
+    sessionState,
+  }: {
+    gameStateManager: GameStateManager<SoldierState>;
+    delta: number;
+    sessionState: SessionState;
+  }) => {
     try {
       if (sessionState.sessionState !== "SPAWN_SELECTION_STATE")
         sessionState.sessionState = "SPAWN_SELECTION_STATE";
       //in seconds
-      const deltaTime = delta / 1000;
+      const deltaTime = delta;
       sessionState.countdown -= deltaTime;
       sessionState.countdown = Math.max(0, sessionState.countdown);
 
@@ -58,21 +58,20 @@ export default {
     }
   },
 
-  BattleState: (
-    {
-      gameStateManager,
-      delta,
-    }: {
-      gameStateManager: GameStateManager<Soldier>;
-      delta: number;
-    },
-    sessionState: SessionState
-  ) => {
+  BattleState: ({
+    gameStateManager,
+    delta,
+    sessionState,
+  }: {
+    gameStateManager: GameStateManager<SoldierState>;
+    delta: number;
+    sessionState: SessionState;
+  }) => {
     try {
       if (sessionState.sessionState !== "BATTLE_STATE")
         sessionState.sessionState = "BATTLE_STATE";
       var deltaTime = delta / 1000;
-      
+
       //simulate all players.
       const playersConnected = sessionState.players;
       if (playersConnected.size == 0) {
@@ -80,21 +79,20 @@ export default {
         return;
       }
       playersConnected.forEach((player) => {
-        player.tick(deltaTime, gameStateManager);
+        player.tick(deltaTime);
       });
     } catch (err) {
       console.log(err);
     }
   },
 
-  BattleEndState: (
-    {
-      gameStateManager,
-      delta,
-    }: {
-      gameStateManager: GameStateManager<Soldier>;
-      delta: number;
-    },
-    sessionState: SessionState
-  ) => {},
+  BattleEndState: ({
+    gameStateManager,
+    delta,
+    sessionState,
+  }: {
+    gameStateManager: GameStateManager<SoldierState>;
+    delta: number;
+    sessionState: SessionState;
+  }) => {},
 };

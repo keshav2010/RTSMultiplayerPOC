@@ -1,14 +1,14 @@
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat&family=Poppins:wght@500&display=swap');
 
-    .conter {
+    .center {
         position: relative;
         padding: 1px;
         width: 400px;
         background: white;
         border-radius: 10px;
         font-family: montserrat;
-        background: #2980b9;
+        background: rgb(255,255,255,0.5);
     }
 
     .conter h1 {
@@ -40,7 +40,8 @@
         position: relative;
         top: 50%;
         left: 5px;
-        color: #adadad;
+        font-weight: bold;
+        color: #000000;
         font-size: 16px;
         pointer-events: none;
         transition: .5s;
@@ -106,7 +107,7 @@
         }
     }
 </style>
-<div class="conter">
+<div class="center" style="display:flex; flex-direction: column;">
     <h1>Conquesta</h1>
     <div class="txt_field">
         <input type="text" name="nameInput" required style="background-color: white;">
@@ -117,5 +118,4 @@
         <input type="submit" value="Join Session" name="btnJoin">
         <input type="submit" value="Create Session" name="btnCreate">
     </div>
-    <div class="lds-dual-ring" name="loadingSpinner1"></div>
 </div>

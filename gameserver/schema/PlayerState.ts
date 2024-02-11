@@ -2,15 +2,6 @@ import { Schema, MapSchema, ArraySchema, type } from "@colyseus/schema";
 import { SoldierState } from "./SoldierState";
 import { nanoid } from "nanoid";
 import { SoldierType, SoldierTypeConfig } from "../../common/SoldierType";
-export interface IPlayer {
-  id: string;
-  name: string;
-  resources: number;
-  readyStatus: boolean;
-  posX: number;
-  posY: number;
-  spawnFlagHealth: number;
-}
 
 export class SpawnRequest extends Schema {
   @type("string") requestId: string = "";
@@ -22,11 +13,11 @@ export class SpawnRequest extends Schema {
     this.requestId = requestId;
     this.unitType = soldierType;
     this.count = count;
-    this.countdown = 10;
+    this.countdown = 10000;
   }
 }
 
-export class PlayerState extends Schema implements IPlayer {
+export class PlayerState extends Schema {
   @type("string") id: string;
 
   @type("string") name: string = "";
@@ -38,6 +29,7 @@ export class PlayerState extends Schema implements IPlayer {
 
   @type("number") spawnFlagHealth: number = 100;
 
+  // key: SoldierId
   @type({ map: SoldierState }) soldiers: MapSchema<SoldierState> =
     new MapSchema<SoldierState>();
 
@@ -46,9 +38,10 @@ export class PlayerState extends Schema implements IPlayer {
   @type("number") colorG = Math.random() * 255;
   @type("number") colorB = Math.random() * 255;
 
-  // Spawn Requests
+  // Spawn Requests (key: requestId , val: obj {unitType, count, countdown})
   @type({ map: SpawnRequest }) unitSpawnRequests: MapSchema<SpawnRequest> =
     new MapSchema<SpawnRequest>();
+
   @type(["string"]) spawnRequestQueue: ArraySchema<string> =
     new ArraySchema<string>();
 
@@ -83,7 +76,7 @@ export class PlayerState extends Schema implements IPlayer {
 
     if (!isEnoughResources) return;
 
-    requestInfo.countdown = requestInfo.countdown - deltaTime / 1000;
+    requestInfo.countdown = requestInfo.countdown - deltaTime;
     if (requestInfo.countdown > 0) {
       return;
     }
@@ -112,6 +105,11 @@ export class PlayerState extends Schema implements IPlayer {
   public updatePosition(x: number, y: number) {
     this.posX = x;
     this.posY = y;
+  }
+
+  //TODO:
+  public getAlliesId() {
+    return [];
   }
 
   public getSoldier(soldierId: string) {

@@ -6,11 +6,11 @@ import { SpawnSelectionScene } from "./scenes/SpawnSelectionScene";
 import { PlayerStatisticHUD } from "./scenes/PlayerStatisticHUD";
 import { SessionLobbyScene } from "./scenes/SessionLobbyScene";
 import SpinnerPlugin from "phaser3-rex-plugins/templates/spinner/spinner-plugin.js";
-
+import Phaser from "phaser";
 const config = {
-  type: Phaser.AUTO,
+  type: Phaser.WEBGL,
   width: 1200,
-  height: 600,
+  height: 800,
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

@@ -7,5 +7,7 @@ export class OnSpawnSoldierCommand extends Command<
   SessionRoom,
   CommandPayload
 > {
-  execute({ client, message }: { client: Client; message: any }) {}
+  execute({ client, message }: { client: Client; message: any }) {
+    console.log(message);
+  }
 }

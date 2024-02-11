@@ -1,48 +1,57 @@
 import { AllianceTracker, AllianceTypes } from "../AllianceTracker";
-import { Scene } from "./Scene";
-import { IMachineJSON, IStateActions, StateMachine } from "./StateMachine";
-import { SceneObject } from "./SceneObject";
+import { Scene, ISceneItem } from "./Scene";
+import {
+  IMachineJSON,
+  IStateActions,
+  CustomStateMachine,
+} from "./CustomStateMachine";
 import { SessionState } from "../schema/SessionState";
 
 /**
  * Manages entire game state.
  */
-export class GameStateManager<SceneItemType extends SceneObject> {
+export class GameStateManager<SceneItemType extends ISceneItem> {
   GameStarted: boolean;
   scene: Scene<SceneItemType>;
   countdown: number;
-  stateMachine: StateMachine;
+  stateMachine: CustomStateMachine<{
+    gameStateManager: GameStateManager<SceneItemType>;
+    delta: number;
+    sessionState: SessionState;
+  }>;
   alliances: AllianceTracker;
   onGameStartCallback: (() => void) | null | undefined;
   onGameEndCallback: (() => void) | null | undefined;
-  sessionId: string | null;
+  onSceneItemRemoved: null | ((arg: SceneItemType) => void) = null;
+
   constructor(
     sessionStateMachineJSON: IMachineJSON,
-    sessionStateMachineActions: IStateActions
+    sessionStateMachineActions: IStateActions,
+    onSceneItemRemoved?: (arg: SceneItemType) => void
   ) {
-    this.sessionId = null;
-
     this.GameStarted = false;
-
-    this.scene = new Scene<SceneItemType>({
+    this.onSceneItemRemoved = onSceneItemRemoved || null;
+    this.scene = new Scene({
       width: 15,
       height: 15,
     });
 
-    this.countdown = Number(process.env.COUNTDOWN) || 10; //seconds
-    this.stateMachine = new StateMachine(
-      sessionStateMachineJSON,
-      sessionStateMachineActions
-    );
+    this.countdown = Number(process.env.COUNTDOWN) || 10000; //seconds
+    this.stateMachine = new CustomStateMachine<{
+      gameStateManager: GameStateManager<SceneItemType>;
+      delta: number;
+      sessionState: SessionState;
+    }>(sessionStateMachineJSON, sessionStateMachineActions);
     this.alliances = new AllianceTracker();
   }
 
-  tick(delta: number, state: SessionState) {
+  tick(delta: number, sessionState: SessionState) {
     const args = {
       gameStateManager: this,
       delta,
+      sessionState,
     };
-    this.stateMachine.tick(args, state);
+    this.stateMachine.tick(args);
   }
 
   addSceneItem(item: SceneItemType) {
@@ -52,6 +61,14 @@ export class GameStateManager<SceneItemType extends SceneObject> {
     this.scene.removeSceneItem(itemId);
   }
 
+  removeSoldier(unit: SceneItemType) {
+    const isRemoved = this.scene.remove(unit.getSceneItem().getQuadtreeItem());
+    if (isRemoved && this.onSceneItemRemoved) {
+      this.onSceneItemRemoved(unit);
+    }
+    return isRemoved;
+  }
+
   setAlliance(
     playerAId: string,
     playerBId: string,
@@ -59,6 +76,7 @@ export class GameStateManager<SceneItemType extends SceneObject> {
   ) {
     this.alliances.setAlliance(playerAId, playerBId, allianceType);
   }
+
   getAlliance(playerAId: string, playerBId: string) {
     return this.alliances.getAlliance(playerAId, playerBId);
   }

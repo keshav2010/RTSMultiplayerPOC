@@ -1,5 +1,4 @@
 import { createMachine, interpret } from "xstate";
-import { SessionState } from "../schema/SessionState";
 
 export interface IMachineJSON {
   id: string;
@@ -14,7 +13,7 @@ export interface IStateActions {
   [key: string]: (...args: any) => void;
 }
 
-export class StateMachine<TickArg = any> {
+export class CustomStateMachine<TickArg = any> {
   machine: any;
   stateActions: IStateActions;
   currentState: string;
@@ -45,7 +44,7 @@ export class StateMachine<TickArg = any> {
       })
       .start();
   }
-  tick(stateArgumentsObject: TickArg, sessionState : SessionState) {
-    this.stateActions[`${this.currentState}`](stateArgumentsObject, sessionState);
+  tick(stateArgumentsObject: TickArg) {
+    this.stateActions[`${this.currentState}`](stateArgumentsObject);
   }
 }

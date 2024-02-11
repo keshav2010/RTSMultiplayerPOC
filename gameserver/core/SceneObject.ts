@@ -1,7 +1,5 @@
 import Quadtree from "quadtree-lib";
 import SAT from "sat";
-import { Schema } from '@colyseus/schema'
-import { nanoid } from "nanoid";
 
 /**
  * @class SceneObject
@@ -14,20 +12,12 @@ export type TypeQuadtreeItem = {
   height?: Quadtree.QuadtreeItem["height"];
   id: string;
 };
-export class SceneObject<ParentType = any> extends SAT.Box implements Schema {
+export class SceneObject extends SAT.Box {
   id: string;
-  parent: ParentType;
-  constructor(
-    x: number,
-    y: number,
-    width = 35,
-    height = 35,
-    parent: ParentType
-  ) {
+  constructor(id: string, x: number, y: number, width = 35, height = 35) {
     // {pos:{x,y}}
     super(new SAT.Vector(x, y), width, height);
-    this.id = nanoid();
-    this.parent = parent;
+    this.id = id;
   }
   getQuadtreeItem(): TypeQuadtreeItem {
     return {

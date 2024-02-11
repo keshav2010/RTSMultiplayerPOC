@@ -4,13 +4,10 @@ import { OnSpawnSoldierCommand } from "./OnSpawnSoldierCommand";
 import { OnSoldierCreateCommand } from "./OnSoldierCreateCommand";
 import { Command } from "@colyseus/command";
 import { SessionRoom } from "../SessionRoom";
-import { Client } from "colyseus";
 import { OnSoldierDeleteCommand } from "./OnSoldierDeleteCommand";
 import { OnSoldierMoveCommand } from "./OnSoldierMoveCommand";
 import { OnSoldierAttackCommand } from "./OnSoldierAttackCommand";
 import { OnSpawnPointSelectCommand } from "./OnSpawnPointSelectCommand";
-import { GameStateManager } from "../core/GameStateManager";
-import { Soldier } from "../Objects/Soldier";
 import { CommandPayload } from "./CommandPayloadType";
 
 export class CommandFactory {

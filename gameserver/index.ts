@@ -17,7 +17,8 @@ import { playground } from "@colyseus/playground";
 import { monitor } from "@colyseus/monitor";
 import path from "path";
 import fs from "fs";
-
+import dotenv from 'dotenv';
+dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(cors());
