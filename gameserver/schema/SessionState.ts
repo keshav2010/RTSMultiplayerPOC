@@ -30,4 +30,10 @@ export class SessionState extends Schema {
   public removePlayer(sessionId: string) {
     this.players.delete(sessionId);
   }
+  public countReadyPlayers() {
+    return [...this.players.values()].reduce((acc, curr) => {
+      acc = acc + ((curr.readyStatus)?1:0);
+      return acc;
+    }, 0);
+  }
 }

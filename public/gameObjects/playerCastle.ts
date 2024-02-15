@@ -29,7 +29,6 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     this.health = initialParam?.health || 100;
     //add object to scene
     scene.add.existing(this);
-
     this.player = initialParam.player;
     //this.setInteractive();
     scene.events.on("update", this.update, this);
@@ -40,7 +39,7 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
       x,
       y + this.height / 2 + 15,
       `[${this.player.name}] - health:${this.player.spawnFlagHealth}`,
-      { font: "12px Arial", backgroundColor: "#ffffff" }
+      { font: "12px Arial" }
     );
     this.DEBUGTEXT.setOrigin(0.5);
     this.on("destroy", () => {

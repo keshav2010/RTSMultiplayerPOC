@@ -8,6 +8,7 @@ export class OnJoinCommand extends Command<SessionRoom, CommandPayload> {
   execute({ client, message }: { client: Client; message: any }) {
     console.log(message);
     const sessionId = client.sessionId;
+    console.log(message);
     this.state.addPlayer(
       sessionId,
       message?.name || `Player_${nanoid()}`,

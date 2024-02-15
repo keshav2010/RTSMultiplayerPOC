@@ -9,6 +9,10 @@ export class OnSoldierCreateCommand extends Command<
   CommandPayload
 > {
   execute({ client, message }: { client: Client; message: any }) {
+    console.log('received soldier create request, queueing');
+    let lengthBefore = this.state.getPlayer(client.id)?.unitSpawnRequests.size;
     this.state.getPlayer(client.id)?.queueSpawnRequest(message.soldierType);
+    let lengthAfter = this.state.getPlayer(client.id)?.unitSpawnRequests.size;
+    console.log(`added to queue ${lengthAfter} <-- ${lengthBefore}`)
   }
 }

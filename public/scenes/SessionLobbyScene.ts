@@ -33,10 +33,6 @@ export class SessionLobbyScene extends BaseScene {
       )
     );
 
-    let startGameButton = this.AddObject(
-      this.add.image(500, 120, "playbutton").setScale(0.4)
-    ).setInteractive();
-
     const cb = networkManager.getState()?.listen("sessionState", (value) => {
       console.log("session state updated ", value)
       if(value === "SPAWN_SELECTION_STATE")

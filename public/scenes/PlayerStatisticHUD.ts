@@ -114,6 +114,16 @@ export class PlayerStatisticHUD extends BaseScene {
       }
     );
 
+    this.AddObject(this.add.text(50, 110, "Soldiers Queued: 0"), "obj_soldiersQueued");
+    gameScene.AddSceneEvent(
+      PacketType.ByServer.SOLDIER_SPAWN_SCHEDULED,
+      ({ playerId, queueSize }: { playerId: string; queueSize: number }) => {
+        this.GetObject<Phaser.GameObjects.Text>("obj_soldiersQueued")?.setText(
+          `Soldiers Queued: ${queueSize}`
+        );
+      }
+    );
+
     this.AddSceneEvent("shutdown", (data: any) => {
       console.log("shutdown ", data.config.key);
       this.Destroy();

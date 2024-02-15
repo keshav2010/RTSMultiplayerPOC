@@ -36,10 +36,10 @@ export class MenuScene extends BaseScene {
     let inputField = playerForm.getChildByName("nameInput");
 
     inputField?.addEventListener("input", (event) => {
-      var inputName = playerForm.getChildByName("nameInput");
+      var inputName = playerForm.getChildByName("nameInput") as Element & { value: string };
       if (!inputName) return;
-      if (inputName.innerHTML !== "") {
-        let name = inputName.innerHTML.trim().replace(" ", "-");
+      if (inputName.value !== "") {
+        let name = inputName.value.trim().replace(" ", "-");
         networkManager.setPlayerName(name);
         this.GetObject<Phaser.GameObjects.Text>("obj_introText")?.setText(
           `Welcome: ${name}`
@@ -78,9 +78,9 @@ export class MenuScene extends BaseScene {
     const networkManager = this.registry.get(
       "networkManager"
     ) as NetworkManager;
-    var inputName = playerForm.getChildByName("nameInput");
-    if (inputName?.innerHTML !== "") {
-      let name = inputName?.innerHTML.trim().replace(" ", "-");
+    var inputName = playerForm.getChildByName("nameInput") as Element & { value: string };
+    if (inputName?.nodeValue !== "") {
+      let name = inputName?.value.trim().replace(" ", "-");
       networkManager.setPlayerName(name || "");
     }
     try {
@@ -121,8 +121,12 @@ export class MenuScene extends BaseScene {
       if (!networkManager) {
         throw new Error("NetworkManager is not defined");
       }
+
+      const playerName = (this.GetObject<Phaser.GameObjects.DOMElement>(
+        "obj_playerForm"
+      )?.getChildByName("nameInput") as Element & { value: string })!.value;
       await networkManager?.hostAndJoinSession(
-        `${networkManager?.getPlayerName()}_ROOM`
+        `${playerName}`
       );
 
       console.log("[client id] : ", networkManager?.getClientId());

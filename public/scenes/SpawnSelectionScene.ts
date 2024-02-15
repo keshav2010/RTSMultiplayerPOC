@@ -93,11 +93,13 @@ export class SpawnSelectionScene extends BaseScene {
         );
       }
     });
+
     this.AddInputEvent("pointerup", function () {
       selectorDraw = false;
       selectorGraphics.clear();
       pointerDownWorldSpace = null;
     });
+
     this.AddInputEvent("pointermove", (pointer: any) => {
       if (!pointer.isDown) {
         selectorGraphics.clear();
@@ -134,13 +136,16 @@ export class SpawnSelectionScene extends BaseScene {
     this.cameras.main
       .setBounds(0, 0, this.mapWidth, this.mapHeight)
       .setName("WorldCamera");
+
     var mapGraphics = this.AddObject(this.add.graphics());
+
     mapGraphics.depth = -5;
     mapGraphics.fillStyle(0x221200, 1);
     mapGraphics.fillRect(0, 0, this.mapWidth, this.mapHeight);
 
     cursors = this.input.keyboard?.createCursorKeys();
     if (!cursors) return;
+
     const controlConfig = {
       camera: this.cameras.main,
       left: cursors.left,
@@ -218,6 +223,7 @@ export class SpawnSelectionScene extends BaseScene {
     }
     if (spawnFlag) {
       spawnFlag.setPosition(player.posX, player.posY);
+      spawnFlag.setHealth(2);
     } else
       this.AddObject(
         new PlayerCastle(this, player.posX, player.posY, "flag", null, {

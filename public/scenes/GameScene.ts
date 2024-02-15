@@ -360,6 +360,22 @@ export class GameScene extends BaseScene {
 
     const state = networkManager.getState();
     if (!state) return;
+
+    const player = SessionStateClientHelpers.getPlayer(state, networkManager.getClientId()!);
+    if (!player) {
+      console.error(`Client not connected.`);
+      this.scene.start(CONSTANT.SCENES.MENU);
+      return;
+    }
+
+    this.AddStateChangeListener(
+      player!.spawnRequestQueue.onChange((item, key) => {
+        this.events.emit(PacketType.ByServer.SOLDIER_SPAWN_SCHEDULED, {
+          playerId: player,
+          queueSize: player.spawnRequestQueue.length,
+        });
+      })
+    );
     this.AddStateChangeListener(
       state.players.onChange((playerState) => {
         this.AddStateChangeListener(
@@ -403,14 +419,24 @@ export class GameScene extends BaseScene {
     );
 
     this.AddStateChangeListener(
-      state
-        .getPlayer(networkManager.getClientId()!)!
-        .listen("resources", (value) => {
+      networkManager.getState()?.listen("sessionState", (value) => {
+        if (value === "BATTLE_END_STATE") {
+          this.scene.start(CONSTANT.SCENES.MENU);
+        }
+      })!
+    );
+
+    const playerId = networkManager.getClientId()!;
+    this.AddStateChangeListener(
+      SessionStateClientHelpers.getPlayer(state, playerId)!.listen(
+        "resources",
+        (value) => {
           this.events.emit(PacketType.ByServer.PLAYER_RESOURCE_UPDATED, {
             playerId: networkManager.getClientId()!,
             resources: value,
           });
-        })
+        }
+      )
     );
 
     this.AddSceneEvent(GAMEEVENTS.SOLDIER_SELECTED, (d: BaseSoldier) => {
