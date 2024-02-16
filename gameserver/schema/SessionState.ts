@@ -22,7 +22,10 @@ export class SessionState extends Schema {
     x: number,
     y: number
   ) {
-    this.players.set(sessionId, new PlayerState(`Player_${name}`, x, y));
+    this.players.set(
+      sessionId,
+      new PlayerState(`Player_${name}`, x, y, sessionId)
+    );
   }
   public getPlayer(sessionId: string) {
     return this.players.get(sessionId);

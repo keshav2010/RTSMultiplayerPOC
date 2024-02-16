@@ -50,9 +50,9 @@ export class PlayerState extends Schema {
   resourceGrowthRateHz = 1;
   maxResources = 200;
 
-  constructor(name: string, x: number, y: number) {
+  constructor(name: string, x: number, y: number, sessionId : string) {
     super();
-    this.id = nanoid();
+    this.id = sessionId;
     this.name = name;
     this.resources = 100;
     this.readyStatus = false;

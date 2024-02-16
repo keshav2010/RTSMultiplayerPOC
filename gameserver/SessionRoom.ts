@@ -2,7 +2,6 @@ import { Room, Client } from "@colyseus/core";
 import { SessionState } from "./schema/SessionState";
 import { Dispatcher } from "@colyseus/command";
 import { CommandFactory } from "./commands";
-import { PacketType } from "../common/PacketType";
 import { OnJoinCommand } from "./commands/OnJoinCommand";
 import { OnLeaveCommand } from "./commands/OnLeaveCommand";
 import { GameStateManager } from "./core/GameStateManager";
@@ -29,7 +28,6 @@ export class SessionRoom extends Room<SessionState> {
 
   onCreate(options: any) {
     console.log("CREATED GAME SESSION", options);
-    const refThis = this;
     this.setState(new SessionState());
     this.onMessage("*", (client, type, message) => {
       try {

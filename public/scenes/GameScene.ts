@@ -51,6 +51,9 @@ $(() => {
     SendChatMessage();
   });
 });
+
+type soldierIdToPhaserMap = Map<string, BaseSoldier>;
+type PlayerId = string;
 export class GameScene extends BaseScene {
   mapWidth: number;
   mapHeight: number;
@@ -62,15 +65,9 @@ export class GameScene extends BaseScene {
     BaseSoldier
   >();
 
-  // maps every soldier id to its phaser object that is dispalyed on screen.
-  soldierIdToPhaserObject: Map<string, BaseSoldier> = new Map<
-    string,
-    BaseSoldier
-  >();
-
-  playerToSoldierObjectMap: Map<string, Map<string, BaseSoldier>> = new Map<
-    string,
-    Map<string, BaseSoldier>
+  playerSoldiersGameObject: Map<PlayerId, soldierIdToPhaserMap> = new Map<
+    PlayerId,
+    soldierIdToPhaserMap
   >();
 
   constructor() {
@@ -104,22 +101,20 @@ export class GameScene extends BaseScene {
       ownerPlayer.id
     );
 
-    let soldiersMap = this.playerToSoldierObjectMap.get(soldier.playerId);
+    let soldiersMap = this.playerSoldiersGameObject.get(soldier.playerId);
     if (!soldiersMap) {
-      this.playerToSoldierObjectMap.set(
+      this.playerSoldiersGameObject.set(
         soldier.playerId,
         new Map<string, BaseSoldier>()
       );
-      soldiersMap = this.playerToSoldierObjectMap.get(soldier.playerId);
+      soldiersMap = this.playerSoldiersGameObject.get(soldier.playerId);
     }
     soldiersMap!.set(soldier.id, spearmen);
-    this.soldierIdToPhaserObject.set(soldier.id, spearmen);
   }
 
   onSoldierRemoved(soldier: SoldierState, ownerPlayer: PlayerState) {
     this.selectedSoldiersMap.delete(soldier.id);
-    this.playerToSoldierObjectMap.get(ownerPlayer.id)?.delete(soldier.id);
-    this.soldierIdToPhaserObject.delete(soldier.id);
+    this.playerSoldiersGameObject.get(ownerPlayer.id)?.delete(soldier.id);
     this.DestroyStateChangeListener(soldier.id);
   }
 
@@ -128,7 +123,7 @@ export class GameScene extends BaseScene {
     if (!playerId) {
       return;
     }
-    const soldierPhaserObj = this.playerToSoldierObjectMap
+    const soldierPhaserObj = this.playerSoldiersGameObject
       .get(playerId)
       ?.get(soldierId);
     if (!soldierPhaserObj) return;
@@ -139,11 +134,8 @@ export class GameScene extends BaseScene {
     this.selectedSoldiersMap.delete(soldierId);
   }
 
-  onSoldierPositionChanged(soldierId: string) {
-    const phaserSceneObject = this.soldierIdToPhaserObject.get(soldierId);
-    const playerId = phaserSceneObject?.playerId;
-    if (!playerId) return;
-
+  onSoldierPositionChanged(playerId: string, soldierId: string) {
+    const phaserSceneObject = this.playerSoldiersGameObject.get(playerId)?.get(soldierId);
     const state = networkManager.getState();
     if (!state) return;
     const playerState = SessionStateClientHelpers.getPlayer(state, playerId);
@@ -160,7 +152,7 @@ export class GameScene extends BaseScene {
 
     if (!soldierState) return;
 
-    phaserSceneObject.setPosition(
+    phaserSceneObject?.setPosition(
       soldierState.currentPositionX,
       soldierState.currentPositionY
     );
@@ -171,7 +163,7 @@ export class GameScene extends BaseScene {
     value: number,
     prevValue: number
   ) {
-    this.playerToSoldierObjectMap
+    this.playerSoldiersGameObject
       .get(soldier.playerId)
       ?.get(soldier.id)
       ?.setHealth(value);
@@ -195,7 +187,6 @@ export class GameScene extends BaseScene {
       }
       //mmb
       else if (pointer.button === 1) {
-        console.log("Requesting Soldier Spawn/Create ");
         networkManager.sendEventToServer(
           PacketType.ByClient.SOLDIER_CREATE_REQUESTED,
           {
@@ -216,7 +207,7 @@ export class GameScene extends BaseScene {
           selectorGraphics.strokeRectShape(rect);
 
           const soldiers = Array.from(
-            this.playerToSoldierObjectMap.values()
+            this.playerSoldiersGameObject.values()
           ).map((soldiersMap) => Array.from(soldiersMap.values()));
           const soldiersArray = soldiers.flat(1);
 
@@ -304,10 +295,16 @@ export class GameScene extends BaseScene {
           return;
         }
 
-        let s = this.playerToSoldierObjectMap.get(playerId)?.values();
-        if (!s) return;
+        const soldierMap = this.playerSoldiersGameObject.get(playerId);
+        if(!soldierMap) {
+          return;
+        }
+        let s = soldierMap.values();
+        if (!s) {
+          console.log(this.playerSoldiersGameObject.get(playerId));
+          return;
+        }
         let soldiers = [...s];
-
         soldiers.forEach((soldier) => {
           let bound = soldier.getBounds();
           if (Phaser.Geom.Intersects.RectangleToRectangle(bound, rect)) {
@@ -394,13 +391,13 @@ export class GameScene extends BaseScene {
 
           this.AddStateChangeListener(
             soldier.listen("currentPositionX", (value, prevValue) => {
-              this.onSoldierPositionChanged(soldier.id);
+              this.onSoldierPositionChanged(player.id, soldier.id);
             }),
             `currentPosX-${soldier.id}`
           );
           this.AddStateChangeListener(
             soldier.listen("currentPositionY", (value, prevValue) => {
-              this.onSoldierPositionChanged(soldier.id);
+              this.onSoldierPositionChanged(player.id, soldier.id);
             }),
             `currentPosY-${soldier.id}`
           );

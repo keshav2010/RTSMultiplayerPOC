@@ -120,7 +120,6 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
       this.hp.destroy();
       this.highlightBackground.destroy();
       this.DEBUGTEXT.destroy();
-      this.scene.registry.get("stateManager").selectedSoldiers.delete(this.id);
     });
   }
   setHealth(newHealth: number) {
@@ -139,7 +138,6 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     );
   }
   markSelected() {
-    this.scene.registry.get("stateManager").selectedSoldiers.set(this.id, this);
     this.alpha = 0.5;
 
     //emit scene wide event
@@ -147,7 +145,6 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
   }
   markUnselected() {
     if (!this || !this.scene) return;
-    this.scene.registry.get("stateManager")?.selectedSoldiers.delete(this.id);
     this.alpha = 1;
 
     //emit scene wide event

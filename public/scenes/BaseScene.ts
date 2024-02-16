@@ -155,6 +155,8 @@ export class BaseScene extends Phaser.Scene {
   }
 
   Destroy() {
+
+    console.log(`[BaseScene] : Destroy Invoked`);
     this.DestroyObjects();
     this.DestroyInputEvents();
     this.DestroySceneEvents();
