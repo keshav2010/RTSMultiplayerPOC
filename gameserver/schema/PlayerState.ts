@@ -2,6 +2,7 @@ import { Schema, MapSchema, ArraySchema, type } from "@colyseus/schema";
 import { SoldierState } from "./SoldierState";
 import { nanoid } from "nanoid";
 import { SoldierType, SoldierTypeConfig } from "../../common/SoldierType";
+import { GameStateManager } from "../core/GameStateManager";
 
 export class SpawnRequest extends Schema {
   @type("string") requestId: string = "";
@@ -86,6 +87,8 @@ export class PlayerState extends Schema {
     this.spawnRequestQueue.shift();
 
     const soldierId = nanoid();
+
+    console.log('spawning a soldier ', requestInfo.unitType);
     const newSoldier = new SoldierState(
       this.id,
       requestInfo.unitType,
@@ -95,11 +98,14 @@ export class PlayerState extends Schema {
     this.soldiers.set(soldierId, newSoldier);
   }
 
-  public tick(deltaTime: number) {
+  public tick(deltaTime: number, gameStateManager: GameStateManager<SoldierState>) {
     this.resources += this.resourceGrowthRateHz * deltaTime;
     this.processSpawnRequest(deltaTime);
 
     //TODO: tick each soldier
+    this.soldiers.forEach((soldier) => {
+      soldier.tick(deltaTime, gameStateManager);
+    });
   }
 
   public updatePosition(x: number, y: number) {

@@ -7,6 +7,7 @@ import soldierStateBehaviours from "../stateMachines/soldier-state-machine/Soldi
 import { GameStateManager } from "../core/GameStateManager";
 import { SceneObject } from "../core/SceneObject";
 import { AllianceTypes } from "../AllianceTracker";
+import SAT from "sat";
 
 function mapRange(
   val: number,
@@ -281,7 +282,6 @@ export class SoldierState extends Schema {
   }
 
   tick(delta: number, stateManager: GameStateManager<SoldierState>) {
-
     //if object is moving, we apply -2 frictionForce to it.
     this.velocityVector.add(this.accelerationVector);
     if (this.velocityVector.len() > this.speed)
@@ -302,7 +302,7 @@ export class SoldierState extends Schema {
       this,
       (
         res: { a: any; b: any; overlapV: { x: number; y: number } },
-        collidingBodies: any
+        collidingBodies
       ) => {
         let a = res.a;
         let b = res.b;

@@ -87,11 +87,12 @@ export class GameScene extends BaseScene {
   }
 
   onSoldierAdded(soldier: SoldierState, ownerPlayer: PlayerState) {
+    console.log('Adding a soldier');
     const spearmen = new Spearman(
       this,
       soldier.currentPositionX,
       soldier.currentPositionY,
-      "SPEARMAN",
+      "spearman",
       null,
       {
         health: soldier.health,
@@ -376,39 +377,47 @@ export class GameScene extends BaseScene {
         });
       })
     );
-    this.AddStateChangeListener(
-      state.players.onChange((playerState) => {
-        this.AddStateChangeListener(
-          playerState.soldiers.onAdd((soldierState) => {
-            this.onSoldierAdded(soldierState, playerState);
-          })
-        );
-        this.AddStateChangeListener(
-          playerState.soldiers.onRemove((soldierState) => {
-            this.onSoldierRemoved(soldierState, playerState);
-          })
-        );
-        playerState.soldiers.forEach((soldier) => {
-          const cb = soldier.listen("health", (value, prevValue) => {
-            this.onSoldierHealthUpdate(soldier, value, prevValue);
-          });
-          this.AddStateChangeListener(cb, soldier.id);
-        });
 
-        playerState.soldiers.forEach((soldier) => {
+    // register soldier creation/removal listeners for eaech player.
+    state.players.forEach((player) => {
+      this.AddStateChangeListener(
+        player.soldiers.onAdd((soldier, key) => {
+          this.onSoldierAdded(soldier, player);
+
+          // add relevant listeners for every soldier
+          this.AddStateChangeListener(
+            soldier.listen("health", (value, prevValue) => {
+              this.onSoldierHealthUpdate(soldier, value, prevValue);
+            }),
+            `health-${soldier.id}`
+          );
+
           this.AddStateChangeListener(
             soldier.listen("currentPositionX", (value, prevValue) => {
               this.onSoldierPositionChanged(soldier.id);
-            })
+            }),
+            `currentPosX-${soldier.id}`
           );
           this.AddStateChangeListener(
             soldier.listen("currentPositionY", (value, prevValue) => {
               this.onSoldierPositionChanged(soldier.id);
-            })
+            }),
+            `currentPosY-${soldier.id}`
           );
-        });
-      })
-    );
+        })
+      );
+
+      this.AddStateChangeListener(
+        player.soldiers.onRemove((soldier, key) => {
+          this.onSoldierRemoved(soldier, player);
+
+          // remove relevant listeners for each soldier.
+          this.DestroyStateChangeListener(`health-${soldier.id}`);
+          this.DestroyStateChangeListener(`currentPosX-${soldier.id}`);
+          this.DestroyStateChangeListener(`currentPosY-${soldier.id}`);
+        })
+      );
+    });
 
     this.AddStateChangeListener(
       state.players.onRemove((player) => {

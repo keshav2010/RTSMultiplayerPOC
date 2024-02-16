@@ -79,7 +79,7 @@ export default {
         return;
       }
       playersConnected.forEach((player) => {
-        player.tick(deltaTime);
+        player.tick(deltaTime, gameStateManager);
       });
     } catch (err) {
       console.log(err);

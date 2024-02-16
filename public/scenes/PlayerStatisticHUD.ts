@@ -124,10 +124,9 @@ export class PlayerStatisticHUD extends BaseScene {
         countdown: number;
         unitType: string;
       }) => {
-        console.log("test", countdown);
         const textObject =
           this.GetObject<Phaser.GameObjects.Text>("obj_spawnETA");
-        textObject?.setText(`Spawning Next In : ${countdown} x${count}`);
+        textObject?.setText(`Spawning Next In : ${Math.floor(countdown)} X${count}`);
       }
     );
 

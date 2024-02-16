@@ -1,5 +1,6 @@
-const { GAMEEVENTS } = require("../constant");
-const LoadingBar = require("../LoadingBar");
+import CONSTANTS from "../constant";
+import LoadingBar from "../LoadingBar";
+const GAMEEVENTS = CONSTANTS.GAMEEVENTS;
 class BackgroundHighlight extends Phaser.GameObjects.Graphics {
   parent: any;
   r: number;
