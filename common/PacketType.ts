@@ -29,6 +29,8 @@ export enum ServerToClientPacketType {
   SOLDIER_POSITION_UPDATED = "spu",
   COUNTDOWN_TIME = "cdwn",
   SOLDIER_STATE_DEBUG = "debug_soldierState",
+  
+  SOLDIER_SPAWN_REQUEST_UPDATED = "spawn_request_updated",
 }
 
 export const PacketType = {

@@ -426,18 +426,40 @@ export class GameScene extends BaseScene {
       })!
     );
 
-    const playerId = networkManager.getClientId()!;
     this.AddStateChangeListener(
-      SessionStateClientHelpers.getPlayer(state, playerId)!.listen(
-        "resources",
-        (value) => {
-          this.events.emit(PacketType.ByServer.PLAYER_RESOURCE_UPDATED, {
-            playerId: networkManager.getClientId()!,
-            resources: value,
-          });
-        }
-      )
+      player.listen("resources", (value) => {
+        this.events.emit(PacketType.ByServer.PLAYER_RESOURCE_UPDATED, {
+          playerId: networkManager.getClientId()!,
+          resources: value,
+        });
+      })
     );
+
+    this.AddStateChangeListener(
+      player.spawnRequestDetailMap.onAdd((item, key) => {
+        this.AddStateChangeListener(
+          item.onChange(() => {
+            this.events.emit(
+              PacketType.ByServer.SOLDIER_SPAWN_REQUEST_UPDATED,
+              {
+                count: item.count,
+                countdown: item.countdown,
+                requestId: item.requestId,
+                unitType: item.unitType,
+              }
+            );
+          }),
+          `${item.requestId}`
+        );
+      })
+    );
+
+    this.AddStateChangeListener(
+      player.spawnRequestDetailMap.onRemove((item, key) => {
+        this.DestroyStateChangeListener(item.requestId);
+      })
+    );
+    
 
     this.AddSceneEvent(GAMEEVENTS.SOLDIER_SELECTED, (d: BaseSoldier) => {
       this.onSoldierSelected(d.id);

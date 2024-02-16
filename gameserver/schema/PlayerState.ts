@@ -13,7 +13,7 @@ export class SpawnRequest extends Schema {
     this.requestId = requestId;
     this.unitType = soldierType;
     this.count = count;
-    this.countdown = 10000;
+    this.countdown = 10;
   }
 }
 
@@ -39,7 +39,7 @@ export class PlayerState extends Schema {
   @type("number") colorB = Math.random() * 255;
 
   // Spawn Requests (key: requestId , val: obj {unitType, count, countdown})
-  @type({ map: SpawnRequest }) unitSpawnRequests: MapSchema<SpawnRequest> =
+  @type({ map: SpawnRequest }) spawnRequestDetailMap: MapSchema<SpawnRequest> =
     new MapSchema<SpawnRequest>();
 
   @type(["string"]) spawnRequestQueue: ArraySchema<string> =
@@ -59,7 +59,7 @@ export class PlayerState extends Schema {
     this.posY = y;
     this.spawnFlagHealth = 100;
     this.soldiers = new MapSchema<SoldierState>();
-    this.unitSpawnRequests = new MapSchema<SpawnRequest>();
+    this.spawnRequestDetailMap = new MapSchema<SpawnRequest>();
     this.spawnRequestQueue = new ArraySchema<string>();
   }
 
@@ -68,7 +68,7 @@ export class PlayerState extends Schema {
     const requestId = this.spawnRequestQueue.at(0);
     if (!requestId) return;
 
-    const requestInfo = this.unitSpawnRequests.get(requestId);
+    const requestInfo = this.spawnRequestDetailMap.get(requestId);
     if (!requestInfo) return;
 
     const spawnCost = SoldierTypeConfig[requestInfo.unitType].cost;
@@ -82,7 +82,7 @@ export class PlayerState extends Schema {
     }
 
     // spawn a unit, and clear queue entry.
-    this.unitSpawnRequests.delete(requestId);
+    this.spawnRequestDetailMap.delete(requestId);
     this.spawnRequestQueue.shift();
 
     const soldierId = nanoid();
@@ -99,7 +99,7 @@ export class PlayerState extends Schema {
     this.resources += this.resourceGrowthRateHz * deltaTime;
     this.processSpawnRequest(deltaTime);
 
-    //TODO tick each soldier
+    //TODO: tick each soldier
   }
 
   public updatePosition(x: number, y: number) {
@@ -128,7 +128,7 @@ export class PlayerState extends Schema {
     const requestId = nanoid();
     this.spawnRequestQueue.push(requestId);
     const request: SpawnRequest = new SpawnRequest(requestId, soldierType, 1);
-    this.unitSpawnRequests.set(requestId, request);
+    this.spawnRequestDetailMap.set(requestId, request);
     this.resources -= costOfUnit;
   }
 

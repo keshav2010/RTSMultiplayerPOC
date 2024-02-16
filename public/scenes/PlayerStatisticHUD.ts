@@ -102,6 +102,35 @@ export class PlayerStatisticHUD extends BaseScene {
       }
     );
 
+    this.AddObject(
+      this.add.text(50, 110, "Soldiers Queued: 0"),
+      "obj_soldiersQueued"
+    );
+    this.AddObject(
+      this.add.text(50, 140, "Next Spawn In: 0"),
+      "obj_spawnETA"
+    );
+
+    gameScene.AddSceneEvent(
+      PacketType.ByServer.SOLDIER_SPAWN_REQUEST_UPDATED,
+      ({
+        requestId,
+        count,
+        countdown,
+        unitType,
+      }: {
+        requestId: string;
+        count: number;
+        countdown: number;
+        unitType: string;
+      }) => {
+        console.log("test", countdown);
+        const textObject =
+          this.GetObject<Phaser.GameObjects.Text>("obj_spawnETA");
+        textObject?.setText(`Spawning Next In : ${countdown} x${count}`);
+      }
+    );
+
     gameScene.AddSceneEvent(
       PacketType.ByServer.PLAYER_RESOURCE_UPDATED,
       ({ playerId, resources }: { playerId: string; resources: number }) => {
@@ -114,7 +143,6 @@ export class PlayerStatisticHUD extends BaseScene {
       }
     );
 
-    this.AddObject(this.add.text(50, 110, "Soldiers Queued: 0"), "obj_soldiersQueued");
     gameScene.AddSceneEvent(
       PacketType.ByServer.SOLDIER_SPAWN_SCHEDULED,
       ({ playerId, queueSize }: { playerId: string; queueSize: number }) => {

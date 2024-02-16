@@ -9,6 +9,14 @@ function getPlayers(state: SessionState) {
   return [...state.players.values()];
 }
 
+function getLastSpawnRequest(state: SessionState, playerId: string) {
+  const requestId = getPlayer(state, playerId)?.spawnRequestQueue.at(0);
+
+  const requestDetail = getPlayer(state, playerId)?.spawnRequestDetailMap.get(requestId!);
+  
+  return requestDetail;
+}
+
 function getSoldier(
   state: SessionState,
   playerState: PlayerState,
@@ -31,4 +39,5 @@ export default {
   getPlayers,
   getSoldier,
   getSoldiers,
+  getLastSpawnRequest,
 };
