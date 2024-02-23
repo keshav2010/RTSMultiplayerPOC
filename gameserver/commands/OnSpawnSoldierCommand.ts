@@ -8,6 +8,6 @@ export class OnSpawnSoldierCommand extends Command<
   CommandPayload
 > {
   execute({ client, message }: { client: Client; message: any }) {
-    console.log(message);
+    this.state.getPlayer(client.id)?.addNewSoldier(message.unitType);
   }
 }

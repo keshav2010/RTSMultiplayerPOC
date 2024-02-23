@@ -84,9 +84,10 @@ export class GameScene extends BaseScene {
   }
 
   onSoldierAdded(soldier: SoldierState, ownerPlayer: PlayerState) {
-    console.log('Adding a soldier');
+    console.log('Adding a soldier ', soldier.id);
     const spearmen = new Spearman(
       this,
+      soldier.id,
       soldier.currentPositionX,
       soldier.currentPositionY,
       "spearman",
@@ -96,7 +97,6 @@ export class GameScene extends BaseScene {
         speed: soldier.speed,
         cost: soldier.cost,
         damage: soldier.damage,
-        id: soldier.id,
       },
       ownerPlayer.id
     );
@@ -109,6 +109,7 @@ export class GameScene extends BaseScene {
       );
       soldiersMap = this.playerSoldiersGameObject.get(soldier.playerId);
     }
+    console.log('Added soldier with id ', soldier.id, soldier);
     soldiersMap!.set(soldier.id, spearmen);
   }
 
@@ -151,6 +152,11 @@ export class GameScene extends BaseScene {
     );
 
     if (!soldierState) return;
+    
+    if(!phaserSceneObject) {
+      console.error(`No Phaser Object Found (soldier: ${soldierId})/ playerId: ${playerId}`);
+      return;
+    }
 
     phaserSceneObject?.setPosition(
       soldierState.currentPositionX,
@@ -244,9 +250,7 @@ export class GameScene extends BaseScene {
             networkManager.sendEventToServer(
               PacketType.ByClient.SOLDIER_MOVE_REQUESTED,
               {
-                soldiers: [...this.selectedSoldiersMap.values()]
-                  .map((v) => v.id)
-                  .join(","),
+                soldierIds: Array.from(this.selectedSoldiersMap.values()).map((v) => v.id),
                 expectedPositionX: pointer.worldX,
                 expectedPositionY: pointer.worldY,
               }

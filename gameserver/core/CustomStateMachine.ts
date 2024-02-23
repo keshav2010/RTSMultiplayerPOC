@@ -17,7 +17,7 @@ export class CustomStateMachine<TickArg = any> {
   machine: any;
   stateActions: IStateActions;
   currentState: string;
-  controller: any;
+  controller;
   /**
    *
    * @param {Object} machineJSON - the state machine definition object

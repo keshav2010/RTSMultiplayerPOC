@@ -1,5 +1,7 @@
 import CONSTANTS from "../constant";
+import SessionStateClientHelpers from "../helpers/SessionStateClientHelpers";
 import LoadingBar from "../LoadingBar";
+import { NetworkManager } from "../NetworkManager";
 const GAMEEVENTS = CONSTANTS.GAMEEVENTS;
 class BackgroundHighlight extends Phaser.GameObjects.Graphics {
   parent: any;
@@ -47,7 +49,7 @@ class BackgroundHighlight extends Phaser.GameObjects.Graphics {
   }
 }
 export class BaseSoldier extends Phaser.GameObjects.Sprite {
-  id: any;
+  id: string;
   initialParam: any;
   color: any[];
   expectedPositionX: any;
@@ -65,20 +67,22 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
    */
   constructor(
     scene: Phaser.Scene,
+    id: string,
     x: number,
     y: number,
     texture: string | Phaser.Textures.Texture,
     frame: string | number | undefined,
-    initialParam: { id?: string },
+    initialParam: {},
     playerId: null | string
   ) {
     super(scene, x, y, texture, frame);
-
     //add object to scene
     scene.add.existing(this);
     this.setInteractive();
-    this.id = initialParam.id;
+    this.id = id;
+    console.log('BASESOLDIER ', this.id);
     this.playerId = playerId;
+
     scene.events.on("update", this.update, this);
 
     this.initialParam = initialParam || {};
@@ -90,6 +94,7 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
         Math.random() * 255,
         Math.random() * 255,
       ];
+
     this.setData("health", this.initialParam.health || 25);
     this.setData("speed", this.initialParam.speed || 10);
     this.setData("damage", this.initialParam.damage || 10);
@@ -98,8 +103,10 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     this.expectedPositionX = x;
     this.expectedPositionY = y;
     this.setPosition(x, y);
+
     this.scale = 1;
     this.hp = new LoadingBar(scene, this);
+
     this.highlightBackground = new BackgroundHighlight(
       scene,
       this,
@@ -112,7 +119,7 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
       x,
       y + 40,
       `${this.id.substr(0, 15)}\n health:${this.initialParam.health}`,
-      { font: "12px Arial", backgroundColor: "#ffffff" }
+      { font: "12px Arial", color: "yellow"}
     );
     this.DEBUGTEXT.setOrigin(0.5);
 
@@ -126,16 +133,36 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     this.setData("health", newHealth);
     this.hp.currentValue = newHealth;
   }
+  printDebugText() {
+
+    const networkManager = this.scene.registry.get(
+      "networkManager"
+    ) as NetworkManager;
+
+    const playerState = SessionStateClientHelpers.getPlayer(
+      networkManager.getState()!,
+      networkManager.getClientId()!
+    );
+
+    const soldierState = SessionStateClientHelpers.getSoldier(
+      networkManager.getState()!,
+      playerState!,
+      this.id
+    );
+
+    this.DEBUGTEXT.setPosition(this.x, this.y + 40);
+    this.DEBUGTEXT.setText(
+      `${soldierState?.currentState}
+      ID:${this.id}
+      HLTH:${this.initialParam.health}
+      V_EXP: (${soldierState?.expectedPositionX}, ${soldierState?.expectedPositionY})
+      V_CUR: (${soldierState?.currentPositionX}, ${soldierState?.currentPositionY})`
+    );
+  }
   update(deltaTime: number) {
     this.hp.draw();
     this.highlightBackground.draw();
-    this.DEBUGTEXT.setPosition(this.x, this.y + 40);
-    this.DEBUGTEXT.setText(
-      `${this.initialParam.currentState}\n id:${this.id.substr(
-        0,
-        15
-      )}\n health:${this.initialParam.health}`
-    );
+    this.printDebugText();
   }
   markSelected() {
     this.alpha = 0.5;

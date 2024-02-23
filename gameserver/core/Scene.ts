@@ -72,7 +72,7 @@ export class Scene<
     sceneItem: ISceneItem,
     callback: (arg0: SAT.Response, arg1: ISceneItem[]) => void
   ) {
-    //fetch all bodies with which soldier is colliding in Quadtree
+    //fetch all bodies which are colliding with the soldier specified by x,y,w,h in arg.
     let collidingBodies = this.colliding({
       x: sceneItem.getSceneItem().pos.x,
       y: sceneItem.getSceneItem().pos.y,

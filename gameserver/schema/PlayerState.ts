@@ -50,7 +50,7 @@ export class PlayerState extends Schema {
   resourceGrowthRateHz = 1;
   maxResources = 200;
 
-  constructor(name: string, x: number, y: number, sessionId : string) {
+  constructor(name: string, x: number, y: number, sessionId: string) {
     super();
     this.id = sessionId;
     this.name = name;
@@ -85,20 +85,20 @@ export class PlayerState extends Schema {
     // spawn a unit, and clear queue entry.
     this.spawnRequestDetailMap.delete(requestId);
     this.spawnRequestQueue.shift();
-
-    const soldierId = nanoid();
-
-    console.log('spawning a soldier ', requestInfo.unitType);
-    const newSoldier = new SoldierState(
-      this.id,
-      requestInfo.unitType,
-      this.posX,
-      this.posY
-    );
-    this.soldiers.set(soldierId, newSoldier);
+    this.addNewSoldier(requestInfo.unitType);
   }
 
-  public tick(deltaTime: number, gameStateManager: GameStateManager<SoldierState>) {
+  public addNewSoldier(type: SoldierType) {
+    console.log("spawning a soldier ", type);
+    const newSoldier = new SoldierState(this.id, type, this.posX, this.posY);
+    this.soldiers.set(newSoldier.id, newSoldier);
+    return newSoldier.id;
+  }
+
+  public tick(
+    deltaTime: number,
+    gameStateManager: GameStateManager<SoldierState>
+  ) {
     this.resources += this.resourceGrowthRateHz * deltaTime;
     this.processSpawnRequest(deltaTime);
 
@@ -124,7 +124,7 @@ export class PlayerState extends Schema {
   }
 
   public getAllSoldiers() {
-    return this.soldiers;
+    return Array.from(this.soldiers.values());
   }
 
   public queueSpawnRequest(soldierType: SoldierType) {

@@ -12,12 +12,12 @@ export class Spearman extends BaseSoldier {
    */
   constructor(
     scene: Phaser.Scene,
+    id: string,
     x: number,
     y: number,
     texture: string | Phaser.Textures.Texture,
     frame: any,
     initialParam: {
-      id: string;
       color?: number[];
       health?: number;
       speed?: number;
@@ -26,21 +26,26 @@ export class Spearman extends BaseSoldier {
     },
     playerId: string
   ) {
-    super(scene, x, y, texture, frame, initialParam, playerId);
+    super(
+      scene,
+      id,
+      x,
+      y,
+      texture,
+      frame,
+      {
+        ...initialParam,
+        speed: 10,
+        damage: 2,
+        health: 100,
+        cost: 10,
+      },
+      playerId
+    );
     this.soldierType = "SPEARMAN";
   }
   onClicked() {}
   update(deltaTime: number) {
     super.update(deltaTime);
-    let diffX = this.expectedPositionX - this.x;
-    let diffY = this.expectedPositionY - this.y;
-    let mag = Math.sqrt(diffX * diffX + diffY * diffY);
-    if (mag === 0) return;
-    diffX = diffX / mag;
-    diffY = diffY / mag;
-    this.setPosition(
-      this.x + diffX * 100 * deltaTime,
-      this.y + diffY * 100 * deltaTime
-    );
   }
 }

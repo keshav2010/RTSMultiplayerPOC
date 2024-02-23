@@ -23,9 +23,10 @@ export default {
         return a.hasReachedDestination() && b.hasReachedDestination();
       }
     );
-    soldier.applyForce(steerForce);
-    soldier.applyForce(seperationForce);
+    soldier.applyForce(steerForce, delta);
+    soldier.applyForce(seperationForce, delta);
     if (!soldier.hasReachedDestination()) {
+      console.log("soldier not at destination, moving..");
       soldier.stateMachine.controller.send("Move");
       return;
     }
@@ -70,22 +71,25 @@ export default {
     stateManager: GameStateManager<SoldierState>;
     soldier: SoldierState;
   }) => {
-    let seperationForce = soldier.getSeperationVector(stateManager);
-    let steerForce = soldier.getSteerVector(soldier.getExpectedPosition());
-    soldier.applyForce(seperationForce);
-    soldier.applyForce(steerForce);
+    const seperationForce = soldier.getSeperationVector(stateManager);
+    const steerForce = soldier.getSteerVector(soldier.getExpectedPosition());
+
+    soldier.applyForce(seperationForce, delta);
+    soldier.applyForce(steerForce, delta);
 
     let stateMachineTrigged = false;
+
     if (soldier.hasReachedDestination()) {
       soldier.stateMachine.controller.send("ReachedPosition");
       stateMachineTrigged = true;
     }
 
-    var nearbyUnits = stateManager.scene.getNearbyUnits(
+    const nearbyUnits = stateManager.scene.getNearbyUnits(
       soldier.getSceneItem().pos.x + soldier.getSceneItem().w / 2,
       soldier.getSceneItem().pos.y + soldier.getSceneItem().h / 2,
       SoldierConstants.NEARBY_SEARCH_RADI
     );
+
     if (nearbyUnits.length < 2) return;
 
     nearbyUnits.forEach((unit) => {
@@ -105,6 +109,7 @@ export default {
         soldier.hasReachedDestination();
 
       if (anyOneAtDest && overlapExpectedPos) {
+        
         nearbySoldierUnit.isAtDestination = soldier.isAtDestination = true;
         soldier.setExpectedPosition(soldier.getSceneItem().pos);
         if (!stateMachineTrigged)
@@ -246,8 +251,8 @@ export default {
       let steerForce = soldier.getSteerVector(
         soldierAttackTarget.getSceneItem().pos
       );
-      soldier.applyForce(seperationForce);
-      soldier.applyForce(steerForce);
+      soldier.applyForce(seperationForce, delta);
+      soldier.applyForce(steerForce, delta);
 
       soldier.setTargetPosition(soldierAttackTarget.getSceneItem().pos);
 

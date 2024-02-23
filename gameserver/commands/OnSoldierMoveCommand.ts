@@ -3,8 +3,33 @@ import { Command } from "@colyseus/command";
 import { SessionRoom } from "../SessionRoom";
 import { Client } from "colyseus";
 import { CommandPayload } from "./CommandPayloadType";
+import SAT from "sat";
 export class OnSoldierMoveCommand extends Command<SessionRoom, CommandPayload> {
-  execute({ client, message }: { client: Client; message: any }) {
-    console.log('Soldier Move Command Requested', message);
+  execute({
+    client,
+    message,
+  }: {
+    client: Client;
+    message: {
+      soldierIds: string[];
+      expectedPositionX: number;
+      expectedPositionY: number;
+    };
+  }) {
+    console.log("Soldier Move Command Requested", message);
+    message.soldierIds.forEach((soldierId) => {
+      const player = this.state.getPlayer(client.sessionId);
+      if (!player) {
+        return;
+      }
+      const soldier = player.getSoldier(soldierId);
+
+      if (!soldier) {
+        return;
+      }
+      soldier.setTargetPosition(
+        new SAT.Vector(message.expectedPositionX, message.expectedPositionY)
+      );
+    });
   }
 }
