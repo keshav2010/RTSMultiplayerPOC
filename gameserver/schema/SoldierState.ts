@@ -5,7 +5,7 @@ import { CustomStateMachine } from "../core/CustomStateMachine";
 import SoldierStateMachineJSON from "../stateMachines/soldier-state-machine/SoldierStateMachine.json";
 import soldierStateBehaviours from "../stateMachines/soldier-state-machine/SoldierStateBehaviour";
 import { GameStateManager } from "../core/GameStateManager";
-import { SceneObject, TypeQuadtreeItem } from "../core/SceneObject";
+import { SceneObject } from "../core/SceneObject";
 import { AllianceTypes } from "../AllianceTracker";
 import SAT from "sat";
 
@@ -26,7 +26,6 @@ const MOVABLE_UNIT_CONSTANTS = {
   MAX_STEER_FORCE: 10,
   MAX_REPEL_FORCE: 50,
 
-  MAX_ACCELERATION: 10,
   DESIRED_DIST_FROM_TARGET: 30,
   ACCEPTABLE_DIST_FROM_EXPECTED_POS: 5,
   NEARBY_SEARCH_RADI: 150,
@@ -69,7 +68,6 @@ export class SoldierState extends Schema {
   targetVector: SAT.Vector | null = null;
 
   steeringVector: SAT.Vector = new SAT.Vector(0, 0);
-  accelerationVector: SAT.Vector = new SAT.Vector(0, 0);
   velocityVector: SAT.Vector = new SAT.Vector(0, 0);
 
   isAtDestination = true;
@@ -130,19 +128,8 @@ export class SoldierState extends Schema {
     this.targetVector = new SAT.Vector(vector.x, vector.y);
   }
 
-  getAccelerationVector() {
-    return this.accelerationVector.clone();
-  }
   applyForce(forceVector: SAT.Vector, delta: number = 1) {
-    this.accelerationVector.copy(
-      this.getAccelerationVector().add(forceVector.clone().scale(delta))
-    );
-    const maxAcceleration = MOVABLE_UNIT_CONSTANTS.MAX_ACCELERATION * delta;
-    const isAccelerationAtMax =
-      this.getAccelerationVector().len() > maxAcceleration;
-    if (isAccelerationAtMax) {
-      this.accelerationVector.normalize().scale(maxAcceleration);
-    }
+    this.velocityVector.add(forceVector);
   }
 
   setPosition(vec: SAT.Vector) {
@@ -179,7 +166,6 @@ export class SoldierState extends Schema {
     this.expectedPositionY = vec.y;
     this.hasReachedDestination();
     this.attackTarget = null;
-    this.accelerationVector.scale(0);
     this.steeringVector.scale(0);
     this.velocityVector.scale(0);
     this.stateMachine.controller.send("Move");
@@ -220,13 +206,17 @@ export class SoldierState extends Schema {
   ) {
     const soldier = this.getSceneItem();
     const nearbyUnits = stateManager.scene.getNearbyUnits(
-      soldier.pos.x + soldier.w / 2,
-      soldier.pos.y + soldier.h / 2,
+      soldier.x + soldier.w / 2,
+      soldier.y + soldier.h / 2,
       MOVABLE_UNIT_CONSTANTS.NEARBY_SEARCH_RADI
     );
 
     let sumVec = new SAT.Vector(0);
-    if (nearbyUnits.length < 2) return sumVec;
+    if (nearbyUnits.length < 2){
+      // console.log('no nearby unit found ', nearbyUnits.length);
+      return sumVec; 
+    }
+    console.log('nearby units = ', nearbyUnits.length);
 
     const otherSoldierUnits = nearbyUnits.filter((value) => {
       const isSelf = this.id === value.id;
@@ -297,26 +287,29 @@ export class SoldierState extends Schema {
     this.stateMachine.controller.send("PlayerAttacked");
   }
 
-  getVelocityVector(delta: number = 1) {
+  getVelocityVector() {
     return this.velocityVector.clone();
   }
 
   tick(delta: number, stateManager: GameStateManager<SoldierState>) {
-    // simulate velocity/acceleration
     this.currentState = this.stateMachine.currentState as any;
     const soldier = this.getSceneItem();
-    this.accelerationVector.scale(delta * MOVABLE_UNIT_CONSTANTS.MAX_ACCELERATION)
-    this.velocityVector.add(this.getAccelerationVector());
-
-    if (this.getVelocityVector().len() > this.speed * delta)
-      this.velocityVector.normalize().scale(this.speed * delta);
-
-    let frictionForce = this.velocityVector.clone().scale(-1.0 * delta);
-
+    const frictionForce = this.velocityVector.clone().scale(-1.0 * delta);
     this.velocityVector.add(frictionForce);
+    const steerForce = this.getSteerVector(this.getExpectedPosition());
+    let seperationForce = this.getSeperationVector(
+      stateManager,
+      (a: SoldierState, b: SoldierState) => {
+        return a.hasReachedDestination() && b.hasReachedDestination();
+      }
+    );
+    
+    const netForce = steerForce.clone().add(seperationForce);
+    this.applyForce(netForce);
+
+    this.velocityVector.normalize().scale(this.speed * delta);
     const newPosition = soldier.pos.clone().add(this.getVelocityVector());
 
-    this.accelerationVector.scale(0);
     this.setPosition(newPosition);
 
     stateManager.scene.checkOne(this, (res, collidingBodies) => {

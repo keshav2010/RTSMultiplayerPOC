@@ -14,17 +14,6 @@ export default {
     stateManager: GameStateManager<SoldierState>;
     soldier: SoldierState;
   }) => {
-    /*repel from only those units which are not yet at their destination.
-     */
-    let steerForce = soldier.getSteerVector(soldier.getExpectedPosition());
-    let seperationForce = soldier.getSeperationVector(
-      stateManager,
-      (a: SoldierState, b: SoldierState) => {
-        return a.hasReachedDestination() && b.hasReachedDestination();
-      }
-    );
-    soldier.applyForce(steerForce, delta);
-    soldier.applyForce(seperationForce, delta);
     if (!soldier.hasReachedDestination()) {
       console.log("soldier not at destination, moving..");
       soldier.stateMachine.controller.send("Move");
@@ -71,10 +60,6 @@ export default {
     stateManager: GameStateManager<SoldierState>;
     soldier: SoldierState;
   }) => {
-    const seperationForce = soldier.getSeperationVector(stateManager);
-    const steerForce = soldier.getSteerVector(soldier.getExpectedPosition());
-    const netForce = seperationForce.clone().add(steerForce);
-    soldier.applyForce(netForce, delta);
 
     let stateMachineTrigged = false;
 

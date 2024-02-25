@@ -49,19 +49,9 @@ export class Scene<
   getNearbyUnits(x: number, y: number, searchRadius: number) {
     const result = this.colliding({ x, y }, (a, b) => {
       // a=> 1st arg, b => actual quadtree object
-      const itemA = this.sceneItemMap.get(a.id);
-      const itemB = this.sceneItemMap.get(b.id);
-      if (!itemA || !itemB) return false;
-
-      let aPos = new SAT.Vector(
-        itemA.getSceneItem().pos.x,
-        itemA.getSceneItem().pos.y
-      );
-      let bPos = new SAT.Vector(
-        itemB.getSceneItem().pos.x + itemB.getSceneItem().w / 2,
-        itemB.getSceneItem().pos.y + itemB.getSceneItem().h / 2
-      );
-      let distance = new SAT.Vector().copy(aPos).sub(bPos).len();
+      const aPos = new SAT.Vector(a.x, a.y);
+      const bPos = new SAT.Vector(b.x + b.width!/2, b.y + b.height!/2);
+      let distance = aPos.clone().sub(bPos).len();
       return distance <= 2 * searchRadius;
     });
     return result;
