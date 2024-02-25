@@ -5,7 +5,7 @@ import { Client } from "colyseus";
 import { nanoid } from "nanoid";
 import { CommandPayload } from "./CommandPayloadType";
 export class OnJoinCommand extends Command<SessionRoom, CommandPayload> {
-  execute({ client, message }: { client: Client; message: any }) {
+  execute({ client, message, gameManager }: CommandPayload) {
     console.log(message);
     const sessionId = client.sessionId;
     console.log(message);

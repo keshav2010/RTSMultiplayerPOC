@@ -27,13 +27,13 @@ export class Scene<
     const item = this.sceneItemMap.get(itemId)!;
     const sceneObject = item.getSceneItem();
 
-    this.remove(sceneObject.getQuadtreeItem());
+    this.remove(sceneObject);
     this.sceneItemMap.delete(itemId);
   }
 
   addSceneItem(item: SceneItemType, doObserve: boolean = true) {
     this.sceneItemMap.set(item.getSceneItem().id, item);
-    this.push(item.getSceneItem().getQuadtreeItem(), doObserve);
+    this.push(item.getSceneItem(), doObserve);
   }
 
   getSceneItemById(id: string) {

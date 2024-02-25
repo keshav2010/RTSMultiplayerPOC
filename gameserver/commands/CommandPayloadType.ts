@@ -2,8 +2,8 @@ import { Client } from "colyseus";
 import { GameStateManager } from "../core/GameStateManager";
 import { SoldierState } from "../schema/SoldierState";
 
-export type CommandPayload = {
+export type CommandPayload<messageType = any> = {
   client: Client;
-  message: any;
-  gameManager?: GameStateManager<SoldierState>;
+  message: messageType;
+  gameManager ?: GameStateManager<SoldierState>;
 };

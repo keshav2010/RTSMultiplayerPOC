@@ -8,7 +8,6 @@ import { GameStateManager } from "../core/GameStateManager";
 import { SceneObject, TypeQuadtreeItem } from "../core/SceneObject";
 import { AllianceTypes } from "../AllianceTracker";
 import SAT from "sat";
-import { ISceneItem } from "../core/Scene";
 
 function mapRange(
   val: number,
@@ -25,15 +24,15 @@ function mapRange(
 
 const MOVABLE_UNIT_CONSTANTS = {
   MAX_STEER_FORCE: 10,
-  MAX_REPEL_FORCE: 20,
+  MAX_REPEL_FORCE: 50,
 
   MAX_ACCELERATION: 10,
   DESIRED_DIST_FROM_TARGET: 30,
   ACCEPTABLE_DIST_FROM_EXPECTED_POS: 5,
   NEARBY_SEARCH_RADI: 150,
   ENEMY_SEARCH_RADIUS: 200,
-  DESIRED_SEPERATION_DIST: 90, //to initiate repulsion force
-  MAX_TARGETPOS_OVERLAP_DIST: 40,
+  DESIRED_SEPERATION_DIST: 100, //to initiate repulsion force
+  MAX_TARGETPOS_OVERLAP_DIST: 50,
 };
 
 export class SoldierState extends Schema {
@@ -106,7 +105,7 @@ export class SoldierState extends Schema {
     this.type = soldierType;
 
     this.health = 100;
-    this.speed = 25;
+    this.speed = 50;
     this.damage = 1;
     this.cost = 10;
 
@@ -147,7 +146,9 @@ export class SoldierState extends Schema {
   }
 
   setPosition(vec: SAT.Vector) {
-    this.getSceneItem().pos.copy(vec);
+    this.soldier.pos.copy(vec);
+    this.soldier.x = vec.x;
+    this.soldier.y = vec.y;
     this.currentPositionX = vec.x;
     this.currentPositionY = vec.y;
   }
@@ -193,7 +194,6 @@ export class SoldierState extends Schema {
   }
 
   getSteerVector(expectedPos: SAT.Vector) {
-    // actual direction that should be followed to move to next point.
     const desiredVector = new SAT.Vector()
       .copy(expectedPos)
       .sub(this.getSceneItem().pos);
@@ -258,11 +258,7 @@ export class SoldierState extends Schema {
       const repelUnitVector = soldier.pos
         .clone()
         .sub(new SAT.Vector(unit.x, unit.y));
-
-      repelUnitVector.scale(
-        MOVABLE_UNIT_CONSTANTS.DESIRED_SEPERATION_DIST / distanceBetweenUnits
-      );
-
+      repelUnitVector.scale(MOVABLE_UNIT_CONSTANTS.MAX_REPEL_FORCE);
       sumVec.add(repelUnitVector);
     });
 
@@ -302,45 +298,40 @@ export class SoldierState extends Schema {
   }
 
   getVelocityVector(delta: number = 1) {
-    return this.velocityVector.clone().scale(delta);
+    return this.velocityVector.clone();
   }
 
   tick(delta: number, stateManager: GameStateManager<SoldierState>) {
     // simulate velocity/acceleration
     this.currentState = this.stateMachine.currentState as any;
     const soldier = this.getSceneItem();
+    this.accelerationVector.scale(delta * MOVABLE_UNIT_CONSTANTS.MAX_ACCELERATION)
     this.velocityVector.add(this.getAccelerationVector());
 
-    if (this.velocityVector.len() > this.speed * delta)
-      this.velocityVector.normalize().scale(this.speed);
+    if (this.getVelocityVector().len() > this.speed * delta)
+      this.velocityVector.normalize().scale(this.speed * delta);
 
-    let frictionForce = this.velocityVector.clone().scale(-0.001 * delta);
+    let frictionForce = this.velocityVector.clone().scale(-1.0 * delta);
 
     this.velocityVector.add(frictionForce);
-    const newPosition = soldier.pos.clone().add(this.getVelocityVector(delta));
+    const newPosition = soldier.pos.clone().add(this.getVelocityVector());
 
     this.accelerationVector.scale(0);
     this.setPosition(newPosition);
 
     stateManager.scene.checkOne(this, (res, collidingBodies) => {
-      console.log(" ---- [SCENE COLLISIONS] ---- ");
-      let a = res.a;
-      let b = res.b;
-      a.x = a.x - res.overlapV.x;
-      a.y = a.y - res.overlapV.y;
+      let soldierA = res.a as SoldierState;
+      let soldierB = res.b as SoldierState;
 
-      const soldierA = stateManager.scene.getSceneItemById(a.id);
-      const soldierB = stateManager.scene.getSceneItemById(b.id);
       if (!soldierA || !soldierB) {
-        console.log(
-          "[HARD-COLLISION check failed] : failed to get scene item by id."
-        );
         return;
       }
-
       // update position so it doesnt overlap with colliding body.
       soldierA.setPosition(
-        new SAT.Vector(a.x - res.overlapV.x, a.y - res.overlapV.y)
+        new SAT.Vector(
+          soldierA.currentPositionX - res.overlapV.x,
+          soldierA.currentPositionY - res.overlapV.y
+        )
       );
 
       let overlappingTargetPos =
@@ -353,8 +344,12 @@ export class SoldierState extends Schema {
         soldierA.hasReachedDestination() || soldierB.hasReachedDestination();
 
       if (overlappingTargetPos && eitherReachedDest) {
-        soldierA.setExpectedPosition(new SAT.Vector(a.x, a.y));
-        soldierB.setExpectedPosition(new SAT.Vector(b.x, b.y));
+        soldierA.setExpectedPosition(
+          new SAT.Vector(soldierA.getSceneItem().x, soldierA.getSceneItem().y)
+        );
+        soldierB.setExpectedPosition(
+          new SAT.Vector(soldierB.getSceneItem().x, soldierB.getSceneItem().y)
+        );
       }
     });
 

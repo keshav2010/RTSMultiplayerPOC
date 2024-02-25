@@ -8,14 +8,12 @@ export class OnSoldierMoveCommand extends Command<SessionRoom, CommandPayload> {
   execute({
     client,
     message,
-  }: {
-    client: Client;
-    message: {
-      soldierIds: string[];
-      expectedPositionX: number;
-      expectedPositionY: number;
-    };
-  }) {
+    gameManager,
+  }: CommandPayload<{
+    soldierIds: string[];
+    expectedPositionX: number;
+    expectedPositionY: number;
+  }>) {
     console.log("Soldier Move Command Requested", message);
     message.soldierIds.forEach((soldierId) => {
       const player = this.state.getPlayer(client.sessionId);

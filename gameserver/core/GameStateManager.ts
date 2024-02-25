@@ -62,7 +62,7 @@ export class GameStateManager<SceneItemType extends ISceneItem> {
   }
 
   removeSoldier(unit: SceneItemType) {
-    const isRemoved = this.scene.remove(unit.getSceneItem().getQuadtreeItem());
+    const isRemoved = this.scene.remove(unit.getSceneItem());
     if (isRemoved && this.onSceneItemRemoved) {
       this.onSceneItemRemoved(unit);
     }

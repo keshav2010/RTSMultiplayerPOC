@@ -73,9 +73,8 @@ export default {
   }) => {
     const seperationForce = soldier.getSeperationVector(stateManager);
     const steerForce = soldier.getSteerVector(soldier.getExpectedPosition());
-
-    soldier.applyForce(seperationForce, delta);
-    soldier.applyForce(steerForce, delta);
+    const netForce = seperationForce.clone().add(steerForce);
+    soldier.applyForce(netForce, delta);
 
     let stateMachineTrigged = false;
 

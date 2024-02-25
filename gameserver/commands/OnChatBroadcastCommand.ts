@@ -8,11 +8,20 @@ export class OnChatBroadcastCommand extends Command<
   SessionRoom,
   CommandPayload
 > {
-  execute({ client, message }: { client: Client; message: any }) {
+  execute({
+    client,
+    message,
+    gameManager,
+  }: CommandPayload<{
+    sessionId: string;
+    name: string;
+    x: number;
+    y: number;
+  }>) {
     const sessionId = client.sessionId;
     this.state.addPlayer(
       sessionId,
-      message.name || `Player_${nanoid()}`,
+      message.name,
       message?.x || 0,
       message?.y || 0
     );

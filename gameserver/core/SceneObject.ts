@@ -14,18 +14,20 @@ export type TypeQuadtreeItem = {
 };
 export class SceneObject extends SAT.Box {
   id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
   constructor(id: string, x: number, y: number, width = 35, height = 35) {
     // {pos:{x,y}}
     super(new SAT.Vector(x, y), width, height);
     this.id = id;
+    this.x = this.pos.x;
+    this.y = this.pos.y;
+    this.width = this.w;
+    this.height = this.h;
   }
   getQuadtreeItem(): TypeQuadtreeItem {
-    return {
-      id: this.id,
-      x: this.pos.x,
-      y: this.pos.y,
-      width: this.w,
-      height: this.h,
-    } as TypeQuadtreeItem;
+    return this as TypeQuadtreeItem;
   }
 }

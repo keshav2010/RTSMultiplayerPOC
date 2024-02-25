@@ -3,6 +3,7 @@ import { SoldierState } from "./SoldierState";
 import { nanoid } from "nanoid";
 import { SoldierType, SoldierTypeConfig } from "../../common/SoldierType";
 import { GameStateManager } from "../core/GameStateManager";
+import { Scene } from "../core/Scene";
 
 export class SpawnRequest extends Schema {
   @type("string") requestId: string = "";
@@ -64,7 +65,7 @@ export class PlayerState extends Schema {
     this.spawnRequestQueue = new ArraySchema<string>();
   }
 
-  private processSpawnRequest(deltaTime: number) {
+  private processSpawnRequest(deltaTime: number, scene: Scene<SoldierState>) {
     if (this.spawnRequestQueue.length < 1) return;
     const requestId = this.spawnRequestQueue.at(0);
     if (!requestId) return;
@@ -85,13 +86,15 @@ export class PlayerState extends Schema {
     // spawn a unit, and clear queue entry.
     this.spawnRequestDetailMap.delete(requestId);
     this.spawnRequestQueue.shift();
-    this.addNewSoldier(requestInfo.unitType);
+    this.addNewSoldier(requestInfo.unitType, scene);
   }
 
-  public addNewSoldier(type: SoldierType) {
+  public addNewSoldier(type: SoldierType, scene: Scene<SoldierState>) {
     console.log("spawning a soldier ", type);
     const newSoldier = new SoldierState(this.id, type, this.posX, this.posY);
     this.soldiers.set(newSoldier.id, newSoldier);
+
+    scene.addSceneItem(newSoldier);
     return newSoldier.id;
   }
 
@@ -100,7 +103,7 @@ export class PlayerState extends Schema {
     gameStateManager: GameStateManager<SoldierState>
   ) {
     this.resources += this.resourceGrowthRateHz * deltaTime;
-    this.processSpawnRequest(deltaTime);
+    this.processSpawnRequest(deltaTime, gameStateManager.scene);
 
     //TODO: tick each soldier
     this.soldiers.forEach((soldier) => {

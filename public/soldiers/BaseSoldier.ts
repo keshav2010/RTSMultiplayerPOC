@@ -153,10 +153,7 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     this.DEBUGTEXT.setPosition(this.x, this.y + 40);
     this.DEBUGTEXT.setText(
       `${soldierState?.currentState}
-      ID:${this.id}
-      HLTH:${this.initialParam.health}
-      V_EXP: (${soldierState?.expectedPositionX}, ${soldierState?.expectedPositionY})
-      V_CUR: (${soldierState?.currentPositionX}, ${soldierState?.currentPositionY})`
+      health:${this.initialParam.health}`
     );
   }
   update(deltaTime: number) {

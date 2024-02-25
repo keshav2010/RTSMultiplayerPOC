@@ -7,5 +7,5 @@ export class OnSoldierAttackCommand extends Command<
   SessionRoom,
   CommandPayload
 > {
-  execute({ client, message }: { client: Client; message: any }) {}
+  execute({ client, message, gameManager }: CommandPayload) {}
 }
