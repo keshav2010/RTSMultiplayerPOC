@@ -17,13 +17,7 @@ export class Spearman extends BaseSoldier {
     y: number,
     texture: string | Phaser.Textures.Texture,
     frame: any,
-    initialParam: {
-      color?: number[];
-      health?: number;
-      speed?: number;
-      damage?: number;
-      cost?: number;
-    },
+    color: number[],
     playerId: string
   ) {
     super(
@@ -33,13 +27,7 @@ export class Spearman extends BaseSoldier {
       y,
       texture,
       frame,
-      {
-        ...initialParam,
-        speed: 10,
-        damage: 2,
-        health: 100,
-        cost: 10,
-      },
+      color,
       playerId
     );
     this.soldierType = "SPEARMAN";

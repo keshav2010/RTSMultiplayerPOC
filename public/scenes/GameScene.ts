@@ -92,12 +92,7 @@ export class GameScene extends BaseScene {
       soldier.currentPositionY,
       "spearman",
       null,
-      {
-        health: soldier.health,
-        speed: soldier.speed,
-        cost: soldier.cost,
-        damage: soldier.damage,
-      },
+      [ownerPlayer.colorR, ownerPlayer.colorG, ownerPlayer.colorB],
       ownerPlayer.id
     );
 

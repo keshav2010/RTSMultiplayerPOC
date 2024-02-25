@@ -213,10 +213,8 @@ export class SoldierState extends Schema {
 
     let sumVec = new SAT.Vector(0);
     if (nearbyUnits.length < 2){
-      // console.log('no nearby unit found ', nearbyUnits.length);
       return sumVec; 
     }
-    console.log('nearby units = ', nearbyUnits.length);
 
     const otherSoldierUnits = nearbyUnits.filter((value) => {
       const isSelf = this.id === value.id;
