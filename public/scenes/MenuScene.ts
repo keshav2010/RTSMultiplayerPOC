@@ -54,7 +54,7 @@ export class MenuScene extends BaseScene {
 
     playBtn?.addEventListener("pointerdown", async (event) => {
       event.stopPropagation();
-      await this.onPlayButtonClick(playerForm);
+      this.scene.start(CONSTANT.SCENES.SESSIONBROWSER);
     });
 
     createSessionBtn?.addEventListener("pointerdown", async (event) => {
@@ -113,6 +113,25 @@ export class MenuScene extends BaseScene {
     }
   }
 
+  async onJoinSessionClick() {
+    try {
+      const networkManager = this.registry.get(
+        "networkManager"
+      ) as NetworkManager;
+      if (!networkManager) {
+        throw new Error("NetworkManager is not defined");
+      }
+
+      const playerName = (this.GetObject<Phaser.GameObjects.DOMElement>(
+        "obj_playerForm"
+      )?.getChildByName("nameInput") as Element & { value: string })!.value;
+      const sessions = await networkManager.getAvailableSession();
+      console.log('available sessions ', sessions);
+    }
+    catch(error) {
+
+    }
+  }
   async onCreateSessionClick() {
     try {
       const networkManager = this.registry.get(

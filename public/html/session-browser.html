@@ -1,0 +1,107 @@
+<style>
+    body {
+        font-family: Arial, sans-serif;
+    }
+    .server-browser {
+        width: 800px;
+        margin: 0 auto;
+        background-color: #f8f8f8;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .header,
+    .server-row-data {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        /* Vertically center content */
+    }
+
+    .server-list {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+
+    .server-row {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .server-row-data,
+    .search-box {
+        padding: 0 10px;
+    }
+
+    /* Scrollbar styles */
+    .server-list::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .server-list::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    .server-list::-webkit-scrollbar-thumb {
+        background: #888;
+    }
+
+    .server-list::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    /* Button styles */
+    button {
+        display: inline-block;
+        padding: 10px 20px;
+        margin: 10px;
+        text-align: center;
+        text-decoration: none;
+        font-size: 16px;
+        cursor: pointer;
+        color: #ffffff;
+        background-color: #4CAF50;
+        border: none;
+        border-radius: 12px;
+        transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+        background-color: #45a049;
+    }
+
+    button:focus {
+        outline: none;
+        border: 2px solid #4CAF50;
+    }
+
+    button:active {
+        background-color: #3e8e41;
+        transform: scale(0.98);
+    }
+    .no-servers-found {
+        min-height: 100px;
+        display: flex;
+        text-align: center;
+        justify-content: center;
+    }
+</style>
+<div class="server-browser">
+    <div class="header">
+        <h1>Server Browser</h1>
+        <button id="btn_serverListBrowser">Refresh</button>
+        <button id="btn_backToMenu">Back To Menu</button>
+        <input id="input_searchServer" type="text" placeholder="Search servers..." class="search-box">
+    </div>
+    <div class="server-list">
+        <div data-id="1" class="server-row-data" name="server-row-data">
+            <span class="server-name">Server 1</span>
+            <span class="server-players">10/50</span>
+            <span class="server-capacity">50</span>
+            <span><button>Join</button></span>
+        </div>
+        <!-- Add more server rows as needed -->
+    </div>
+</div>

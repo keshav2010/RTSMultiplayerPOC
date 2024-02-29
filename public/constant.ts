@@ -1,6 +1,7 @@
 export default {
   SCENES: {
     MENU: "MENU",
+    SESSIONBROWSER: "SESSIONBROWSER",
     LOAD: "LOAD",
     GAME: "GAME",
     RESULT: "RESULT",

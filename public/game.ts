@@ -5,6 +5,7 @@ import { ResultScene } from "./scenes/ResultScene";
 import { SpawnSelectionScene } from "./scenes/SpawnSelectionScene";
 import { PlayerStatisticHUD } from "./scenes/PlayerStatisticHUD";
 import { SessionLobbyScene } from "./scenes/SessionLobbyScene";
+import { SessionBrowserScene } from "./scenes/SessionBrowserScene";
 import SpinnerPlugin from "phaser3-rex-plugins/templates/spinner/spinner-plugin.js";
 import Phaser from "phaser";
 const config = {
@@ -19,6 +20,7 @@ const config = {
   disableContextMenu: true,
   scene: [
     MenuScene,
+    SessionBrowserScene,
     SessionLobbyScene,
     PlayerStatisticHUD,
     SpawnSelectionScene,
