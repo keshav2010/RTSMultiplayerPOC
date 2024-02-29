@@ -161,6 +161,7 @@ export class SessionBrowserScene extends BaseScene {
       }
       const connectedRoom = await networkManager.connectGameServer(roomId);
       console.log('connected',connectedRoom);
+      this.scene.start(CONSTANT.SCENES.SESSIONLOBBY);
     } catch (error) {
       console.log(error);
     }

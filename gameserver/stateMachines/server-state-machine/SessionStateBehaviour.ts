@@ -13,9 +13,9 @@ export default {
     sessionState: SessionState;
   }) => {
     const deltaTime = delta;
-    if (sessionState.sessionState !== "SESSION_LOBBY_STATE")
+    if (sessionState.sessionState !== "SESSION_LOBBY_STATE"){
       sessionState.sessionState = "SESSION_LOBBY_STATE";
-
+    } 
     if (
       sessionState.players.size >=
       Number(process.env.MINIMUM_PLAYERS_PER_SESSION)
@@ -42,8 +42,10 @@ export default {
     sessionState: SessionState;
   }) => {
     try {
-      if (sessionState.sessionState !== "SPAWN_SELECTION_STATE")
+      if (sessionState.sessionState !== "SPAWN_SELECTION_STATE"){
         sessionState.sessionState = "SPAWN_SELECTION_STATE";
+        sessionState.countdown = Number(process.env.COUNTDOWN_SPAWN_SELECTION);
+      }
       //in seconds
       const deltaTime = delta;
       sessionState.countdown -= deltaTime;
