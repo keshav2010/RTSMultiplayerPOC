@@ -6,6 +6,7 @@ import {
   CustomStateMachine,
 } from "./CustomStateMachine";
 import { SessionState } from "../schema/SessionState";
+import { Room } from "colyseus";
 
 /**
  * Manages entire game state.
@@ -18,6 +19,7 @@ export class GameStateManager<SceneItemType extends ISceneItem> {
     gameStateManager: GameStateManager<SceneItemType>;
     delta: number;
     sessionState: SessionState;
+    room: Room<any>;
   }>;
   alliances: AllianceTracker;
   onGameStartCallback: (() => void) | null | undefined;
@@ -45,11 +47,12 @@ export class GameStateManager<SceneItemType extends ISceneItem> {
     this.alliances = new AllianceTracker();
   }
 
-  tick(delta: number, sessionState: SessionState) {
+  tick(delta: number, sessionState: SessionState, room: Room<any>) {
     const args = {
       gameStateManager: this,
       delta,
       sessionState,
+      room
     };
     this.stateMachine.tick(args);
   }

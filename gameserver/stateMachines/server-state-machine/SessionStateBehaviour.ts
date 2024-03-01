@@ -1,20 +1,24 @@
+import { Room } from "colyseus";
 import { GameStateManager } from "../../core/GameStateManager";
 import { SessionState } from "../../schema/SessionState";
 import { SoldierState } from "../../schema/SoldierState";
 
 export default {
-  SessionLobbyState: ({
+  SessionLobbyState: async ({
     gameStateManager,
     delta,
     sessionState,
+    room
   }: {
     gameStateManager: GameStateManager<SoldierState>;
     delta: number;
     sessionState: SessionState;
+    room : Room;
   }) => {
     const deltaTime = delta;
     if (sessionState.sessionState !== "SESSION_LOBBY_STATE"){
       sessionState.sessionState = "SESSION_LOBBY_STATE";
+      await room.unlock();
     } 
     if (
       sessionState.players.size >=
@@ -32,19 +36,22 @@ export default {
 
   },
 
-  SpawnSelectionState: ({
+  SpawnSelectionState: async ({
     gameStateManager,
     delta,
     sessionState,
+    room
   }: {
     gameStateManager: GameStateManager<SoldierState>;
     delta: number;
     sessionState: SessionState;
+    room : Room;
   }) => {
     try {
       if (sessionState.sessionState !== "SPAWN_SELECTION_STATE"){
         sessionState.sessionState = "SPAWN_SELECTION_STATE";
         sessionState.countdown = Number(process.env.COUNTDOWN_SPAWN_SELECTION);
+        await room.unlock();
       }
       //in seconds
       const deltaTime = delta;
@@ -53,6 +60,7 @@ export default {
 
       if (sessionState.countdown <= 0) {
         console.log("countdown completed for spawn-selection");
+        await room.lock();
         gameStateManager.stateMachine.controller.send("TIMEOUT");
       }
     } catch (err) {
@@ -64,14 +72,18 @@ export default {
     gameStateManager,
     delta,
     sessionState,
+    room
   }: {
     gameStateManager: GameStateManager<SoldierState>;
     delta: number;
     sessionState: SessionState;
+    room : Room;
   }) => {
     try {
-      if (sessionState.sessionState !== "BATTLE_STATE")
+      if (sessionState.sessionState !== "BATTLE_STATE"){
+        room.lock();
         sessionState.sessionState = "BATTLE_STATE";
+      }
       var deltaTime = delta / 1000;
 
       //simulate all players.
@@ -96,5 +108,6 @@ export default {
     gameStateManager: GameStateManager<SoldierState>;
     delta: number;
     sessionState: SessionState;
+    tick : Room;
   }) => {},
 };

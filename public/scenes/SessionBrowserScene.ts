@@ -24,7 +24,7 @@ function removeServerList(sessionBrowserDOM: Phaser.GameObjects.DOMElement) {
 function addServerRecord(sessionBrowserDOM: Phaser.GameObjects.DOMElement, sessions: any[], onJoinClicked: (roomId: string) => void) {
   // Access the underlying HTML element
   const htmlElement = sessionBrowserDOM.node;
-
+  console.log(sessions);
   // Find or create the server-list div
   let serverListDiv = htmlElement.querySelector('.server-list');
   if (!serverListDiv) {
@@ -44,7 +44,7 @@ function addServerRecord(sessionBrowserDOM: Phaser.GameObjects.DOMElement, sessi
       // Create and append server name span
       const serverNameSpan = document.createElement('span');
       serverNameSpan.className = 'server-name';
-      serverNameSpan.textContent = session.name; // Assuming 'name' is a property of the session object
+      serverNameSpan.textContent = session.roomId; // Assuming 'name' is a property of the session object
       serverRowDataDiv.appendChild(serverNameSpan);
 
       // Create and append server players span
@@ -128,9 +128,7 @@ export class SessionBrowserScene extends BaseScene {
 
     refreshButton?.addEventListener("click", async  (event: any) => {
       removeServerList(
-        sessionBrowserDOM as Phaser.GameObjects.DOMElement & {
-          element: Element;
-        }
+        sessionBrowserDOM
       );
 
       const sessions = await networkManager.getAvailableSession();

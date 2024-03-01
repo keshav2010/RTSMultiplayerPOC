@@ -74,6 +74,6 @@ export class SessionRoom extends Room<SessionState> {
   }
 
   update(deltaTime: number) {
-    this.gameManager.tick(deltaTime, this.state);
+    this.gameManager.tick(deltaTime, this.state, this);
   }
 }
