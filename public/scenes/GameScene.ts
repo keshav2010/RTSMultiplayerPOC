@@ -236,7 +236,7 @@ export class GameScene extends BaseScene {
             networkManager.sendEventToServer(
               PacketType.ByClient.SOLDIER_ATTACK_REQUESTED,
               {
-                soldiers: selectedSoldiersForAttack.map((v) => v.id).join(","),
+                soldiers: selectedSoldiersForAttack.map((v) => v.id),
                 targetPlayerId: targetSoldier.playerId,
                 targetSoldierId: targetSoldier.id,
               }

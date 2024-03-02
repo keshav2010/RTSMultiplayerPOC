@@ -15,7 +15,6 @@ export default {
     soldier: SoldierState;
   }) => {
     if (!soldier.hasReachedDestination()) {
-      console.log("soldier not at destination, moving..");
       soldier.stateMachine.controller.send("Move");
       return;
     }
@@ -129,13 +128,7 @@ export default {
 
     //if attacked soldier unit dead, update server-state and schedule update for client.
     if (attackTarget.health === 0) {
-      let isRemoved = stateManager.removeSoldier(attackTarget);
-      if (!isRemoved)
-        console.log(
-          `Soldier ID#${
-            attackTarget?.getSceneItem().id
-          } is probably already removed.`
-        );
+      stateManager.removeSoldier(attackTarget);
       soldier.setAttackTarget(attackTarget);
       soldier.stateMachine.controller.send("TargetKilled");
     }
@@ -229,18 +222,22 @@ export default {
       if (!soldierAttackTarget) {
         soldier.stateMachine.controller.send("TargetLost");
         return;
-      }
+      } 
 
-      let seperationForce = soldier.getSeperationVector(stateManager);
-      let steerForce = soldier.getSteerVector(
+      const seperationForce = soldier.getSeperationVector(stateManager);
+      const steerForce = soldier.getSteerVector(
         soldierAttackTarget.getSceneItem().pos
       );
       soldier.applyForce(seperationForce, delta);
       soldier.applyForce(steerForce, delta);
 
-      soldier.setTargetPosition(soldierAttackTarget.getSceneItem().pos);
+      soldier.targetPositionX = soldierAttackTarget.getSceneItem().pos.x;
+      soldier.targetPositionY = soldierAttackTarget.getSceneItem().pos.y;
+      
+      soldier.expectedPositionX = soldierAttackTarget.getSceneItem().pos.x;
+      soldier.expectedPositionY = soldierAttackTarget.getSceneItem().pos.y;
 
-      let distToTarget = new SAT.Vector()
+      const distToTarget = new SAT.Vector()
         .copy(soldierAttackTarget.getSceneItem().pos)
         .sub(soldier.getSceneItem().pos)
         .len();
@@ -248,11 +245,14 @@ export default {
         soldier.stateMachine.controller.send("TargetInRange");
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
       if (soldierAttackTarget) {
-        soldier.setTargetPosition(soldierAttackTarget.getSceneItem().pos);
-        soldier.setExpectedPosition(soldierAttackTarget.getSceneItem().pos);
-      }
+        soldier.targetPositionX = soldierAttackTarget.getSceneItem().pos.x;
+        soldier.targetPositionY = soldierAttackTarget.getSceneItem().pos.y;
+        
+        soldier.expectedPositionX = soldierAttackTarget.getSceneItem().pos.x;
+        soldier.expectedPositionY = soldierAttackTarget.getSceneItem().pos.y;
+        }
       soldier.setAttackTarget(null);
     }
   },
