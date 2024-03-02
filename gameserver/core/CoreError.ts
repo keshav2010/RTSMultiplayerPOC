@@ -1,9 +1,5 @@
-export enum CoreErrorCodes {
-  REMOVE_ITEM_FAILED = "remove_scene_item_failed",
-  ADD_ITEM_FAILED = "add_scene_item_failed",
-  MAX_SESSIONS_REACHED = "MAX_SESSIONS_REACHED",
-  SESSION_NOT_FOUND = "SESSION_NOT_FOUND",
-}
+import { CoreErrorCodes } from "../config";
+
 export class CoreError extends Error {
   code: CoreErrorCodes;
   statusCode: number;

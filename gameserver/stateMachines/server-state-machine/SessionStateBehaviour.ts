@@ -2,6 +2,7 @@ import { Room } from "colyseus";
 import { GameStateManager } from "../../core/GameStateManager";
 import { SessionState } from "../../schema/SessionState";
 import { SoldierState } from "../../schema/SoldierState";
+import { SERVER_CONFIG } from "../../config";
 
 export default {
   SessionLobbyState: async ({
@@ -20,15 +21,12 @@ export default {
       sessionState.sessionState = "SESSION_LOBBY_STATE";
       await room.unlock();
     } 
-    if (
-      sessionState.players.size >=
-      Number(process.env.MINIMUM_PLAYERS_PER_SESSION)
-    ) {
+    if (sessionState.players.size >= SERVER_CONFIG.MINIMUM_PLAYERS_PER_SESSION) {
       sessionState.countdown -= deltaTime;
       sessionState.countdown = Math.max(0, sessionState.countdown);
       if (sessionState.countdown <= 0) {
         console.log("session-lobby-state timed out, starting match/game");
-        sessionState.countdown = Number(process.env.COUNTDOWN_SPAWN_SELECTION);
+        sessionState.countdown = SERVER_CONFIG.COUNTDOWN_SPAWN_SELECTIONS;
         gameStateManager.stateMachine.controller.send("StartMatch");
       }
       return;
@@ -50,7 +48,7 @@ export default {
     try {
       if (sessionState.sessionState !== "SPAWN_SELECTION_STATE"){
         sessionState.sessionState = "SPAWN_SELECTION_STATE";
-        sessionState.countdown = Number(process.env.COUNTDOWN_SPAWN_SELECTION);
+        sessionState.countdown = SERVER_CONFIG.COUNTDOWN_SPAWN_SELECTIONS;
         await room.unlock();
       }
       //in seconds

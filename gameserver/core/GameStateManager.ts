@@ -7,6 +7,7 @@ import {
 } from "./CustomStateMachine";
 import { SessionState } from "../schema/SessionState";
 import { Room } from "colyseus";
+import { SERVER_CONFIG } from "../config";
 
 /**
  * Manages entire game state.
@@ -38,7 +39,7 @@ export class GameStateManager<SceneItemType extends ISceneItem> {
       height: 15,
     });
 
-    this.countdown = Number(process.env.COUNTDOWN) || 10000; //seconds
+    this.countdown = SERVER_CONFIG.COUNTDOWN
     this.stateMachine = new CustomStateMachine<{
       gameStateManager: GameStateManager<SceneItemType>;
       delta: number;

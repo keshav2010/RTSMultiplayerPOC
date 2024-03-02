@@ -1,6 +1,7 @@
 import { Schema, MapSchema, type } from "@colyseus/schema";
 import { PlayerState } from "./PlayerState";
 import { nanoid } from "nanoid";
+import { SERVER_CONFIG } from "../config";
 
 export class SessionState extends Schema {
 
@@ -11,7 +12,7 @@ export class SessionState extends Schema {
     | "SPAWN_SELECTION_STATE"
     | "BATTLE_STATE"
     | "BATTLE_END_STATE" = "SESSION_LOBBY_STATE";
-  @type("number") countdown: number = Number(process.env.COUNTDOWN_DEFAULT);
+  @type("number") countdown: number = SERVER_CONFIG.COUNTDOWN_DEFAULT;
   constructor() {
     super();
   }

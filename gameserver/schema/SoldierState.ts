@@ -8,6 +8,7 @@ import { GameStateManager } from "../core/GameStateManager";
 import { SceneObject } from "../core/SceneObject";
 import { AllianceTypes } from "../AllianceTracker";
 import SAT from "sat";
+import { MOVABLE_UNIT_CONSTANTS } from "../config";
 
 function mapRange(
   val: number,
@@ -21,18 +22,6 @@ function mapRange(
   let normalizedGivenRange = (val - mapRangeStart) / givenRange;
   return targetRangeStart + normalizedGivenRange * targetRange;
 }
-
-const MOVABLE_UNIT_CONSTANTS = {
-  MAX_STEER_FORCE: 10,
-  MAX_REPEL_FORCE: 50,
-
-  DESIRED_DIST_FROM_TARGET: 30,
-  ACCEPTABLE_DIST_FROM_EXPECTED_POS: 5,
-  NEARBY_SEARCH_RADI: 150,
-  ENEMY_SEARCH_RADIUS: 200,
-  DESIRED_SEPERATION_DIST: 100, //to initiate repulsion force
-  MAX_TARGETPOS_OVERLAP_DIST: 50,
-};
 
 export class SoldierState extends Schema {
   @type("number") currentPositionX: number = 0;
