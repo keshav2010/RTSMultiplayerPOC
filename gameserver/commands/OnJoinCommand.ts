@@ -6,12 +6,11 @@ import { nanoid } from "nanoid";
 import { CommandPayload } from "./CommandPayloadType";
 export class OnJoinCommand extends Command<SessionRoom, CommandPayload> {
   execute({ client, message, gameManager }: CommandPayload) {
-    console.log(message);
     const sessionId = client.sessionId;
-    console.log(message);
+    console.log('Player Joined', message);
     this.state.addPlayer(
       sessionId,
-      message?.name || `Player_${nanoid()}`,
+      message?.playerName || `Player_${nanoid()}`,
       message?.x || 0,
       message?.y || 0
     );

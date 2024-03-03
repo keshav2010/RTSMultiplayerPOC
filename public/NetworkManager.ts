@@ -56,7 +56,9 @@ export class NetworkManager {
   }
 
   async connectGameServer(roomId: string) {
-    const room = await this.client.joinById<SessionState>(roomId);
+    const room = await this.client.joinById<SessionState>(roomId, {
+      playerName: this.getPlayerName(),
+    });
     this.room = room;
     this.setupRoomListener();
     return room;
