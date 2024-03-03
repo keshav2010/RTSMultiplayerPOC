@@ -23,7 +23,7 @@ export class SessionRoom extends Room<SessionState> {
   onSceneItemRemoved(item: SoldierState) {
     const player = this.state.getPlayer(item.playerId);
     if (!player) return;
-    player.removeSoldier(item.id);
+    player.removeSoldier(item.id, this.gameManager);
   }
 
   onCreate(options: any) {
@@ -65,6 +65,7 @@ export class SessionRoom extends Room<SessionState> {
     this.dispatcher.dispatch(new OnLeaveCommand(), {
       client,
       message: commandPayload,
+      gameManager: this.gameManager
     });
   }
 

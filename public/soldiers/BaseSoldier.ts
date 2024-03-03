@@ -112,15 +112,22 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
       this.hp.destroy();
       this.highlightBackground.destroy();
       this.DEBUGTEXT.destroy();
+      scene.events.off("update", this.update, this);
     });
   }
   setHealth(newHealth: number) {
     this.hp.currentValue = newHealth;
   }
   printDebugText() {
-    const networkManager = this.scene.registry.get(
+    const networkManager = this?.scene?.registry?.get(
       "networkManager"
     ) as NetworkManager;
+    if(!networkManager) {
+      console.log(
+        `Could not find network-manager for soldier :${this.id}, most likely is deleted from scene (value of scene : ${this.scene})`
+      );
+      return;
+    }
 
     const playerState = SessionStateClientHelpers.getPlayer(
       networkManager.getState()!,

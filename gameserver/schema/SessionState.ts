@@ -2,6 +2,8 @@ import { Schema, MapSchema, type } from "@colyseus/schema";
 import { PlayerState } from "./PlayerState";
 import { nanoid } from "nanoid";
 import { SERVER_CONFIG } from "../config";
+import { SoldierState } from "./SoldierState";
+import { GameStateManager } from "../core/GameStateManager";
 
 export class SessionState extends Schema {
 
@@ -31,7 +33,13 @@ export class SessionState extends Schema {
   public getPlayer(sessionId: string) {
     return this.players.get(sessionId);
   }
-  public removePlayer(sessionId: string) {
+  public removePlayer(sessionId: string, gameManager: GameStateManager<SoldierState>) {
+    const player = this.players.get(sessionId);
+    if(!player) {
+      return;
+    }
+
+    player.removeAllSoldiers(gameManager);
     this.players.delete(sessionId);
   }
   public countReadyPlayers() {

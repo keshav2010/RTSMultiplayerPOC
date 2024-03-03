@@ -84,7 +84,7 @@ export class GameScene extends BaseScene {
   }
 
   onSoldierAdded(soldier: SoldierState, ownerPlayer: PlayerState) {
-    console.log('Adding a soldier ', soldier.id);
+    console.log("Adding a soldier ", soldier.id);
     const spearmen = new Spearman(
       this,
       soldier.id,
@@ -104,14 +104,23 @@ export class GameScene extends BaseScene {
       );
       soldiersMap = this.playerSoldiersGameObject.get(soldier.playerId);
     }
-    console.log('Added soldier with id ', soldier.id, soldier);
+    console.log("Added soldier with id ", soldier.id, soldier);
     soldiersMap!.set(soldier.id, spearmen);
   }
 
-  onSoldierRemoved(soldier: SoldierState, ownerPlayer: PlayerState) {
-    this.selectedSoldiersMap.delete(soldier.id);
-    this.playerSoldiersGameObject.get(ownerPlayer.id)?.delete(soldier.id);
-    this.DestroyStateChangeListener(soldier.id);
+  onSoldierRemoved(soldierId: string, playerId: string) {
+    try {
+      this.DestroyStateChangeListener(soldierId);
+      this.selectedSoldiersMap.delete(soldierId);
+      const obj = this.playerSoldiersGameObject.get(playerId)!.get(soldierId)!;
+      this.DestroyObject(obj);
+      this.playerSoldiersGameObject.get(playerId)!.delete(soldierId);
+      console.log(
+        `Removed Soldier from scene : ${soldierId} , for player : ${playerId}`
+      );
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   onSoldierSelected(soldierId: string) {
@@ -131,7 +140,9 @@ export class GameScene extends BaseScene {
   }
 
   onSoldierPositionChanged(playerId: string, soldierId: string) {
-    const phaserSceneObject = this.playerSoldiersGameObject.get(playerId)?.get(soldierId);
+    const phaserSceneObject = this.playerSoldiersGameObject
+      .get(playerId)
+      ?.get(soldierId);
     const state = networkManager.getState();
     if (!state) return;
     const playerState = SessionStateClientHelpers.getPlayer(state, playerId);
@@ -147,9 +158,11 @@ export class GameScene extends BaseScene {
     );
 
     if (!soldierState) return;
-    
-    if(!phaserSceneObject) {
-      console.error(`No Phaser Object Found (soldier: ${soldierId})/ playerId: ${playerId}`);
+
+    if (!phaserSceneObject) {
+      console.error(
+        `No Phaser Object Found (soldier: ${soldierId})/ playerId: ${playerId}`
+      );
       return;
     }
 
@@ -245,7 +258,9 @@ export class GameScene extends BaseScene {
             networkManager.sendEventToServer(
               PacketType.ByClient.SOLDIER_MOVE_REQUESTED,
               {
-                soldierIds: Array.from(this.selectedSoldiersMap.values()).map((v) => v.id),
+                soldierIds: Array.from(this.selectedSoldiersMap.values()).map(
+                  (v) => v.id
+                ),
                 expectedPositionX: pointer.worldX,
                 expectedPositionY: pointer.worldY,
               }
@@ -295,7 +310,7 @@ export class GameScene extends BaseScene {
         }
 
         const soldierMap = this.playerSoldiersGameObject.get(playerId);
-        if(!soldierMap) {
+        if (!soldierMap) {
           return;
         }
         let s = soldierMap.values();
@@ -358,7 +373,10 @@ export class GameScene extends BaseScene {
     const state = networkManager.getState();
     if (!state) return;
 
-    const player = SessionStateClientHelpers.getPlayer(state, networkManager.getClientId()!);
+    const player = SessionStateClientHelpers.getPlayer(
+      state,
+      networkManager.getClientId()!
+    );
     if (!player) {
       console.error(`Client not connected.`);
       this.scene.start(CONSTANT.SCENES.MENU);
@@ -405,18 +423,23 @@ export class GameScene extends BaseScene {
 
       this.AddStateChangeListener(
         player.soldiers.onRemove((soldier, key) => {
-          this.onSoldierRemoved(soldier, player);
-
+          const soldierId = soldier.id;
+          console.log(
+            `[Soldier Removed] player-id : ${player.id} > soldier: ${soldierId}`
+          );
           // remove relevant listeners for each soldier.
-          this.DestroyStateChangeListener(`health-${soldier.id}`);
-          this.DestroyStateChangeListener(`currentPosX-${soldier.id}`);
-          this.DestroyStateChangeListener(`currentPosY-${soldier.id}`);
+          this.DestroyStateChangeListener(`health-${soldierId}`);
+          this.DestroyStateChangeListener(`currentPosX-${soldierId}`);
+          this.DestroyStateChangeListener(`currentPosY-${soldierId}`);
+
+          this.onSoldierRemoved(soldierId, player.id);
         })
       );
     });
 
     this.AddStateChangeListener(
       state.players.onRemove((player) => {
+        console.log("player removed ", player.id);
         this.events.emit(PacketType.ByServer.PLAYER_LEFT, {
           playerState: player,
         });
@@ -464,7 +487,6 @@ export class GameScene extends BaseScene {
         this.DestroyStateChangeListener(item.requestId);
       })
     );
-    
 
     this.AddSceneEvent(GAMEEVENTS.SOLDIER_SELECTED, (d: BaseSoldier) => {
       this.onSoldierSelected(d.id);
@@ -491,7 +513,8 @@ export class GameScene extends BaseScene {
         new PlayerCastle(this, player.posX, player.posY, "flag", null, {
           health: 500,
           player: player,
-        })
+        }),
+        `obj_playerCastle_${player.id}`
       );
     });
 

@@ -23,7 +23,10 @@ export class Scene<
   }
 
   removeSceneItem(itemId: string) {
-    if (!this.sceneItemMap.has(itemId)) return;
+    if (!this.sceneItemMap.has(itemId)) {
+      console.log(`item ${itemId} not found in scene`);
+      return;
+    }
     const item = this.sceneItemMap.get(itemId)!;
     const sceneObject = item.getSceneItem();
 
@@ -37,7 +40,7 @@ export class Scene<
   }
 
   getSceneItemById(id: string) {
-    return (this.sceneItemMap.get(id)) || null;
+    return this.sceneItemMap.get(id) || null;
   }
 
   /**
@@ -50,7 +53,7 @@ export class Scene<
     const result = this.colliding({ x, y }, (a, b) => {
       // a=> 1st arg, b => actual quadtree object
       const aPos = new SAT.Vector(a.x, a.y);
-      const bPos = new SAT.Vector(b.x + b.width!/2, b.y + b.height!/2);
+      const bPos = new SAT.Vector(b.x + b.width! / 2, b.y + b.height! / 2);
       let distance = aPos.clone().sub(bPos).len();
       return distance <= 2 * searchRadius;
     });

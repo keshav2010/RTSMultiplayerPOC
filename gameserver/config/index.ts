@@ -1,3 +1,6 @@
+
+import dotenv from 'dotenv';
+dotenv.config();
 export const SERVER_CONFIG = {
   TICKRATE: Number(process.env.TICKRATE || 60),
   COUNTDOWN: Number(process.env.COUNTDOWN || 5000),
@@ -7,7 +10,7 @@ export const SERVER_CONFIG = {
   COUNTDOWN_DEFAULT: Number(process.env.COUNTDOWN_DEFAULT || 15000),
   MAX_SESSION_PER_WORKER: Number(process.env.MAX_SESSION_PER_WORKER || 10),
   MINIMUM_PLAYERS_PER_SESSION: Number(
-    process.env.MINIMUM_PLAYERS_PER_SESSION || 10
+    process.env.MINIMUM_PLAYERS_PER_SESSION
   ),
 };
 export enum CoreErrorCodes {
@@ -19,12 +22,12 @@ export enum CoreErrorCodes {
 
 export const MOVABLE_UNIT_CONSTANTS = {
   MAX_STEER_FORCE: 10,
-  MAX_REPEL_FORCE: 50,
+  MAX_REPEL_FORCE: 30,
 
   DESIRED_DIST_FROM_TARGET: 30,
   ACCEPTABLE_DIST_FROM_EXPECTED_POS: 5,
   NEARBY_SEARCH_RADI: 150,
   ENEMY_SEARCH_RADIUS: 200,
-  DESIRED_SEPERATION_DIST: 100, //to initiate repulsion force
+  DESIRED_SEPERATION_DIST: 35, //to initiate repulsion force
   MAX_TARGETPOS_OVERLAP_DIST: 50,
 };

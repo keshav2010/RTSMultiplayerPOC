@@ -84,15 +84,19 @@ export class PlayerStatisticHUD extends BaseScene {
     gameScene.AddSceneEvent(
       PacketType.ByServer.PLAYER_LEFT,
       (data: { playerState: PlayerState }) => {
+        console.log(`Player : ${data?.playerState?.id} Dropped.`);
+
         const state = networkManager.getState();
         if (!state) return;
-        const playerObject = SessionStateClientHelpers.getPlayer(
-          state,
-          data.playerState.id
-        );
+        const playerObject = data.playerState;
         if (!playerObject) {
           return;
         }
+        
+        const soldiersPhaserObjectMap = gameScene.playerSoldiersGameObject.get(playerObject.id);
+        soldiersPhaserObjectMap?.forEach((soldier, soldierId) => {
+          gameScene.onSoldierRemoved(soldier.id, playerObject.id);
+        });
         soldierCount.setText(
           `Total Soldiers: ${[...state.players.values()].reduce((acc, curr) => {
             acc = acc + curr.soldiers.size;

@@ -141,11 +141,14 @@ export class PlayerState extends Schema {
     this.resources -= costOfUnit;
   }
 
-  public removeSoldier(soldierId: string) {
+  public removeSoldier(soldierId: string, gameManager: GameStateManager<SoldierState>) {
+    gameManager.scene.removeSceneItem(soldierId);
     this.soldiers.delete(soldierId);
   }
 
-  public removeAllSoldiers() {
-    this.soldiers.clear();
+  public removeAllSoldiers(gameManager: GameStateManager<SoldierState>) {
+    this.soldiers.forEach((item) => {
+      this.removeSoldier(item.id, gameManager);
+    })
   }
 }
