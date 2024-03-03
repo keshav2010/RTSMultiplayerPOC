@@ -440,9 +440,13 @@ export class GameScene extends BaseScene {
     this.AddStateChangeListener(
       state.players.onRemove((player) => {
         console.log("player removed ", player.id);
+
+        const kingdomId = `obj_playerCastle_${player.id}`;
         this.events.emit(PacketType.ByServer.PLAYER_LEFT, {
           playerState: player,
         });
+        const castle = this.GetObject<PlayerCastle>(kingdomId);
+        this.DestroyObject<PlayerCastle>(castle!);
       })
     );
 

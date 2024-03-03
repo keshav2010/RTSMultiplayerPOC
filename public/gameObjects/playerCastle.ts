@@ -43,7 +43,7 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     );
     this.DEBUGTEXT.setOrigin(0.5);
     this.on("destroy", () => {
-      scene.events.off("update");
+      scene.events.off("update", this.update, this);
       this.hp.destroy();
       this.DEBUGTEXT.destroy();
     });
