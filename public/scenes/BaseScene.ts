@@ -65,8 +65,14 @@ export class BaseScene extends Phaser.Scene {
     this.networkCallsCleanup.set(mKey, existingCbSet);
   }
   DestroyStateChangeListener(key: string) {
-    this.networkCallsCleanup.get(key)?.forEach((cb) => cb());
-    this.networkCallsCleanup.delete(key);
+    try {
+      this.networkCallsCleanup.get(key)?.forEach((cb) => cb());
+      this.networkCallsCleanup.delete(key);
+      console.log('Clean State Change Listener.');
+    }
+    catch(error) {
+      console.log(error);
+    }
   }
 
   AddObject<

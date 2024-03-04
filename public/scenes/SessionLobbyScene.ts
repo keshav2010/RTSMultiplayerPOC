@@ -71,6 +71,62 @@ export class SessionLobbyScene extends BaseScene {
 
     networkManager.room?.state.onChange(() => {});
 
+    const state = networkManager.getState();
+
+    const playerReadyTextSpacing = 20;
+    const playerReadyTextOffset =300;
+
+    this.AddStateChangeListener(
+      state?.players.onAdd((player) => {
+
+        console.log(' Added player : ', player.id, ' name = ', player.name);
+        const AlreadyJoinedPlayers = Array.from(state.players.values()).filter(
+          (p) => {return p.id !== player.id}
+        );
+
+        let lastIndexAdded = 0;
+        AlreadyJoinedPlayers.forEach((playerAlreadyAdded, i) => {
+          const existingReadyText = this.GetObject<Phaser.GameObjects.Text>(
+            `obj_text_player_joined_${playerAlreadyAdded.id}`
+          );
+          if (existingReadyText) return;
+
+          const textPos = playerReadyTextOffset + playerReadyTextSpacing * i;
+          this.AddObject(
+            this.add.text(
+              15,
+              textPos,
+              `${playerAlreadyAdded.name} is in Room.`
+            ),
+            `obj_text_player_joined_${playerAlreadyAdded.id}`
+          );
+          console.log('adding at pos = ', textPos, 'player = ', playerAlreadyAdded.name, ' index = ', i);
+          lastIndexAdded = i;
+        });
+        if (this.GetObject(`obj_text_player_joined_${player.id}`)) return;
+
+        const newTextPos = playerReadyTextOffset + playerReadyTextSpacing * (state.players.size-1)
+        console.log('fresh log adding at index = ',newTextPos, ' the newly joined player');
+        this.AddObject(
+          this.add.text(
+            15,
+            newTextPos,
+            `${player.name} Joined Now and is in Room.`
+          ),
+          `obj_text_player_joined_${player.id}`
+        );
+      })!
+    );
+
+    this.AddStateChangeListener(
+      state?.players.onRemove((player) => {
+        const text = this.GetObject<Phaser.GameObjects.Text>(
+          `obj_text_player_joined_${player.id}`
+        );
+        this.DestroyObject(text!);
+      })!
+    );
+
     this.AddSceneEvent("shutdown", (data: any) => {
       console.log("shutdown ", data.config.key);
       this.Destroy();
