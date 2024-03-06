@@ -5,4 +5,5 @@ RUN npm install
 COPY . .
 EXPOSE 3000
 EXPOSE 3007
-CMD ["npm", "start"]
+EXPOSE 2567
+CMD ["npm", "run", "deploy"]
