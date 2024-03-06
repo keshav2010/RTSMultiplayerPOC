@@ -129,7 +129,7 @@ export default {
     //if attacked soldier unit dead, update server-state and schedule update for client.
     if (attackTarget.health === 0) {
       stateManager.removeSoldier(attackTarget);
-      soldier.setAttackTarget(attackTarget);
+      soldier.setAttackTarget(null);
       soldier.stateMachine.controller.send("TargetKilled");
     }
   },
