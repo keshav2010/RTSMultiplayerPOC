@@ -2,10 +2,11 @@ import CONSTANT from "../constant";
 import { BaseScene } from "./BaseScene";
 import { NetworkManager } from "../NetworkManager";
 import { addBackgroundImage } from "../helpers/addBackgroundImage";
-
+const URL = `${process.env.COLYSEUS_SERVER_URL}`;
 export class MenuScene extends BaseScene {
   constructor() {
     super(CONSTANT.SCENES.MENU);
+    console.log(URL);
   }
   init() {
     super.init();
@@ -104,7 +105,7 @@ export class MenuScene extends BaseScene {
       this.registry
         .get("networkManager")
         .connectGameServer(
-          `localhost:2567/${sessionId}`,
+          `${URL}/${sessionId}`,
           onConnectHandler,
           onDisconnectHandler
         );
