@@ -6,7 +6,6 @@ services:
     container_name: master_server
     ports:
       - "3000:3000"
-      - "3007:3007"
     deploy:
       restart_policy:
         condition: on-failure
