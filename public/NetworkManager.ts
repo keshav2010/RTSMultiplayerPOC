@@ -1,7 +1,7 @@
 import * as Colyseus from "colyseus.js";
 import Phaser from "phaser";
 import { SessionState } from "../gameserver/schema/SessionState";
-const URL = `${process.env.COLYSEUS_SERVER_URL}`;
+const URL = `${process.env.COLYSEUS_SERVER_URL}:${process.env.COLYSEUS_SERVER_PORT}`;
 export type RoomEventHandlerCallbackType = (
   type: "onStateChange" | "onMessage" | "onLeave" | "onError",
   data: any
@@ -18,7 +18,7 @@ export class NetworkManager {
     phaserGame: Phaser.Game,
     phaserRegistry: Phaser.Data.DataManager
   ) {
-    this.client = new Colyseus.Client(`ws://${URL}` || `ws://localhost:2567`);
+    this.client = new Colyseus.Client(`ws://${URL}`);
     this.room = null;
 
     this.game = phaserGame;

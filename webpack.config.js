@@ -30,6 +30,7 @@ module.exports = {
         new HtmlWebpackPlugin({ template: './public/index.html' }),
         new webpack.DefinePlugin({
             'process.env.COLYSEUS_SERVER_URL': JSON.stringify(process.env.COLYSEUS_SERVER_URL),
+            'process.env.COLYSEUS_SERVER_PORT': JSON.stringify(process.env.COLYSEUS_SERVER_PORT),
         })
     ],
     mode: "development"

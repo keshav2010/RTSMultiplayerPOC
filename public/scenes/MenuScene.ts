@@ -2,7 +2,7 @@ import CONSTANT from "../constant";
 import { BaseScene } from "./BaseScene";
 import { NetworkManager } from "../NetworkManager";
 import { addBackgroundImage } from "../helpers/addBackgroundImage";
-const URL = `${process.env.COLYSEUS_SERVER_URL}`;
+const URL = `${process.env.COLYSEUS_SERVER_URL}:${process.env.COLYSEUS_SERVER_PORT}`;
 export class MenuScene extends BaseScene {
   constructor() {
     super(CONSTANT.SCENES.MENU);
