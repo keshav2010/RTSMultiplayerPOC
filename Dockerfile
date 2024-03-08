@@ -7,4 +7,4 @@ RUN npm install -g tsx
 RUN npm install
 COPY . .
 EXPOSE 3000
-CMD ["npm", "run", "deploy"]
+CMD ["npm", "run", "start"]
