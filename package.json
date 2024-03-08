@@ -32,6 +32,7 @@
     "js-quadtree": "^3.3.6",
     "nanoid": "^5.0.4",
     "nodemon": "^2.0.15",
+    "npx": "^10.2.2",
     "phaser": "^3.70.0",
     "phaser-ui-tools": "^2.0.0-beta",
     "phaser3-rex-plugins": "^1.1.82",
