@@ -19,7 +19,7 @@ import path from "path";
 import fs from "fs";
 import dotenv from 'dotenv';
 dotenv.config();
-const PORT = process.env.COLYSEUS_SERVER_PORT;
+const PORT = process.env.PORT;
 const app = express();
 app.use(express.json());
 app.use(cors());
@@ -66,3 +66,4 @@ const gameServer = new Server({
 });
 gameServer.define("session_room", SessionRoom);
 gameServer.listen(Number(PORT));
+console.log('SERVER WILL BE LISTENING ON PORT ', PORT);
