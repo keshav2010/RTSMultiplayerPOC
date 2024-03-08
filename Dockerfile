@@ -2,7 +2,7 @@ FROM node:18
 WORKDIR /rtsApp
 COPY package*.json ./
 RUN npm install webpack webpack-cli
-RUN npm install -g npx
+RUN npm install npx
 RUN npm install -g tsx
 RUN npm install
 COPY . .
