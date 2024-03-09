@@ -7,7 +7,7 @@
     "build": "webpack --config webpack.config.js --watch",
     "start": "tsx gameserver/index",
     "dev": "webpack --config webpack.config.js --watch && tsx watch gameserver/index.ts",
-    "deploy": "npx webpack --config webpack.config.js && tsx gameserver/index",
+    "deploy": "npx webpack --config webpack.config.js -f && tsx gameserver/index",
     "test": "ts-jest",
     "run_server": "docker-compose up -d --build --remove-orphans",
     "stop_server": "docker-compose down"
