@@ -42,15 +42,18 @@ app.get("/", async (req, res) => {
     const files = await fs.promises.readdir(pathName);
     const filename = files.find((file) => path.extname(file) === ".html");
     if (!filename) {
+      console.log(`Serving back 500`);
       return res
         .status(500)
         .send(`<h1>ERROR! No HTML files found in ${pathName}</h1>`);
     }
     const filepath = path.resolve(pathName, filename);
     const stats = await fs.promises.stat(filepath);
+    console.log(`Serving : ${filepath}`);
     if (!stats.isFile()) {
       return res.status(500).send(`<h1>ERROR! ${filename} is not a file.</h1>`);
     }
+    console.log(`Serving : ${filepath}`);
     res.sendFile(filepath);
   } catch (err) {
     console.error(err);
