@@ -3,7 +3,7 @@ WORKDIR /rtsApp
 COPY package*.json ./
 RUN npm install webpack
 RUN npm install webpack-cli
-RUN npm install -g tsx
+RUN npm install tsx
 RUN npm install
 COPY . .
 EXPOSE 3000
