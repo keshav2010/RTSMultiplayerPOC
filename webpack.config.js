@@ -32,6 +32,5 @@ module.exports = {
             'process.env.COLYSEUS_SERVER_URL': JSON.stringify(process.env.COLYSEUS_SERVER_URL),
             'process.env.PORT': JSON.stringify(process.env.PORT),
         })
-    ],
-    mode: "development"
+    ]
 }
