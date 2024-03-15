@@ -4,7 +4,7 @@ import { nanoid } from "nanoid";
 import { SoldierType, SoldierTypeConfig } from "../../common/SoldierType";
 import { GameStateManager } from "../core/GameStateManager";
 import { Scene } from "../core/Scene";
-
+import {IDfied} from '../core/interface/IDfied';
 export class SpawnRequest extends Schema {
   @type("string") requestId: string = "";
   @type("string") unitType: SoldierType = "SPEARMAN";
@@ -19,7 +19,7 @@ export class SpawnRequest extends Schema {
   }
 }
 
-export class PlayerState extends Schema {
+export class PlayerState extends Schema implements IDfied {
   @type("string") id: string;
 
   @type("string") name: string = "";
@@ -100,7 +100,7 @@ export class PlayerState extends Schema {
 
   public tick(
     deltaTime: number,
-    gameStateManager: GameStateManager<SoldierState>
+    gameStateManager: GameStateManager<SoldierState, PlayerState>
   ) {
     this.resources += this.resourceGrowthRateHz * deltaTime;
     this.processSpawnRequest(deltaTime, gameStateManager.scene);
@@ -141,12 +141,12 @@ export class PlayerState extends Schema {
     this.resources -= costOfUnit;
   }
 
-  public removeSoldier(soldierId: string, gameManager: GameStateManager<SoldierState>) {
+  public removeSoldier(soldierId: string, gameManager: GameStateManager<SoldierState, PlayerState>) {
     gameManager.scene.removeSceneItem(soldierId);
     this.soldiers.delete(soldierId);
   }
 
-  public removeAllSoldiers(gameManager: GameStateManager<SoldierState>) {
+  public removeAllSoldiers(gameManager: GameStateManager<SoldierState, PlayerState>) {
     this.soldiers.forEach((item) => {
       this.removeSoldier(item.id, gameManager);
     })

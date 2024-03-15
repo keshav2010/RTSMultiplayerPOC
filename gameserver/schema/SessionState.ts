@@ -6,7 +6,6 @@ import { SoldierState } from "./SoldierState";
 import { GameStateManager } from "../core/GameStateManager";
 
 export class SessionState extends Schema {
-
   // Key : sessionId
   @type({ map: PlayerState }) players = new MapSchema<PlayerState>();
   @type("string") sessionState:
@@ -29,13 +28,17 @@ export class SessionState extends Schema {
       sessionId,
       new PlayerState(`Player_${name}`, x, y, sessionId)
     );
+    return this.players.get(sessionId);
   }
   public getPlayer(sessionId: string) {
     return this.players.get(sessionId);
   }
-  public removePlayer(sessionId: string, gameManager: GameStateManager<SoldierState>) {
+  public removePlayer(
+    sessionId: string,
+    gameManager: GameStateManager<SoldierState, PlayerState>
+  ) {
     const player = this.players.get(sessionId);
-    if(!player) {
+    if (!player) {
       return;
     }
 
@@ -44,7 +47,7 @@ export class SessionState extends Schema {
   }
   public countReadyPlayers() {
     return [...this.players.values()].reduce((acc, curr) => {
-      acc = acc + ((curr.readyStatus)?1:0);
+      acc = acc + (curr.readyStatus ? 1 : 0);
       return acc;
     }, 0);
   }

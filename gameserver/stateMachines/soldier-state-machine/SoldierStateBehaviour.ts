@@ -4,6 +4,8 @@ import { GameStateManager } from "../../core/GameStateManager";
 import { IStateActions } from "../../core/CustomStateMachine";
 import { AllianceTypes } from "../../AllianceTracker";
 import { SoldierState } from "../../schema/SoldierState";
+import { PlayerState } from "../../schema/PlayerState";
+type GameStateManagerType = GameStateManager<SoldierState, PlayerState>;
 export default {
   Idle: ({
     delta,
@@ -11,7 +13,7 @@ export default {
     soldier,
   }: {
     delta: number;
-    stateManager: GameStateManager<SoldierState>;
+    stateManager: GameStateManagerType;
     soldier: SoldierState;
   }) => {
     if (!soldier.hasReachedDestination()) {
@@ -56,10 +58,9 @@ export default {
     soldier,
   }: {
     delta: number;
-    stateManager: GameStateManager<SoldierState>;
+    stateManager: GameStateManagerType;
     soldier: SoldierState;
   }) => {
-
     let stateMachineTrigged = false;
 
     if (soldier.hasReachedDestination()) {
@@ -92,7 +93,6 @@ export default {
         soldier.hasReachedDestination();
 
       if (anyOneAtDest && overlapExpectedPos) {
-        
         nearbySoldierUnit.isAtDestination = soldier.isAtDestination = true;
         soldier.setExpectedPosition(soldier.getSceneItem().pos);
         if (!stateMachineTrigged)
@@ -107,7 +107,7 @@ export default {
     soldier,
   }: {
     delta: number;
-    stateManager: GameStateManager<SoldierState>;
+    stateManager: GameStateManagerType;
     soldier: SoldierState;
   }) => {
     let attackTarget = soldier.getAttackTarget();
@@ -128,8 +128,13 @@ export default {
 
     //if attacked soldier unit dead, update server-state and schedule update for client.
     if (attackTarget.health === 0) {
-      stateManager.removeSoldier(attackTarget);
+      const victimPlayerId = attackTarget.playerId;
+      const victimPlayer = stateManager.getPlayer(victimPlayerId);
+      if (!victimPlayer) {
+        return;
+      }
       soldier.setAttackTarget(null);
+      victimPlayer.removeSoldier(attackTarget.id, stateManager);
       soldier.stateMachine.controller.send("TargetKilled");
     }
   },
@@ -140,7 +145,7 @@ export default {
     soldier,
   }: {
     delta: number;
-    stateManager: GameStateManager<SoldierState>;
+    stateManager: GameStateManagerType;
     soldier: SoldierState;
   }) => {
     try {
@@ -198,7 +203,7 @@ export default {
     soldier,
   }: {
     delta: number;
-    stateManager: GameStateManager<SoldierState>;
+    stateManager: GameStateManagerType;
     soldier: SoldierState;
   }) => {
     if (!soldier.getAttackTarget()) {
@@ -214,7 +219,7 @@ export default {
     soldier,
   }: {
     delta: number;
-    stateManager: GameStateManager<SoldierState>;
+    stateManager: GameStateManagerType;
     soldier: SoldierState;
   }) => {
     const soldierAttackTarget = soldier.getAttackTarget();
@@ -222,7 +227,7 @@ export default {
       if (!soldierAttackTarget) {
         soldier.stateMachine.controller.send("TargetLost");
         return;
-      } 
+      }
 
       const seperationForce = soldier.getSeperationVector(stateManager);
       const steerForce = soldier.getSteerVector(
@@ -233,7 +238,7 @@ export default {
 
       soldier.targetPositionX = soldierAttackTarget.getSceneItem().pos.x;
       soldier.targetPositionY = soldierAttackTarget.getSceneItem().pos.y;
-      
+
       soldier.expectedPositionX = soldierAttackTarget.getSceneItem().pos.x;
       soldier.expectedPositionY = soldierAttackTarget.getSceneItem().pos.y;
 
@@ -249,10 +254,10 @@ export default {
       if (soldierAttackTarget) {
         soldier.targetPositionX = soldierAttackTarget.getSceneItem().pos.x;
         soldier.targetPositionY = soldierAttackTarget.getSceneItem().pos.y;
-        
+
         soldier.expectedPositionX = soldierAttackTarget.getSceneItem().pos.x;
         soldier.expectedPositionY = soldierAttackTarget.getSceneItem().pos.y;
-        }
+      }
       soldier.setAttackTarget(null);
     }
   },

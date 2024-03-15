@@ -9,6 +9,7 @@ import { SceneObject } from "../core/SceneObject";
 import { AllianceTypes } from "../AllianceTracker";
 import SAT from "sat";
 import { MOVABLE_UNIT_CONSTANTS } from "../config";
+import { PlayerState } from "./PlayerState";
 
 function mapRange(
   val: number,
@@ -42,7 +43,7 @@ export class SoldierState extends Schema {
 
   @type("number") health: number = 100;
   @type("number") speed: number;
-  @type("number") damage: number = 2;
+  @type("number") damage: number = 15;
   @type("number") cost: number = 10;
 
   @type("string") id: string = nanoid();
@@ -63,7 +64,7 @@ export class SoldierState extends Schema {
 
   stateMachine = new CustomStateMachine<{
     delta: number;
-    stateManager: GameStateManager<SoldierState>;
+    stateManager: GameStateManager<SoldierState, PlayerState>;
     soldier: SoldierState;
   }>(SoldierStateMachineJSON, soldierStateBehaviours);
 
@@ -93,7 +94,7 @@ export class SoldierState extends Schema {
 
     this.health = 100;
     this.speed = 50;
-    this.damage = 1;
+    this.damage = 50;
     this.cost = 10;
 
     this.soldier = new SceneObject(this.id, x, y, 32, 32);
@@ -190,7 +191,7 @@ export class SoldierState extends Schema {
   }
 
   getSeperationVector(
-    stateManager: GameStateManager<SoldierState>,
+    stateManager: GameStateManager<SoldierState, PlayerState>,
     excludeUnitPredicate?: (arg0: SoldierState, arg1: SoldierState) => boolean
   ) {
     const soldier = this.getSceneItem();
@@ -201,8 +202,8 @@ export class SoldierState extends Schema {
     );
 
     let sumVec = new SAT.Vector(0);
-    if (nearbyUnits.length < 2){
-      return sumVec; 
+    if (nearbyUnits.length < 2) {
+      return sumVec;
     }
 
     const otherSoldierUnits = nearbyUnits.filter((value) => {
@@ -248,7 +249,7 @@ export class SoldierState extends Schema {
 
   attackUnit(
     targetSoldier: SoldierState,
-    stateManager: GameStateManager<SoldierState>
+    stateManager: GameStateManager<SoldierState, PlayerState>
   ) {
     this.setAttackTarget(targetSoldier);
     stateManager.setAlliance(
@@ -262,7 +263,7 @@ export class SoldierState extends Schema {
   takeDamage(
     delta: number,
     attackerUnit: SoldierState,
-    stateManager: GameStateManager<SoldierState>
+    stateManager: GameStateManager<SoldierState, PlayerState>
   ) {
     if (!attackerUnit || !stateManager) return;
 
@@ -278,7 +279,10 @@ export class SoldierState extends Schema {
     return this.velocityVector.clone();
   }
 
-  tick(delta: number, stateManager: GameStateManager<SoldierState>) {
+  tick(
+    delta: number,
+    stateManager: GameStateManager<SoldierState, PlayerState>
+  ) {
     this.currentState = this.stateMachine.currentState as any;
     const soldier = this.getSceneItem();
     const frictionForce = this.velocityVector.clone().scale(-1.0 * delta);
@@ -290,7 +294,7 @@ export class SoldierState extends Schema {
         return a.hasReachedDestination() && b.hasReachedDestination();
       }
     );
-    
+
     const netForce = steerForce.clone().add(seperationForce);
     this.applyForce(netForce);
 

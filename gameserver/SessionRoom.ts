@@ -8,23 +8,17 @@ import { GameStateManager } from "./core/GameStateManager";
 import SessionStateMachineAction from "./stateMachines/server-state-machine/SessionStateBehaviour";
 import SessionStateMachineJSON from "./stateMachines/server-state-machine/SessionStateMachine.json";
 import { SoldierState } from "./schema/SoldierState";
+import { PlayerState } from "./schema/PlayerState";
 
 export class SessionRoom extends Room<SessionState> {
   maxClients = 10;
   patchRate = 60;
   dispatcher = new Dispatcher(this);
 
-  gameManager = new GameStateManager<SoldierState>(
+  gameManager = new GameStateManager<SoldierState, PlayerState>(
     SessionStateMachineJSON,
-    SessionStateMachineAction,
-    this.onSceneItemRemoved
+    SessionStateMachineAction
   );
-
-  onSceneItemRemoved(item: SoldierState) {
-    const player = this.state.getPlayer(item.playerId);
-    if (!player) return;
-    player.removeSoldier(item.id, this.gameManager);
-  }
 
   onCreate(options: any) {
     console.log("CREATED GAME SESSION", options);
@@ -54,7 +48,11 @@ export class SessionRoom extends Room<SessionState> {
   }
 
   onJoin(client: Client, options: any) {
-    this.dispatcher.dispatch(new OnJoinCommand(), { client, message: options });
+    this.dispatcher.dispatch(new OnJoinCommand(), {
+      client,
+      message: options,
+      gameManager: this.gameManager,
+    });
   }
 
   onLeave(client: Client, consented: boolean) {
@@ -65,12 +63,12 @@ export class SessionRoom extends Room<SessionState> {
     this.dispatcher.dispatch(new OnLeaveCommand(), {
       client,
       message: commandPayload,
-      gameManager: this.gameManager
+      gameManager: this.gameManager,
     });
   }
 
   onDispose() {
-    console.log('SesionRoom/onDispose');
+    console.log("SesionRoom/onDispose");
     this.dispatcher.stop();
   }
 

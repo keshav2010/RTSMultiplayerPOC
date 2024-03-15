@@ -8,16 +8,20 @@ import {
 import { SessionState } from "../schema/SessionState";
 import { Room } from "colyseus";
 import { SERVER_CONFIG } from "../config";
+import { IDfied } from "./interface/IDfied";
 
 /**
  * Manages entire game state.
  */
-export class GameStateManager<SceneItemType extends ISceneItem> {
+export class GameStateManager<
+  SceneItemType extends ISceneItem,
+  PlayerSchema extends IDfied
+> {
   GameStarted: boolean;
   scene: Scene<SceneItemType>;
   countdown: number;
   stateMachine: CustomStateMachine<{
-    gameStateManager: GameStateManager<SceneItemType>;
+    gameStateManager: GameStateManager<SceneItemType, PlayerSchema>;
     delta: number;
     sessionState: SessionState;
     room: Room<any>;
@@ -25,35 +29,39 @@ export class GameStateManager<SceneItemType extends ISceneItem> {
   alliances: AllianceTracker;
   onGameStartCallback: (() => void) | null | undefined;
   onGameEndCallback: (() => void) | null | undefined;
-  onSceneItemRemoved: null | ((arg: SceneItemType) => void) = null;
-
+  playerMap: Map<string, PlayerSchema>;
   constructor(
     sessionStateMachineJSON: IMachineJSON,
-    sessionStateMachineActions: IStateActions,
-    onSceneItemRemoved?: (arg: SceneItemType) => void
+    sessionStateMachineActions: IStateActions
   ) {
     this.GameStarted = false;
-    this.onSceneItemRemoved = onSceneItemRemoved || null;
     this.scene = new Scene({
       width: 15,
       height: 15,
     });
-
-    this.countdown = SERVER_CONFIG.COUNTDOWN
+    this.playerMap = new Map();
+    this.countdown = SERVER_CONFIG.COUNTDOWN;
     this.stateMachine = new CustomStateMachine<{
-      gameStateManager: GameStateManager<SceneItemType>;
+      gameStateManager: GameStateManager<SceneItemType, PlayerSchema>;
       delta: number;
       sessionState: SessionState;
     }>(sessionStateMachineJSON, sessionStateMachineActions);
     this.alliances = new AllianceTracker();
   }
 
+  addPlayer(player: PlayerSchema) {
+    this.playerMap.set(player.id, player);
+  }
+  getPlayer(id: string) {
+    return this.playerMap.get(id);
+  }
+  
   tick(delta: number, sessionState: SessionState, room: Room<any>) {
     const args = {
       gameStateManager: this,
       delta,
       sessionState,
-      room
+      room,
     };
     this.stateMachine.tick(args);
   }
@@ -63,14 +71,6 @@ export class GameStateManager<SceneItemType extends ISceneItem> {
   }
   removeSceneItem(itemId: string) {
     this.scene.removeSceneItem(itemId);
-  }
-
-  removeSoldier(unit: SceneItemType) {
-    const isRemoved = this.scene.remove(unit.getSceneItem());
-    if (isRemoved && this.onSceneItemRemoved) {
-      this.onSceneItemRemoved(unit);
-    }
-    return isRemoved;
   }
 
   setAlliance(

@@ -3,7 +3,8 @@ import { GameStateManager } from "../../core/GameStateManager";
 import { SessionState } from "../../schema/SessionState";
 import { SoldierState } from "../../schema/SoldierState";
 import { SERVER_CONFIG } from "../../config";
-
+import { PlayerState } from "../../schema/PlayerState";
+type GameStateManagerType = GameStateManager<SoldierState, PlayerState>
 export default {
   SessionLobbyState: async ({
     gameStateManager,
@@ -11,7 +12,7 @@ export default {
     sessionState,
     room
   }: {
-    gameStateManager: GameStateManager<SoldierState>;
+    gameStateManager: GameStateManagerType;
     delta: number;
     sessionState: SessionState;
     room : Room;
@@ -40,7 +41,7 @@ export default {
     sessionState,
     room
   }: {
-    gameStateManager: GameStateManager<SoldierState>;
+    gameStateManager: GameStateManagerType;
     delta: number;
     sessionState: SessionState;
     room : Room;
@@ -72,7 +73,7 @@ export default {
     sessionState,
     room
   }: {
-    gameStateManager: GameStateManager<SoldierState>;
+    gameStateManager: GameStateManagerType;
     delta: number;
     sessionState: SessionState;
     room : Room;
@@ -103,7 +104,7 @@ export default {
     delta,
     sessionState,
   }: {
-    gameStateManager: GameStateManager<SoldierState>;
+    gameStateManager: GameStateManagerType;
     delta: number;
     sessionState: SessionState;
     tick : Room;
