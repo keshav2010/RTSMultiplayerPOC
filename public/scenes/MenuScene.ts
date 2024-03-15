@@ -2,7 +2,7 @@ import CONSTANT from "../constant";
 import { BaseScene } from "./BaseScene";
 import { NetworkManager } from "../NetworkManager";
 import { addBackgroundImage } from "../helpers/addBackgroundImage";
-const URL = `${process.env.COLYSEUS_SERVER_URL}:${process.env.PORT}`;
+const URL = `${window.location.host}`;
 export class MenuScene extends BaseScene {
   constructor() {
     super(CONSTANT.SCENES.MENU);
@@ -102,13 +102,9 @@ export class MenuScene extends BaseScene {
         this.scene.start(CONSTANT.SCENES.MENU);
       };
       //join session
-      this.registry
-        .get("networkManager")
-        .connectGameServer(
-          `${URL}/${sessionId}`,
-          onConnectHandler,
-          onDisconnectHandler
-        );
+      await(
+        this.registry.get("networkManager") as NetworkManager
+      ).connectGameServer(`${URL}/${sessionId}`);
     } catch (err) {
       console.error(err);
     }

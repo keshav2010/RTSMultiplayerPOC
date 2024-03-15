@@ -1,7 +1,7 @@
 import * as Colyseus from "colyseus.js";
 import Phaser from "phaser";
 import { SessionState } from "../gameserver/schema/SessionState";
-const URL = `${process.env.COLYSEUS_SERVER_URL}:${process.env.PORT}`;
+const URL = `${window.location.host}`;
 export type RoomEventHandlerCallbackType = (
   type: "onStateChange" | "onMessage" | "onLeave" | "onError",
   data: any
