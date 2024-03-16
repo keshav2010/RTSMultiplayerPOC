@@ -25,19 +25,15 @@ export class SessionRoom extends Room<SessionState> {
     this.setState(new SessionState());
     this.onMessage("*", (client, type, message) => {
       try {
-        console.log(`[Message Received] : ${client.id} | ${type}`);
+        console.log(`[Message Received] from: ${client.id} | type: ${type}`);
         const commandToDispatch = CommandFactory.createCommand(type as string);
-        if (commandToDispatch)
-          this.dispatcher.dispatch(commandToDispatch, {
-            client,
-            message,
-            gameManager: this.gameManager,
-          });
-        else {
-          console.error(
-            `[message: ${type}]: Failed to dispatch command, no command found.`
-          );
-        }
+        if (!commandToDispatch)
+          throw new Error(`Failed to find command for type ${type}`);
+        this.dispatcher.dispatch(commandToDispatch, {
+          client,
+          message,
+          gameManager: this.gameManager,
+        });
       } catch (error) {
         console.log("error in session-room onCreate");
         console.log(error);

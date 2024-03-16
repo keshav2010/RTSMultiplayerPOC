@@ -193,6 +193,7 @@ export default {
       soldier.setAttackTarget(nearestUnit);
       soldier.stateMachine.controller.send("TargetFound");
     } catch (err) {
+      console.log(err, 'soldier = ', soldier.id);
       soldier.stateMachine.controller.send("TargetNotFound");
     }
   },

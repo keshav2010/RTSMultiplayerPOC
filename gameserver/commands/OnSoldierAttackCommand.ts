@@ -17,7 +17,6 @@ export class OnSoldierAttackCommand extends Command<
     targetPlayerId: string;
     targetSoldierId: string;
   }>) {
-    console.log("Soldier Attack Requested ", message);
     const attacker = this.state.getPlayer(client.id);
     const victim = this.state.getPlayer(message.targetPlayerId);
     if (!attacker || !victim) {

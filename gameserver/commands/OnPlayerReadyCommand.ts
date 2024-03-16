@@ -10,7 +10,6 @@ export class OnPlayerReadyCommand extends Command<SessionRoom, CommandPayload> {
   }: CommandPayload<{
     readyStatus: boolean;
   }>) {
-    console.log("player ready", message);
     const player = this.state.getPlayer(client.sessionId);
     if (!player) return;
     player.readyStatus = message.readyStatus;
