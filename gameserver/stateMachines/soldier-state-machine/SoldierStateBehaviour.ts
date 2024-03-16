@@ -172,7 +172,7 @@ export default {
           stateManager.getAlliance(soldier.playerId, unitSoldier.playerId) !==
             AllianceTypes.ENEMIES
         )
-          return;
+          break;
 
         let distBetweenUnits = new SAT.Vector()
           .copy(unitSoldier.getSceneItem().pos)
