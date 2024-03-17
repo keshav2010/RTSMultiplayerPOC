@@ -15,14 +15,14 @@ export class OnSoldierAttackCommand extends Command<
   }: CommandPayload<{
     soldiers: string[];
     targetPlayerId: string;
-    targetSoldierId: string;
+    targetUnitId: string;
   }>) {
     const attacker = this.state.getPlayer(client.id);
     const victim = this.state.getPlayer(message.targetPlayerId);
     if (!attacker || !victim) {
       return;
     }
-    const targetSoldier = victim.getSoldier(message.targetSoldierId);
+    const targetSoldier = victim.getSoldier(message.targetUnitId);
     if (!targetSoldier) {
       return;
     }
