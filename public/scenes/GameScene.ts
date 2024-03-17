@@ -251,7 +251,7 @@ export class GameScene extends BaseScene {
               {
                 soldiers: selectedSoldiersForAttack.map((v) => v.id),
                 targetPlayerId: targetSoldier.playerId,
-                targetSoldierId: targetSoldier.id,
+                targetUnitId: targetSoldier.id,
               }
             );
           } else {
