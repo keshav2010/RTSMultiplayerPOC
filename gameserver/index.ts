@@ -18,23 +18,37 @@ import { monitor } from "@colyseus/monitor";
 import path from "path";
 import fs from "fs";
 import dotenv from 'dotenv';
+import basicAuth from "express-basic-auth";
+
+const username = process.env.ADMIN_USERNAME as string;
+const password = process.env.ADMIN_PASSWORD as string;
+const basicAuthMiddleware = basicAuth({
+  // list of users and passwords
+  users: {
+    [username]: password,
+  },
+  // sends WWW-Authenticate header, which will prompt the user to fill
+  // credentials in
+  challenge: true
+});
+
 dotenv.config();
 const PORT = process.env.PORT;
 const app = express();
 app.use(express.json());
 app.use(cors());
+
 app.use(express.static("dist"));
 app.use(express.static("public"));
-if (process.env.NODE_ENV !== "production") {
-  app.use("/playground", playground);
-}
+
+app.use("/monitor", basicAuthMiddleware, monitor());
+app.use("/playground", basicAuthMiddleware, playground);
 
 /**
  * Use @colyseus/monitor
  * It is recommended to protect this route with a password
  * Read more: https://docs.colyseus.io/tools/monitor/#restrict-access-to-the-panel-using-a-password
  */
-app.use("/monitor", monitor());
 
 app.get("/", async (req, res) => {
   try {
