@@ -60,6 +60,22 @@ export class SpawnSelectionScene extends BaseScene {
         }
       })!
     );
+    const clientId = networkManager.getClientId();
+    const sessionState = networkManager.getState();
+    let player = SessionStateClientHelpers.getPlayer(sessionState!, clientId!);
+    if (player) {
+      this.AddStateChangeListener(
+        player.listen("posX", (value) => {
+          this.showSpawnFlag(networkManager, value, player?.posY);
+        })
+      );
+      this.AddStateChangeListener(
+        player.listen("posY", (value) => {
+          this.showSpawnFlag(networkManager, player?.posX, value);
+        })
+      );
+    }
+     
 
     this.AddObject(
       new LoadingBar(this, this, {
@@ -191,13 +207,10 @@ export class SpawnSelectionScene extends BaseScene {
     if (networkManager.getState()?.sessionState !== "SPAWN_SELECTION_STATE") {
       return;
     }
-
     this.GetObject<LoadingBar>("obj_timerBar")?.setValue(
       (networkManager.getState()?.countdown || 0) / 1000
     );
     this.controls?.update(delta);
-
-    this.showSpawnFlag(networkManager);
     this.GetObject<LoadingBar>("obj_timerBar")?.draw();
   }
 
