@@ -67,7 +67,7 @@ export default {
     }
   },
 
-  BattleState: ({
+  BattleState: async ({
     gameStateManager,
     delta,
     sessionState,
@@ -80,7 +80,7 @@ export default {
   }) => {
     try {
       if (sessionState.sessionState !== "BATTLE_STATE"){
-        room.lock();
+        await room.lock();
         sessionState.sessionState = "BATTLE_STATE";
       }
       var deltaTime = delta / 1000;

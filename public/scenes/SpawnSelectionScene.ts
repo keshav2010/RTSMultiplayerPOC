@@ -73,7 +73,7 @@ export class SpawnSelectionScene extends BaseScene {
       "obj_timerBar"
     );
 
-    this.AddInputEvent("pointerdown", function (pointer: any) {
+    this.AddInputEvent("pointerdown", (pointer: any) => {
       if (pointer.button === 0) {
         selectorGraphics.clear();
         selectorDraw = true;
@@ -91,6 +91,36 @@ export class SpawnSelectionScene extends BaseScene {
             spawnY: pointer.worldY,
           }
         );
+
+        const spawnFlag = this.GetObject<PlayerCastle>("obj_spawnFlag");
+
+        const sessionState = networkManager.getState();
+        if (!sessionState) return;
+        const clientId = networkManager.getClientId();
+        if (!clientId) {
+          return;
+        }
+        const playerState = SessionStateClientHelpers.getPlayer(
+          sessionState,
+          clientId
+        );
+        if (!playerState) return;
+        if (!spawnFlag) {
+          this.AddObject(
+            new PlayerCastle(
+              this,
+              pointer.worldX,
+              pointer.worldY,
+              "flag",
+              null,
+              {
+                health: playerState.spawnFlagHealth,
+                player: playerState,
+              }
+            ),
+            "obj_spawnFlag"
+          );
+        }
       }
     });
 

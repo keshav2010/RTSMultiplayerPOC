@@ -143,7 +143,7 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     this.DEBUGTEXT.setPosition(this.x, this.y + 40);
     this.DEBUGTEXT.setText(
       `${soldierState?.currentState}
-      health:${this.hp.currentValue}`
+      health:${Math.floor(this.hp.currentValue)}`
     );
   }
   update(deltaTime: number) {

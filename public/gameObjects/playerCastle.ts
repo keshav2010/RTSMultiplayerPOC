@@ -59,7 +59,7 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     this.hp.draw();
     this.DEBUGTEXT.setPosition(this.x, this.y + this.height / 2 + 15);
     this.DEBUGTEXT.setText(
-      `[${this.player.name}] - health:${this.player.spawnFlagHealth}`
+      `[${this.player.name}] - health:${Math.floor(this.player.spawnFlagHealth)}`
     );
   }
 }
