@@ -73,7 +73,7 @@ export class SpawnSelectionScene extends BaseScene {
       "obj_timerBar"
     );
 
-    this.AddInputEvent("pointerdown", function (pointer: any) {
+    this.AddInputEvent("pointerdown", (pointer: any) => {
       if (pointer.button === 0) {
         selectorGraphics.clear();
         selectorDraw = true;
@@ -91,6 +91,7 @@ export class SpawnSelectionScene extends BaseScene {
             spawnY: pointer.worldY,
           }
         );
+        this.showSpawnFlag(networkManager, pointer.worldX, pointer.worldY);
       }
     });
 
@@ -196,6 +197,11 @@ export class SpawnSelectionScene extends BaseScene {
     );
     this.controls?.update(delta);
 
+    this.showSpawnFlag(networkManager);
+    this.GetObject<LoadingBar>("obj_timerBar")?.draw();
+  }
+
+  showSpawnFlag(networkManager: NetworkManager, posX?: number, posY?: number) {
     //show new choice on map for player
     const clientId = networkManager.getClientId();
     if (!clientId) {
@@ -221,18 +227,18 @@ export class SpawnSelectionScene extends BaseScene {
       console.error("unable to find player state in spawn selection");
       return;
     }
+    const x = posX || posX === 0 ? posX : player.posX;
+    const y = posY || posY === 0 ? posY : player.posY;
     if (spawnFlag) {
-      spawnFlag.setPosition(player.posX, player.posY);
+      spawnFlag.setPosition(x, y);
       spawnFlag.setHealth(2);
     } else
       this.AddObject(
-        new PlayerCastle(this, player.posX, player.posY, "flag", null, {
+        new PlayerCastle(this, x, y, "flag", null, {
           health: playerState.spawnFlagHealth,
           player: playerState,
         }),
         "obj_spawnFlag"
       );
-
-    this.GetObject<LoadingBar>("obj_timerBar")?.draw();
   }
 }
