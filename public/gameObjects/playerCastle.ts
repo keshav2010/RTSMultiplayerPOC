@@ -4,7 +4,7 @@ import LoadingBar from "../LoadingBar";
 export class PlayerCastle extends Phaser.GameObjects.Sprite {
   player: PlayerState;
   hp: LoadingBar;
-  DEBUGTEXT: any;
+  DEBUGTEXT: Phaser.GameObjects.Text;
   health: number;
 
   /**
@@ -61,5 +61,6 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     this.DEBUGTEXT.setText(
       `[${this.player.name}] - health:${this.player.spawnFlagHealth}`
     );
+    this.DEBUGTEXT.depth = -2
   }
 }

@@ -21,7 +21,7 @@ class BackgroundHighlight extends Phaser.GameObjects.Graphics {
     });
     scene.add.existing(this);
     this.parent = parent;
-    this.depth = -2;
+    this.depth = -1;
     this.r = r;
     this.g = g;
     this.b = b;
@@ -52,11 +52,11 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
   id: string;
   initialParam: any;
   color: number[];
-  expectedPositionX: any;
-  expectedPositionY: any;
-  hp: any;
+  expectedPositionX: number;
+  expectedPositionY: number;
+  hp: LoadingBar;
   highlightBackground: BackgroundHighlight;
-  DEBUGTEXT: any;
+  DEBUGTEXT: Phaser.GameObjects.Text;
   playerId: string | null;
   /**
    * @param {*} scene
@@ -107,7 +107,7 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
       { font: "12px Arial", color: "yellow" }
     );
     this.DEBUGTEXT.setOrigin(0.5);
-
+    this.DEBUGTEXT.depth = -2;
     this.on("destroy", () => {
       this.hp.destroy();
       this.highlightBackground.destroy();
