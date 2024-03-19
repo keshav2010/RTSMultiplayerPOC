@@ -1,6 +1,6 @@
 import { Schema, type } from "@colyseus/schema";
 import { nanoid } from "nanoid";
-import { SoldierType } from "../../common/SoldierType";
+import { SoldierType, SoldierTypeConfig } from "../../common/SoldierType";
 import { CustomStateMachine } from "../core/CustomStateMachine";
 import SoldierStateMachineJSON from "../stateMachines/soldier-state-machine/SoldierStateMachine.json";
 import soldierStateBehaviours from "../stateMachines/soldier-state-machine/SoldierStateBehaviour";
@@ -92,10 +92,10 @@ export class SoldierState extends Schema {
 
     this.type = soldierType;
 
-    this.health = 100;
-    this.speed = 50;
-    this.damage = 50;
-    this.cost = 10;
+    this.health = SoldierTypeConfig[this.type].health;
+    this.speed = SoldierTypeConfig[this.type].speed;
+    this.damage = SoldierTypeConfig[this.type].damage;
+    this.cost = SoldierTypeConfig[this.type].cost;
 
     this.soldier = new SceneObject(this.id, x, y, 32, 32);
   }

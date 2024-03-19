@@ -23,7 +23,7 @@ export class PlayerState extends Schema implements IDfied {
   @type("string") id: string;
 
   @type("string") name: string = "";
-  @type("number") resources: number = 10;
+  @type("number") resources: number = 100;
   @type("boolean") readyStatus: boolean = false;
 
   @type("number") posX: number = 0;
@@ -48,7 +48,7 @@ export class PlayerState extends Schema implements IDfied {
     new ArraySchema<string>();
 
   // non-synced info
-  resourceGrowthRateHz = 1;
+  resourceGrowthRateHz = 2;
   maxResources = 200;
 
   constructor(name: string, x: number, y: number, sessionId: string) {
@@ -109,6 +109,10 @@ export class PlayerState extends Schema implements IDfied {
     this.soldiers.forEach((soldier) => {
       soldier.tick(deltaTime, gameStateManager);
     });
+
+    this.resourceGrowthRateHz = this.resourceGrowthRateHz - 0.1*deltaTime;
+    if(this.resourceGrowthRateHz < 0)
+      this.resourceGrowthRateHz = 0.2;
   }
 
   public updatePosition(x: number, y: number) {
