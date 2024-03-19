@@ -1,19 +1,15 @@
 import { PlayerState } from "../../gameserver/schema/PlayerState";
 import LoadingBar from "../LoadingBar";
+import Phaser from "phaser";
 
 export class PlayerCastle extends Phaser.GameObjects.Sprite {
   player: PlayerState;
   hp: LoadingBar;
   DEBUGTEXT: Phaser.GameObjects.Text;
   health: number;
+  circleOfInfluence: Phaser.GameObjects.Graphics | undefined;
+  circleAnimation: Phaser.Tweens.Tween | undefined;
 
-  /**
-   * @param {*} scene
-   * @param {number} x
-   * @param {number} y
-   * @param {string|Phaser.Textures.Texture} texture
-   * @param {string|number <optional>} frame
-   */
   constructor(
     scene: Phaser.Scene,
     x: number,
@@ -21,16 +17,14 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     texture: string | Phaser.Textures.Texture,
     frame: any,
     initialParam: {
-      health: number,
-      player: PlayerState
+      health: number;
+      player: PlayerState;
     }
   ) {
     super(scene, x, y, texture, frame);
     this.health = initialParam?.health || 100;
-    //add object to scene
     scene.add.existing(this);
     this.player = initialParam.player;
-    //this.setInteractive();
     scene.events.on("update", this.update, this);
     this.setPosition(x, y);
     this.scale = 1;
@@ -46,10 +40,45 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
       scene.events.off("update", this.update, this);
       this.hp.destroy();
       this.DEBUGTEXT.destroy();
+      if (this.circleOfInfluence) this.circleOfInfluence.destroy();
+      if (this.circleAnimation) this.circleAnimation.remove();
+    });
+
+    // Create the circle of influence
+    this.createCircleOfInfluence(scene, x, y, 100); // Assuming a radius of 100
+  }
+
+  createCircleOfInfluence(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    radius: number
+  ) {
+    this.circleOfInfluence = scene.add.graphics();
+    this.circleOfInfluence.lineStyle(5, 0xffffff, 1); // Thickness, color, alpha
+    this.circleOfInfluence.strokeCircle(x, y, radius);
+
+    // Animate the circle
+    this.circleAnimation = scene.tweens.add({
+      targets: this.circleOfInfluence,
+      alpha: 0.5, // Change the alpha to animate the circle
+      duration: 1000,
+      yoyo: true,
+      repeat: -1,
     });
   }
+
+  renderCircleOfInfluence(x: number, y: number) {
+    if (this.circleOfInfluence) {
+      this.circleOfInfluence.clear();
+      this.circleOfInfluence.lineStyle(5, 0xffffff, 1);
+      this.circleOfInfluence.strokeCircle(x, y, 100); // Assuming a fixed radius
+    }
+  }
+
   setPos(x: number, y: number) {
     this.setPosition(x, y);
+    this.renderCircleOfInfluence(x, y);
   }
   setHealth(newHealth: number) {
     this.health = newHealth;
@@ -61,6 +90,7 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     this.DEBUGTEXT.setText(
       `[${this.player.name}] - health:${this.player.spawnFlagHealth}`
     );
-    this.DEBUGTEXT.depth = -2
+    this.DEBUGTEXT.depth = -2;
+    this.renderCircleOfInfluence(this.x, this.y);
   }
 }
