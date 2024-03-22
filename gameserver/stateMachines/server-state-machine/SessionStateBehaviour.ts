@@ -1,28 +1,27 @@
 import { Room } from "colyseus";
-import { GameStateManager } from "../../core/GameStateManager";
 import { SessionState } from "../../schema/SessionState";
-import { SoldierState } from "../../schema/SoldierState";
 import { SERVER_CONFIG } from "../../config";
-import { PlayerState } from "../../schema/PlayerState";
-type GameStateManagerType = GameStateManager<SoldierState, PlayerState>
+import { GameStateManagerType } from "../../schema/PlayerState";
 export default {
   SessionLobbyState: async ({
     gameStateManager,
     delta,
     sessionState,
-    room
+    room,
   }: {
     gameStateManager: GameStateManagerType;
     delta: number;
     sessionState: SessionState;
-    room : Room;
+    room: Room;
   }) => {
     const deltaTime = delta;
-    if (sessionState.sessionState !== "SESSION_LOBBY_STATE"){
+    if (sessionState.sessionState !== "SESSION_LOBBY_STATE") {
       sessionState.sessionState = "SESSION_LOBBY_STATE";
       await room.unlock();
-    } 
-    if (sessionState.players.size >= SERVER_CONFIG.MINIMUM_PLAYERS_PER_SESSION) {
+    }
+    if (
+      sessionState.players.size >= SERVER_CONFIG.MINIMUM_PLAYERS_PER_SESSION
+    ) {
       sessionState.countdown -= deltaTime;
       sessionState.countdown = Math.max(0, sessionState.countdown);
       if (sessionState.countdown <= 0) {
@@ -32,22 +31,21 @@ export default {
       }
       return;
     }
-
   },
 
   SpawnSelectionState: async ({
     gameStateManager,
     delta,
     sessionState,
-    room
+    room,
   }: {
     gameStateManager: GameStateManagerType;
     delta: number;
     sessionState: SessionState;
-    room : Room;
+    room: Room;
   }) => {
     try {
-      if (sessionState.sessionState !== "SPAWN_SELECTION_STATE"){
+      if (sessionState.sessionState !== "SPAWN_SELECTION_STATE") {
         sessionState.sessionState = "SPAWN_SELECTION_STATE";
         sessionState.countdown = SERVER_CONFIG.COUNTDOWN_SPAWN_SELECTIONS;
         await room.unlock();
@@ -71,15 +69,15 @@ export default {
     gameStateManager,
     delta,
     sessionState,
-    room
+    room,
   }: {
     gameStateManager: GameStateManagerType;
     delta: number;
     sessionState: SessionState;
-    room : Room;
+    room: Room;
   }) => {
     try {
-      if (sessionState.sessionState !== "BATTLE_STATE"){
+      if (sessionState.sessionState !== "BATTLE_STATE") {
         room.lock();
         sessionState.sessionState = "BATTLE_STATE";
       }
@@ -107,6 +105,6 @@ export default {
     gameStateManager: GameStateManagerType;
     delta: number;
     sessionState: SessionState;
-    tick : Room;
+    tick: Room;
   }) => {},
 };

@@ -1,9 +1,7 @@
 import { Schema, MapSchema, type } from "@colyseus/schema";
-import { PlayerState } from "./PlayerState";
+import { GameStateManagerType, PlayerState } from "./PlayerState";
 import { nanoid } from "nanoid";
 import { SERVER_CONFIG } from "../config";
-import { SoldierState } from "./SoldierState";
-import { GameStateManager } from "../core/GameStateManager";
 
 export class SessionState extends Schema {
   // Key : sessionId
@@ -33,10 +31,7 @@ export class SessionState extends Schema {
   public getPlayer(sessionId: string) {
     return this.players.get(sessionId);
   }
-  public removePlayer(
-    sessionId: string,
-    gameManager: GameStateManager<SoldierState, PlayerState>
-  ) {
+  public removePlayer(sessionId: string, gameManager: GameStateManagerType) {
     const player = this.players.get(sessionId);
     if (!player) {
       return;

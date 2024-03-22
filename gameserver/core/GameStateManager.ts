@@ -10,18 +10,12 @@ import { Room } from "colyseus";
 import { SERVER_CONFIG } from "../config";
 import { IDfied } from "./interface/IDfied";
 
-/**
- * Manages entire game state.
- */
-export class GameStateManager<
-  SceneItemType extends ISceneItem,
-  PlayerSchema extends IDfied
-> {
+export class GameStateManager<PlayerSchema extends IDfied> {
   GameStarted: boolean;
-  scene: Scene<SceneItemType>;
+  scene: Scene;
   countdown: number;
   stateMachine: CustomStateMachine<{
-    gameStateManager: GameStateManager<SceneItemType, PlayerSchema>;
+    gameStateManager: GameStateManager<PlayerSchema>;
     delta: number;
     sessionState: SessionState;
     room: Room<any>;
@@ -42,7 +36,7 @@ export class GameStateManager<
     this.playerMap = new Map();
     this.countdown = SERVER_CONFIG.COUNTDOWN;
     this.stateMachine = new CustomStateMachine<{
-      gameStateManager: GameStateManager<SceneItemType, PlayerSchema>;
+      gameStateManager: GameStateManager<PlayerSchema>;
       delta: number;
       sessionState: SessionState;
     }>(sessionStateMachineJSON, sessionStateMachineActions);
@@ -55,10 +49,10 @@ export class GameStateManager<
   getPlayer(id: string) {
     return this.playerMap.get(id);
   }
-  
+
   tick(delta: number, sessionState: SessionState, room: Room<any>) {
     const args = {
-      gameStateManager: this,
+      gameStateManager: this as GameStateManager<PlayerSchema>,
       delta,
       sessionState,
       room,
@@ -66,7 +60,7 @@ export class GameStateManager<
     this.stateMachine.tick(args);
   }
 
-  addSceneItem(item: SceneItemType) {
+  addSceneItem(item: ISceneItem) {
     this.scene.addSceneItem(item);
   }
   removeSceneItem(itemId: string) {

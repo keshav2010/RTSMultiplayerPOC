@@ -4,12 +4,11 @@ import { SoldierType, SoldierTypeConfig } from "../../common/SoldierType";
 import { CustomStateMachine } from "../core/CustomStateMachine";
 import SoldierStateMachineJSON from "../stateMachines/soldier-state-machine/SoldierStateMachine.json";
 import soldierStateBehaviours from "../stateMachines/soldier-state-machine/SoldierStateBehaviour";
-import { GameStateManager } from "../core/GameStateManager";
 import { SceneObject } from "../core/SceneObject";
 import { AllianceTypes } from "../AllianceTracker";
 import SAT from "sat";
 import { MOVABLE_UNIT_CONSTANTS } from "../config";
-import { PlayerState } from "./PlayerState";
+import { GameStateManagerType } from "./PlayerState";
 
 function mapRange(
   val: number,
@@ -64,7 +63,7 @@ export class SoldierState extends Schema {
 
   stateMachine = new CustomStateMachine<{
     delta: number;
-    stateManager: GameStateManager<SoldierState, PlayerState>;
+    stateManager: GameStateManagerType;
     soldier: SoldierState;
   }>(SoldierStateMachineJSON, soldierStateBehaviours);
 
@@ -191,7 +190,7 @@ export class SoldierState extends Schema {
   }
 
   getSeperationVector(
-    stateManager: GameStateManager<SoldierState, PlayerState>,
+    stateManager: GameStateManagerType,
     excludeUnitPredicate?: (arg0: SoldierState, arg1: SoldierState) => boolean
   ) {
     const soldier = this.getSceneItem();
@@ -206,10 +205,11 @@ export class SoldierState extends Schema {
       return sumVec;
     }
 
-    const otherSoldierUnits = nearbyUnits.filter((value) => {
+    const otherSoldierUnits = nearbyUnits.filter((value: { id: string }) => {
       const isSelf = this.id === value.id;
 
-      const otherSoldierSchema = stateManager.scene.getSceneItemById(value.id);
+      const otherSoldierSchema =
+        stateManager.scene.getSceneItemById<SoldierState>(value.id);
       if (!otherSoldierSchema) {
         return;
       }
@@ -222,23 +222,26 @@ export class SoldierState extends Schema {
       return !(isSelf || isExcluded);
     });
 
-    otherSoldierUnits.forEach((unit) => {
-      const distanceBetweenUnits = soldier.pos
-        .clone()
-        .sub(new SAT.Vector(unit.x, unit.y))
-        .len();
+    otherSoldierUnits.forEach(
+      (unit: { x: number | undefined; y: number | undefined }) => {
+        const distanceBetweenUnits = soldier.pos
+          .clone()
+          .sub(new SAT.Vector(unit.x, unit.y))
+          .len();
 
-      const unitSeperationBetweenCertainThreshold =
-        distanceBetweenUnits <= MOVABLE_UNIT_CONSTANTS.DESIRED_SEPERATION_DIST;
+        const unitSeperationBetweenCertainThreshold =
+          distanceBetweenUnits <=
+          MOVABLE_UNIT_CONSTANTS.DESIRED_SEPERATION_DIST;
 
-      if (!unitSeperationBetweenCertainThreshold) return;
+        if (!unitSeperationBetweenCertainThreshold) return;
 
-      const repelUnitVector = soldier.pos
-        .clone()
-        .sub(new SAT.Vector(unit.x, unit.y));
-      repelUnitVector.scale(MOVABLE_UNIT_CONSTANTS.MAX_REPEL_FORCE);
-      sumVec.add(repelUnitVector);
-    });
+        const repelUnitVector = soldier.pos
+          .clone()
+          .sub(new SAT.Vector(unit.x, unit.y));
+        repelUnitVector.scale(MOVABLE_UNIT_CONSTANTS.MAX_REPEL_FORCE);
+        sumVec.add(repelUnitVector);
+      }
+    );
 
     const steer = sumVec.clone();
     if (sumVec.len() > 0) steer.sub(this.velocityVector);
@@ -247,10 +250,7 @@ export class SoldierState extends Schema {
     return steer;
   }
 
-  attackUnit(
-    targetSoldier: SoldierState,
-    stateManager: GameStateManager<SoldierState, PlayerState>
-  ) {
+  attackUnit(targetSoldier: SoldierState, stateManager: GameStateManagerType) {
     this.setAttackTarget(targetSoldier);
     stateManager.setAlliance(
       this.playerId,
@@ -263,7 +263,7 @@ export class SoldierState extends Schema {
   takeDamage(
     delta: number,
     attackerUnit: SoldierState,
-    stateManager: GameStateManager<SoldierState, PlayerState>
+    stateManager: GameStateManagerType
   ) {
     if (!attackerUnit || !stateManager) return;
 
@@ -279,10 +279,7 @@ export class SoldierState extends Schema {
     return this.velocityVector.clone();
   }
 
-  tick(
-    delta: number,
-    stateManager: GameStateManager<SoldierState, PlayerState>
-  ) {
+  tick(delta: number, stateManager: GameStateManagerType) {
     this.currentState = this.stateMachine.currentState as any;
     const soldier = this.getSceneItem();
     const frictionForce = this.velocityVector.clone().scale(-1.0 * delta);
@@ -303,39 +300,49 @@ export class SoldierState extends Schema {
 
     this.setPosition(newPosition);
 
-    stateManager.scene.checkOne(this, (res, collidingBodies) => {
-      let soldierA = res.a as SoldierState;
-      let soldierB = res.b as SoldierState;
+    stateManager.scene.checkOne(
+      this,
+      (
+        res: {
+          a: SoldierState;
+          b: SoldierState;
+          overlapV: { x: number; y: number };
+        },
+        collidingBodies: any
+      ) => {
+        let soldierA = res.a as SoldierState;
+        let soldierB = res.b as SoldierState;
 
-      if (!soldierA || !soldierB) {
-        return;
-      }
-      // update position so it doesnt overlap with colliding body.
-      soldierA.setPosition(
-        new SAT.Vector(
-          soldierA.currentPositionX - res.overlapV.x,
-          soldierA.currentPositionY - res.overlapV.y
-        )
-      );
-
-      let overlappingTargetPos =
-        new SAT.Vector()
-          .copy(soldierA.getExpectedPosition())
-          .sub(soldierB.getExpectedPosition())
-          .len() <= MOVABLE_UNIT_CONSTANTS.MAX_TARGETPOS_OVERLAP_DIST;
-
-      var eitherReachedDest =
-        soldierA.hasReachedDestination() || soldierB.hasReachedDestination();
-
-      if (overlappingTargetPos && eitherReachedDest) {
-        soldierA.setExpectedPosition(
-          new SAT.Vector(soldierA.getSceneItem().x, soldierA.getSceneItem().y)
+        if (!soldierA || !soldierB) {
+          return;
+        }
+        // update position so it doesnt overlap with colliding body.
+        soldierA.setPosition(
+          new SAT.Vector(
+            soldierA.currentPositionX - res.overlapV.x,
+            soldierA.currentPositionY - res.overlapV.y
+          )
         );
-        soldierB.setExpectedPosition(
-          new SAT.Vector(soldierB.getSceneItem().x, soldierB.getSceneItem().y)
-        );
+
+        let overlappingTargetPos =
+          new SAT.Vector()
+            .copy(soldierA.getExpectedPosition())
+            .sub(soldierB.getExpectedPosition())
+            .len() <= MOVABLE_UNIT_CONSTANTS.MAX_TARGETPOS_OVERLAP_DIST;
+
+        var eitherReachedDest =
+          soldierA.hasReachedDestination() || soldierB.hasReachedDestination();
+
+        if (overlappingTargetPos && eitherReachedDest) {
+          soldierA.setExpectedPosition(
+            new SAT.Vector(soldierA.getSceneItem().x, soldierA.getSceneItem().y)
+          );
+          soldierB.setExpectedPosition(
+            new SAT.Vector(soldierB.getSceneItem().x, soldierB.getSceneItem().y)
+          );
+        }
       }
-    });
+    );
 
     this.stateMachine.tick({ delta, stateManager, soldier: this });
   }

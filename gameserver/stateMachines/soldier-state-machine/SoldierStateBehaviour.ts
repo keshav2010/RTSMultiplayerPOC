@@ -1,11 +1,10 @@
 import SoldierConstants from "../../unitConstants";
 import SAT from "sat";
-import { GameStateManager } from "../../core/GameStateManager";
 import { IStateActions } from "../../core/CustomStateMachine";
 import { AllianceTypes } from "../../AllianceTracker";
 import { SoldierState } from "../../schema/SoldierState";
-import { PlayerState } from "../../schema/PlayerState";
-type GameStateManagerType = GameStateManager<SoldierState, PlayerState>;
+import { GameStateManagerType } from "../../schema/PlayerState";
+
 export default {
   Idle: ({
     delta,
@@ -30,14 +29,16 @@ export default {
     if (nearbyUnits.length < 2) return;
 
     // if any nearby friendly unit under attack
-    let nearbyAllies = nearbyUnits.filter(
-      (unit) =>
-        unit.id !== soldier.id &&
-        stateManager.scene.getSceneItemById(unit.id)?.playerId ===
-          soldier.playerId
-    );
+    let nearbyAllies = nearbyUnits.filter((unit) => {
+      const sceneItem = stateManager.scene.getSceneItemById<SoldierState>(
+        unit.id
+      );
+      return unit.id !== soldier.id && sceneItem?.playerId === soldier.playerId;
+    });
     for (let i = 0; i < nearbyAllies.length; i++) {
-      let unit = stateManager.scene.getSceneItemById(nearbyAllies[i].id);
+      let unit = stateManager.scene.getSceneItemById<SoldierState>(
+        nearbyAllies[i].id
+      );
       if (!unit || unit.id === soldier.id || unit.playerId !== soldier.playerId)
         continue;
 
@@ -79,7 +80,7 @@ export default {
     nearbyUnits.forEach((unit) => {
       if (unit.id === soldier.id) return;
 
-      const nearbySoldierUnit = stateManager.scene.getSceneItemById(unit.id);
+      const nearbySoldierUnit = stateManager.scene.getSceneItemById<SoldierState>(unit.id);
       if (!nearbySoldierUnit) return;
       // if nearby unit (of same team) has same destination (approx.)
       let overlapExpectedPos =
@@ -165,7 +166,7 @@ export default {
       let minDist = Number.POSITIVE_INFINITY;
       let nearestUnit: SoldierState | null = null;
       for (const unit of nearbyUnits) {
-        let unitSoldier = stateManager.scene.getSceneItemById(unit.id);
+        let unitSoldier = stateManager.scene.getSceneItemById<SoldierState>(unit.id);
         if (
           !unitSoldier ||
           unit.id === soldier.id ||

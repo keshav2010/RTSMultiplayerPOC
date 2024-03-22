@@ -3,8 +3,11 @@ import { SoldierState } from "./SoldierState";
 import { nanoid } from "nanoid";
 import { SoldierType, SoldierTypeConfig } from "../../common/SoldierType";
 import { GameStateManager } from "../core/GameStateManager";
-import { Scene } from "../core/Scene";
+import { ISceneItem, Scene } from "../core/Scene";
 import {IDfied} from '../core/interface/IDfied';
+import { SceneObject } from "../core/SceneObject";
+
+export type GameStateManagerType = GameStateManager<PlayerState>;
 export class SpawnRequest extends Schema {
   @type("string") requestId: string = "";
   @type("string") unitType: SoldierType = "SPEARMAN";
@@ -19,7 +22,7 @@ export class SpawnRequest extends Schema {
   }
 }
 
-export class PlayerState extends Schema implements IDfied {
+export class PlayerState extends Schema implements IDfied, ISceneItem {
   @type("string") id: string;
 
   @type("string") name: string = "";
@@ -51,9 +54,12 @@ export class PlayerState extends Schema implements IDfied {
   resourceGrowthRateHz = 2;
   maxResources = 200;
 
+  sceneItemRef!: SceneObject;
+
   constructor(name: string, x: number, y: number, sessionId: string) {
     super();
     this.id = sessionId;
+    this.sceneItemRef = new SceneObject(sessionId, x, y, 100, 100);
     this.name = name;
     this.resources = 100;
     this.readyStatus = false;
@@ -64,8 +70,11 @@ export class PlayerState extends Schema implements IDfied {
     this.spawnRequestDetailMap = new MapSchema<SpawnRequest>();
     this.spawnRequestQueue = new ArraySchema<string>();
   }
+  getSceneItem() {
+    return this.sceneItemRef;
+  }
 
-  private processSpawnRequest(deltaTime: number, scene: Scene<SoldierState>) {
+  private processSpawnRequest(deltaTime: number, scene: Scene) {
     if (this.spawnRequestQueue.length < 1) return;
     const requestId = this.spawnRequestQueue.at(0);
     if (!requestId) return;
@@ -89,7 +98,7 @@ export class PlayerState extends Schema implements IDfied {
     this.addNewSoldier(requestInfo.unitType, scene);
   }
 
-  public addNewSoldier(type: SoldierType, scene: Scene<SoldierState>) {
+  public addNewSoldier(type: SoldierType, scene: Scene) {
     console.log("spawning a soldier ", type);
     const newSoldier = new SoldierState(this.id, type, this.posX, this.posY);
     this.soldiers.set(newSoldier.id, newSoldier);
@@ -100,7 +109,7 @@ export class PlayerState extends Schema implements IDfied {
 
   public tick(
     deltaTime: number,
-    gameStateManager: GameStateManager<SoldierState, PlayerState>
+    gameStateManager: GameStateManagerType
   ) {
     this.resources += this.resourceGrowthRateHz * deltaTime;
     this.processSpawnRequest(deltaTime, gameStateManager.scene);
@@ -110,9 +119,8 @@ export class PlayerState extends Schema implements IDfied {
       soldier.tick(deltaTime, gameStateManager);
     });
 
-    this.resourceGrowthRateHz = this.resourceGrowthRateHz - 0.1*deltaTime;
-    if(this.resourceGrowthRateHz < 0)
-      this.resourceGrowthRateHz = 0.2;
+    this.resourceGrowthRateHz = this.resourceGrowthRateHz - 0.1 * deltaTime;
+    if (this.resourceGrowthRateHz < 0) this.resourceGrowthRateHz = 0.2;
   }
 
   public updatePosition(x: number, y: number) {
@@ -145,14 +153,19 @@ export class PlayerState extends Schema implements IDfied {
     this.resources -= costOfUnit;
   }
 
-  public removeSoldier(soldierId: string, gameManager: GameStateManager<SoldierState, PlayerState>) {
+  public removeSoldier(
+    soldierId: string,
+    gameManager: GameStateManagerType
+  ) {
     gameManager.scene.removeSceneItem(soldierId);
     this.soldiers.delete(soldierId);
   }
 
-  public removeAllSoldiers(gameManager: GameStateManager<SoldierState, PlayerState>) {
+  public removeAllSoldiers(
+    gameManager: GameStateManagerType
+  ) {
     this.soldiers.forEach((item) => {
       this.removeSoldier(item.id, gameManager);
-    })
+    });
   }
 }

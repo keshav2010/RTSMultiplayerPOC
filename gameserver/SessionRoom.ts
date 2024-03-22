@@ -7,7 +7,6 @@ import { OnLeaveCommand } from "./commands/OnLeaveCommand";
 import { GameStateManager } from "./core/GameStateManager";
 import SessionStateMachineAction from "./stateMachines/server-state-machine/SessionStateBehaviour";
 import SessionStateMachineJSON from "./stateMachines/server-state-machine/SessionStateMachine.json";
-import { SoldierState } from "./schema/SoldierState";
 import { PlayerState } from "./schema/PlayerState";
 
 export class SessionRoom extends Room<SessionState> {
@@ -15,7 +14,7 @@ export class SessionRoom extends Room<SessionState> {
   patchRate = 60;
   dispatcher = new Dispatcher(this);
 
-  gameManager = new GameStateManager<SoldierState, PlayerState>(
+  gameManager = new GameStateManager<PlayerState>(
     SessionStateMachineJSON,
     SessionStateMachineAction
   );

@@ -6,10 +6,8 @@ export interface ISceneItem {
   getSceneItem: () => SceneObject;
 }
 
-export class Scene<
-  SceneItemType extends ISceneItem
-> extends Quadtree<TypeQuadtreeItem> {
-  sceneItemMap: Map<string, SceneItemType>;
+export class Scene extends Quadtree<TypeQuadtreeItem> {
+  sceneItemMap: Map<string, ISceneItem>;
 
   constructor(opts: {
     x?: number;
@@ -19,7 +17,7 @@ export class Scene<
     maxElements?: number;
   }) {
     super(opts);
-    this.sceneItemMap = new Map<string, SceneItemType>();
+    this.sceneItemMap = new Map<string, ISceneItem>();
   }
 
   removeSceneItem(itemId: string) {
@@ -34,13 +32,13 @@ export class Scene<
     this.sceneItemMap.delete(itemId);
   }
 
-  addSceneItem(item: SceneItemType, doObserve: boolean = true) {
+  addSceneItem(item: ISceneItem, doObserve: boolean = true) {
     this.sceneItemMap.set(item.getSceneItem().id, item);
     this.push(item.getSceneItem(), doObserve);
   }
 
-  getSceneItemById(id: string) {
-    return this.sceneItemMap.get(id) || null;
+  getSceneItemById<ReturnType extends ISceneItem = ISceneItem>(id: string) {
+    return this.sceneItemMap.get(id) as ReturnType || null;
   }
 
   /**
