@@ -142,7 +142,8 @@ export class PlayerState extends Schema implements ISceneItem {
     return [];
   }
 
-  public getSoldier(soldierId: string) {
+  public getSoldier(soldierId?: string | null) {
+    if(!soldierId) return undefined;
     const soldierState = this.soldiers.get(soldierId);
     return soldierState;
   }

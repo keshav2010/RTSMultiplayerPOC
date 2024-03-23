@@ -28,7 +28,7 @@ function mapRange(
 
 export class SoldierState
   extends Schema
-  implements ISceneItem, IBoidAgent<SoldierState>
+  implements ISceneItem, IBoidAgent
 {
   @type("number") currentPositionX: number = 0;
   @type("number") currentPositionY: number = 0;
@@ -73,7 +73,7 @@ export class SoldierState
     soldier: SoldierState;
   }>(SoldierStateMachineJSON, soldierStateBehaviours);
 
-  groupLeader?: SoldierState;
+  groupLeaderId?: string | null;
   offsetFromPosition: SAT.Vector = new SAT.Vector(0, 0);
   constructor(
     playerId: string,
@@ -107,11 +107,11 @@ export class SoldierState
     this.sceneItemRef = new SceneObject(this.id, x, y, 32, 32, "MOVABLE", true);
   }
 
-  setGroupLeader(arg: SoldierState) {
-    this.groupLeader = arg;
+  setGroupLeaderId(leaderId: string) {
+    this.groupLeaderId = leaderId;
   }
-  getGroupLeader() {
-    return this.groupLeader;
+  getGroupLeaderId() {
+    return this.groupLeaderId;
   }
 
   getSceneItem() {
@@ -297,6 +297,15 @@ export class SoldierState
   tick(delta: number, stateManager: GameStateManagerType) {
     this.currentState = this.stateMachine.currentState as any;
     const soldier = this.getSceneItem();
+
+    // if group-leader not present anymore, ensure offset is 0
+    if (
+      !stateManager.getPlayer(this.playerId)?.getSoldier(this.groupLeaderId)
+    ) {
+      this.groupLeaderId = null;
+      this.offsetFromPosition = new SAT.Vector(0, 0);
+    }
+
     const frictionForce = this.velocityVector.clone().scale(-1.0 * delta);
     this.velocityVector.add(frictionForce);
     const steerForce = this.getSteerVector(this.getExpectedPosition());

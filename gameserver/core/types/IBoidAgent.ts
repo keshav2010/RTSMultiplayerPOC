@@ -1,4 +1,4 @@
-export interface IBoidAgent<GroupLeadType extends IBoidAgent = any> {
+export interface IBoidAgent {
   currentPositionX: number;
   currentPositionY: number;
   setPosition: (arg: SAT.Vector) => void;
@@ -19,10 +19,10 @@ export interface IBoidAgent<GroupLeadType extends IBoidAgent = any> {
   velocityVector: SAT.Vector;
   getVelocityVector: (...args: any) => SAT.Vector;
 
-  groupLeader?: GroupLeadType;
+  groupLeaderId?: string | null;
   offsetFromPosition: SAT.Vector;
-  setGroupLeader: (arg: GroupLeadType) => void;
-  getGroupLeader: () => GroupLeadType | undefined;
+  setGroupLeaderId: (arg: string) => void;
+  getGroupLeaderId: () => string | undefined | null;
 
   getDistanceFromExpectedPosition: () => number;
   applyForce: (force: SAT.Vector) => void;

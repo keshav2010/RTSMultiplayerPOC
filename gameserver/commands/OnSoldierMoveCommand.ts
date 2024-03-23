@@ -25,7 +25,7 @@ export class OnSoldierMoveCommand extends Command<SessionRoom, CommandPayload> {
     // leader selection for group movement
     const leader = soldierObjects[0];
     for (let i = 1; i < soldierObjects.length; i++) {
-      soldierObjects[i].setGroupLeader(leader);
+      soldierObjects[i].setGroupLeaderId(leader.id);
     }
 
     // update relative position of group units (leader will be assigned center slot in group grid)
