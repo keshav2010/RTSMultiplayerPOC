@@ -1,5 +1,5 @@
 import { AllianceTracker, AllianceTypes } from "../AllianceTracker";
-import { Scene, ISceneItem } from "./Scene";
+import { Scene } from "./Scene";
 import {
   IMachineJSON,
   IStateActions,
@@ -8,7 +8,8 @@ import {
 import { SessionState } from "../schema/SessionState";
 import { Room } from "colyseus";
 import { SERVER_CONFIG } from "../config";
-import { IDfied } from "./interface/IDfied";
+import { IDfied } from "./types/IDfied";
+import { ISceneItem } from "./types/ISceneItem";
 
 export class GameStateManager<PlayerSchema extends IDfied> {
   GameStarted: boolean;

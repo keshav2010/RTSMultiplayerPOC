@@ -1,21 +1,9 @@
-import Quadtree from "quadtree-lib";
 import SAT from "sat";
-
-export type SceneObjectType = "FIXED" | "MOVABLE";
-export type TypeQuadtreeItem = {
-  x: Quadtree.QuadtreeItem["x"];
-  y: Quadtree.QuadtreeItem["y"];
-  width?: Quadtree.QuadtreeItem["width"];
-  height?: Quadtree.QuadtreeItem["height"];
-  id: string;
-  type: SceneObjectType;
-  collidable: boolean
-};
-
 /**
  * @class SceneObject
  * @classdesc Any object that is meant to be part of the Scene should extend this class.
  */
+export type SceneObjectType = "FIXED" | "MOVABLE";
 export class SceneObject extends SAT.Box {
   id: string;
   x: number;

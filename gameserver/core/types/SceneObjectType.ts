@@ -1,0 +1,1 @@
+export type SceneObjectType = "FIXED" | "MOVABLE";

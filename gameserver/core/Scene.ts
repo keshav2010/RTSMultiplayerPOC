@@ -1,11 +1,8 @@
 import Quadtree from "quadtree-lib";
 import SAT from "sat";
-
-import { SceneObject, SceneObjectType, TypeQuadtreeItem } from "./SceneObject";
-export interface ISceneItem {
-  getSceneItem: () => SceneObject;
-}
-
+import { TypeQuadtreeItem } from "./types/TypeQuadtreeItem"
+import { ISceneItem } from "./types/ISceneItem"
+import { SceneObjectType } from "./types/SceneObjectType";
 export class Scene extends Quadtree<TypeQuadtreeItem> {
   sceneItemMap: Map<string, ISceneItem>;
 
@@ -65,7 +62,7 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
   }
 
   //Check if unit/sceneItem is colliding with other units/soldiers
-  checkOne(
+  checkCollisionOnObject(
     sceneItem: ISceneItem,
     callback: (arg0: SAT.Response, arg1: ISceneItem[]) => void
   ) {

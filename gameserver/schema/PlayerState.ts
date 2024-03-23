@@ -3,10 +3,11 @@ import { SoldierState } from "./SoldierState";
 import { nanoid } from "nanoid";
 import { SoldierType, SoldierTypeConfig } from "../../common/SoldierType";
 import { GameStateManager } from "../core/GameStateManager";
-import { ISceneItem, Scene } from "../core/Scene";
-import {IDfied} from '../core/interface/IDfied';
-import { SceneObject } from "../core/SceneObject";
+import { Scene } from "../core/Scene";
+import { IDfied } from "../core/types/IDfied";
+import { SceneObject } from "../core/types/SceneObject";
 import SAT from "sat";
+import { ISceneItem } from "../core/types/ISceneItem";
 export type GameStateManagerType = GameStateManager<PlayerState>;
 export class SpawnRequest extends Schema {
   @type("string") requestId: string = "";
@@ -115,10 +116,7 @@ export class PlayerState extends Schema implements IDfied, ISceneItem {
     return newSoldier.id;
   }
 
-  public tick(
-    deltaTime: number,
-    gameStateManager: GameStateManagerType
-  ) {
+  public tick(deltaTime: number, gameStateManager: GameStateManagerType) {
     this.resources += this.resourceGrowthRateHz * deltaTime;
     this.processSpawnRequest(deltaTime, gameStateManager.scene);
 
@@ -164,17 +162,12 @@ export class PlayerState extends Schema implements IDfied, ISceneItem {
     this.resources -= costOfUnit;
   }
 
-  public removeSoldier(
-    soldierId: string,
-    gameManager: GameStateManagerType
-  ) {
+  public removeSoldier(soldierId: string, gameManager: GameStateManagerType) {
     gameManager.scene.removeSceneItem(soldierId);
     this.soldiers.delete(soldierId);
   }
 
-  public removeAllSoldiers(
-    gameManager: GameStateManagerType
-  ) {
+  public removeAllSoldiers(gameManager: GameStateManagerType) {
     this.soldiers.forEach((item) => {
       this.removeSoldier(item.id, gameManager);
     });

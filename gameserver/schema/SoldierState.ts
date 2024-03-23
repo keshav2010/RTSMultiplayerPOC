@@ -4,11 +4,13 @@ import { SoldierType, SoldierTypeConfig } from "../../common/SoldierType";
 import { CustomStateMachine } from "../core/CustomStateMachine";
 import SoldierStateMachineJSON from "../stateMachines/soldier-state-machine/SoldierStateMachine.json";
 import soldierStateBehaviours from "../stateMachines/soldier-state-machine/SoldierStateBehaviour";
-import { SceneObject } from "../core/SceneObject";
+import { SceneObject } from "../core/types/SceneObject";
 import { AllianceTypes } from "../AllianceTracker";
 import SAT from "sat";
 import { MOVABLE_UNIT_CONSTANTS } from "../config";
 import { GameStateManagerType } from "./PlayerState";
+import { IDfied } from "../core/types/IDfied";
+import { ISceneItem } from "../core/types/ISceneItem";
 
 function mapRange(
   val: number,
@@ -23,7 +25,7 @@ function mapRange(
   return targetRangeStart + normalizedGivenRange * targetRange;
 }
 
-export class SoldierState extends Schema {
+export class SoldierState extends Schema implements IDfied, ISceneItem {
   @type("number") currentPositionX: number = 0;
   @type("number") currentPositionY: number = 0;
 
@@ -301,7 +303,7 @@ export class SoldierState extends Schema {
 
     this.setPosition(newPosition);
 
-    stateManager.scene.checkOne(
+    stateManager.scene.checkCollisionOnObject(
       this,
       (
         res: {
