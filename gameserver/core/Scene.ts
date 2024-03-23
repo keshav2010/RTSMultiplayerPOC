@@ -2,7 +2,7 @@ import Quadtree from "quadtree-lib";
 import SAT from "sat";
 import { TypeQuadtreeItem } from "./types/TypeQuadtreeItem"
 import { ISceneItem } from "./types/ISceneItem"
-import { SceneObjectType } from "./types/SceneObjectType";
+import { SceneObjectType } from "./types/SceneObject";
 export class Scene extends Quadtree<TypeQuadtreeItem> {
   sceneItemMap: Map<string, ISceneItem>;
 

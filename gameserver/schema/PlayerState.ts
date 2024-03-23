@@ -23,7 +23,7 @@ export class SpawnRequest extends Schema {
   }
 }
 
-export class PlayerState extends Schema implements IDfied, ISceneItem {
+export class PlayerState extends Schema implements ISceneItem {
   @type("string") id: string;
 
   @type("string") name: string = "";

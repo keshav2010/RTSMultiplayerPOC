@@ -155,7 +155,8 @@ export default {
       var nearbyUnits = stateManager.scene.getNearbyUnits(
         soldier.getSceneItem().pos.x + soldier.getSceneItem().w / 2,
         soldier.getSceneItem().pos.y + soldier.getSceneItem().h / 2,
-        SoldierConstants.ENEMY_SEARCH_RADIUS
+        SoldierConstants.ENEMY_SEARCH_RADIUS,
+        ['MOVABLE']
       );
       if (nearbyUnits.length < 2) {
         throw new Error(
@@ -235,8 +236,8 @@ export default {
       const steerForce = soldier.getSteerVector(
         soldierAttackTarget.getSceneItem().pos
       );
-      soldier.applyForce(seperationForce, delta);
-      soldier.applyForce(steerForce, delta);
+      soldier.applyForce(seperationForce);
+      soldier.applyForce(steerForce);
 
       soldier.targetPositionX = soldierAttackTarget.getSceneItem().pos.x;
       soldier.targetPositionY = soldierAttackTarget.getSceneItem().pos.y;

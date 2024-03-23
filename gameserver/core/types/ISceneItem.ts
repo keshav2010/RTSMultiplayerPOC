@@ -1,5 +1,7 @@
+import { IDfied } from "./IDfied";
 import { SceneObject } from "./SceneObject";
 
-export interface ISceneItem {
+export interface ISceneItem extends IDfied {
+  sceneItemRef: SceneObject;
   getSceneItem: () => SceneObject;
 }

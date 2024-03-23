@@ -9,8 +9,9 @@ import { AllianceTypes } from "../AllianceTracker";
 import SAT from "sat";
 import { MOVABLE_UNIT_CONSTANTS } from "../config";
 import { GameStateManagerType } from "./PlayerState";
-import { IDfied } from "../core/types/IDfied";
 import { ISceneItem } from "../core/types/ISceneItem";
+import { TypeQuadtreeItem } from "../core/types/TypeQuadtreeItem";
+import { IBoidAgent } from '../core/types/IBoidAgent';
 
 function mapRange(
   val: number,
@@ -25,7 +26,10 @@ function mapRange(
   return targetRangeStart + normalizedGivenRange * targetRange;
 }
 
-export class SoldierState extends Schema implements IDfied, ISceneItem {
+export class SoldierState
+  extends Schema
+  implements ISceneItem, IBoidAgent<SoldierState>
+{
   @type("number") currentPositionX: number = 0;
   @type("number") currentPositionY: number = 0;
 
@@ -53,7 +57,7 @@ export class SoldierState extends Schema implements IDfied, ISceneItem {
   // Debug Information
   @type("string") currentState: keyof typeof SoldierStateMachineJSON.states;
 
-  soldier!: SceneObject;
+  sceneItemRef!: SceneObject;
   attackTarget: SoldierState | null = null;
 
   targetVector: SAT.Vector | null = null;
@@ -69,6 +73,8 @@ export class SoldierState extends Schema implements IDfied, ISceneItem {
     soldier: SoldierState;
   }>(SoldierStateMachineJSON, soldierStateBehaviours);
 
+  groupLeader?: SoldierState;
+  offsetFromPosition: SAT.Vector = new SAT.Vector(0, 0);
   constructor(
     playerId: string,
     soldierType: SoldierType,
@@ -98,15 +104,22 @@ export class SoldierState extends Schema implements IDfied, ISceneItem {
     this.damage = SoldierTypeConfig[this.type].damage;
     this.cost = SoldierTypeConfig[this.type].cost;
 
-    this.soldier = new SceneObject(this.id, x, y, 32, 32, "MOVABLE", true);
+    this.sceneItemRef = new SceneObject(this.id, x, y, 32, 32, "MOVABLE", true);
+  }
+
+  setGroupLeader(arg: SoldierState) {
+    this.groupLeader = arg;
+  }
+  getGroupLeader() {
+    return this.groupLeader;
   }
 
   getSceneItem() {
-    return this.soldier as SceneObject;
+    return this.sceneItemRef as SceneObject;
   }
 
   getExpectedPosition() {
-    return new SAT.Vector(this.expectedPositionX, this.expectedPositionY);
+    return new SAT.Vector(this.expectedPositionX + this.offsetFromPosition.x, this.expectedPositionY + this.offsetFromPosition.y);
   }
 
   setAttackTarget(target: SoldierState | null) {
@@ -119,19 +132,19 @@ export class SoldierState extends Schema implements IDfied, ISceneItem {
     this.targetVector = new SAT.Vector(vector.x, vector.y);
   }
 
-  applyForce(forceVector: SAT.Vector, delta: number = 1) {
+  applyForce(forceVector: SAT.Vector) {
     this.velocityVector.add(forceVector);
   }
 
   setPosition(vec: SAT.Vector) {
-    this.soldier.pos.copy(vec);
-    this.soldier.x = vec.x;
-    this.soldier.y = vec.y;
+    this.sceneItemRef.pos.copy(vec);
+    this.sceneItemRef.x = vec.x;
+    this.sceneItemRef.y = vec.y;
     this.currentPositionX = vec.x;
     this.currentPositionY = vec.y;
   }
 
-  getDistanceFromMovePos() {
+  getDistanceFromExpectedPosition() {
     const expectedPos = this.getExpectedPosition().clone();
     let distanceToExpectedPos = expectedPos.sub(this.getSceneItem().pos).len();
     if (
@@ -144,7 +157,7 @@ export class SoldierState extends Schema implements IDfied, ISceneItem {
   }
 
   hasReachedDestination() {
-    let distanceToExpectedPos = this.getDistanceFromMovePos();
+    let distanceToExpectedPos = this.getDistanceFromExpectedPosition();
     this.isAtDestination =
       distanceToExpectedPos <= MOVABLE_UNIT_CONSTANTS.DESIRED_DIST_FROM_TARGET;
     return this.isAtDestination;
@@ -208,43 +221,42 @@ export class SoldierState extends Schema implements IDfied, ISceneItem {
       return sumVec;
     }
 
-    const otherSoldierUnits = nearbyUnits.filter((value: { id: string }) => {
-      const isSelf = this.id === value.id;
+    const otherSoldierUnits = nearbyUnits.filter(
+      (nearbyUnit: TypeQuadtreeItem) => {
+        const isSelf = this.id === nearbyUnit.id;
 
-      const otherSoldierSchema =
-        stateManager.scene.getSceneItemById<SoldierState>(value.id);
-      if (!otherSoldierSchema) {
-        return;
-      }
+        const otherSoldierSchema =
+          stateManager.scene.getSceneItemById<SoldierState>(nearbyUnit.id);
+        if (!otherSoldierSchema) {
+          return;
+        }
 
-      const isExcluded =
-        (excludeUnitPredicate &&
-          typeof excludeUnitPredicate === "function" &&
-          excludeUnitPredicate(this, otherSoldierSchema)) ||
-        false;
-      return !(isSelf || isExcluded);
-    });
-
-    otherSoldierUnits.forEach(
-      (unit: { x: number | undefined; y: number | undefined }) => {
-        const distanceBetweenUnits = soldier.pos
-          .clone()
-          .sub(new SAT.Vector(unit.x, unit.y))
-          .len();
-
-        const unitSeperationBetweenCertainThreshold =
-          distanceBetweenUnits <=
-          MOVABLE_UNIT_CONSTANTS.DESIRED_SEPERATION_DIST;
-
-        if (!unitSeperationBetweenCertainThreshold) return;
-
-        const repelUnitVector = soldier.pos
-          .clone()
-          .sub(new SAT.Vector(unit.x, unit.y));
-        repelUnitVector.scale(MOVABLE_UNIT_CONSTANTS.MAX_REPEL_FORCE);
-        sumVec.add(repelUnitVector);
+        const isExcluded =
+          (excludeUnitPredicate &&
+            typeof excludeUnitPredicate === "function" &&
+            excludeUnitPredicate(this, otherSoldierSchema)) ||
+          false;
+        return !(isSelf || isExcluded);
       }
     );
+
+    otherSoldierUnits.forEach((unit: TypeQuadtreeItem) => {
+      const distanceBetweenUnits = soldier.pos
+        .clone()
+        .sub(new SAT.Vector(unit.x, unit.y))
+        .len();
+
+      const unitSeperationBetweenCertainThreshold =
+        distanceBetweenUnits <= MOVABLE_UNIT_CONSTANTS.DESIRED_SEPERATION_DIST;
+
+      if (!unitSeperationBetweenCertainThreshold) return;
+
+      const repelUnitVector = soldier.pos
+        .clone()
+        .sub(new SAT.Vector(unit.x, unit.y));
+      repelUnitVector.scale(MOVABLE_UNIT_CONSTANTS.MAX_REPEL_FORCE);
+      sumVec.add(repelUnitVector);
+    });
 
     const steer = sumVec.clone();
     if (sumVec.len() > 0) steer.sub(this.velocityVector);
