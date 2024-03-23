@@ -72,7 +72,8 @@ export default {
     const nearbyUnits = stateManager.scene.getNearbyUnits(
       soldier.getSceneItem().pos.x + soldier.getSceneItem().w / 2,
       soldier.getSceneItem().pos.y + soldier.getSceneItem().h / 2,
-      SoldierConstants.NEARBY_SEARCH_RADI
+      SoldierConstants.NEARBY_SEARCH_RADI,
+      ['MOVABLE']
     );
 
     if (nearbyUnits.length < 2) return;

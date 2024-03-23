@@ -96,7 +96,7 @@ export class SoldierState extends Schema {
     this.damage = SoldierTypeConfig[this.type].damage;
     this.cost = SoldierTypeConfig[this.type].cost;
 
-    this.soldier = new SceneObject(this.id, x, y, 32, 32);
+    this.soldier = new SceneObject(this.id, x, y, 32, 32, "MOVABLE", true);
   }
 
   getSceneItem() {
@@ -197,7 +197,8 @@ export class SoldierState extends Schema {
     const nearbyUnits = stateManager.scene.getNearbyUnits(
       soldier.x + soldier.w / 2,
       soldier.y + soldier.h / 2,
-      MOVABLE_UNIT_CONSTANTS.NEARBY_SEARCH_RADI
+      MOVABLE_UNIT_CONSTANTS.NEARBY_SEARCH_RADI,
+      ["MOVABLE"]
     );
 
     let sumVec = new SAT.Vector(0);

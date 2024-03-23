@@ -16,7 +16,6 @@ export class OnSpawnPointSelectCommand extends Command<
     console.log("spawn point selected in frontend", spawnX, spawnY);
     const player = this.state.getPlayer(client.id);
     if (!player) return;
-    player.posX = spawnX;
-    player.posY = spawnY;
+    player.updatePosition(spawnX, spawnY);
   }
 }

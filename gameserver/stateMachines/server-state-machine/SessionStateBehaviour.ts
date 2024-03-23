@@ -1,7 +1,7 @@
 import { Room } from "colyseus";
 import { SessionState } from "../../schema/SessionState";
 import { SERVER_CONFIG } from "../../config";
-import { GameStateManagerType } from "../../schema/PlayerState";
+import { GameStateManagerType, PlayerState } from "../../schema/PlayerState";
 export default {
   SessionLobbyState: async ({
     gameStateManager,
@@ -65,7 +65,7 @@ export default {
     }
   },
 
-  BattleState: ({
+  BattleState: async ({
     gameStateManager,
     delta,
     sessionState,
@@ -77,18 +77,25 @@ export default {
     room: Room;
   }) => {
     try {
-      if (sessionState.sessionState !== "BATTLE_STATE") {
-        room.lock();
-        sessionState.sessionState = "BATTLE_STATE";
-      }
-      var deltaTime = delta / 1000;
-
-      //simulate all players.
       const playersConnected = sessionState.players;
       if (playersConnected.size == 0) {
         gameStateManager.stateMachine.controller.send("BattleEnd");
         return;
       }
+      if (sessionState.sessionState !== "BATTLE_STATE") {
+        await room.lock();
+
+        // for all players, ensure that their castles / main spawn point is part of scene
+        playersConnected.forEach((player) => {
+          const isAlreadyInScene = gameStateManager.getSceneItem<PlayerState>(
+            player.id
+          );
+          if (!isAlreadyInScene) gameStateManager.addSceneItem(player);
+        });
+        
+        sessionState.sessionState = "BATTLE_STATE";
+      }
+      var deltaTime = delta / 1000;
       playersConnected.forEach((player) => {
         player.tick(deltaTime, gameStateManager);
       });

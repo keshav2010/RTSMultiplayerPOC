@@ -66,6 +66,9 @@ export class GameStateManager<PlayerSchema extends IDfied> {
   removeSceneItem(itemId: string) {
     this.scene.removeSceneItem(itemId);
   }
+  getSceneItem<Type extends ISceneItem>(itemId: string) {
+    return this.scene.getSceneItemById<Type>(itemId);
+  }
 
   setAlliance(
     playerAId: string,

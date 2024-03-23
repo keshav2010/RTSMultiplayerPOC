@@ -6,7 +6,7 @@ import { GameStateManager } from "../core/GameStateManager";
 import { ISceneItem, Scene } from "../core/Scene";
 import {IDfied} from '../core/interface/IDfied';
 import { SceneObject } from "../core/SceneObject";
-
+import SAT from "sat";
 export type GameStateManagerType = GameStateManager<PlayerState>;
 export class SpawnRequest extends Schema {
   @type("string") requestId: string = "";
@@ -59,7 +59,15 @@ export class PlayerState extends Schema implements IDfied, ISceneItem {
   constructor(name: string, x: number, y: number, sessionId: string) {
     super();
     this.id = sessionId;
-    this.sceneItemRef = new SceneObject(sessionId, x, y, 100, 100);
+    this.sceneItemRef = new SceneObject(
+      sessionId,
+      x,
+      y,
+      100,
+      100,
+      "FIXED",
+      false
+    );
     this.name = name;
     this.resources = 100;
     this.readyStatus = false;
@@ -126,6 +134,9 @@ export class PlayerState extends Schema implements IDfied, ISceneItem {
   public updatePosition(x: number, y: number) {
     this.posX = x;
     this.posY = y;
+    this.sceneItemRef.x = x;
+    this.sceneItemRef.y = y;
+    this.sceneItemRef.pos.copy(new SAT.Vector(x, y));
   }
 
   //TODO:
