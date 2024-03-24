@@ -30,11 +30,7 @@ export class OnSoldierMoveCommand extends Command<SessionRoom, CommandPayload> {
 
     // update relative position of group units (leader will be assigned center slot in group grid)
     const matrixRows = Math.ceil(Math.sqrt(soldierObjects.length));
-    const offset = 35;
-    const matrixTopLeft = new SAT.Vector(
-      leader.currentPositionX - Math.floor(matrixRows / 2) * offset,
-      leader.currentPositionY - Math.floor(matrixRows / 2) * offset
-    );
+    const offset = 80;
     soldierObjects.forEach((soldier, i) => {
       const offsetX = (i % matrixRows) * offset;
       const offsetY = Math.floor(i / matrixRows) * offset;

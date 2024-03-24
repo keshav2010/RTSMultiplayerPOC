@@ -12,7 +12,6 @@ import { Spearman } from "../soldiers/Spearman";
 import { BaseScene } from "./BaseScene";
 import $ from "jquery";
 
-var selectorGraphics: Phaser.GameObjects.Graphics;
 var selectorColor = 0xffff00;
 var selectorThickness = 2;
 var selectorDraw = false;
@@ -186,8 +185,12 @@ export class GameScene extends BaseScene {
   create() {
     networkManager = this.registry.get("networkManager") as NetworkManager;
 
-    selectorGraphics = this.AddObject(this.add.graphics());
+    this.AddObject(this.add.graphics(), "obj_selectorGraphics");
+    this.AddObject(this.add.graphics(), "obj_brush");
     this.AddInputEvent("pointerdown", (pointer: any) => {
+      const selectorGraphics = this.GetObject<Phaser.GameObjects.Graphics>(
+        "obj_selectorGraphics"
+      )!;
       if (pointer.button === 0) {
         //lmb
         selectorGraphics.clear();
@@ -272,12 +275,18 @@ export class GameScene extends BaseScene {
       }
     });
     this.AddInputEvent("pointerup", () => {
+      const selectorGraphics = this.GetObject<Phaser.GameObjects.Graphics>(
+        "obj_selectorGraphics"
+      )!;
       selectorDraw = false;
       selectorGraphics.clear();
       pointerDownWorldSpace = null;
     });
 
     this.AddInputEvent("pointermove", (pointer: any) => {
+      const selectorGraphics = this.GetObject<Phaser.GameObjects.Graphics>(
+        "obj_selectorGraphics"
+      )!;
       if (!pointer.isDown) {
         selectorGraphics.clear();
         return;
@@ -531,7 +540,42 @@ export class GameScene extends BaseScene {
       this.events.removeAllListeners();
     });
   }
+  renderDebugPath() {
+    const painter = this.GetObject<Phaser.GameObjects.Graphics>("obj_brush")!;
+    painter.clear();
+    const sessionState = networkManager.getState()!;
+    const playerState = SessionStateClientHelpers.getPlayer(
+      sessionState,
+      networkManager.getClientId()!
+    );
+    playerState?.soldiers.forEach((value) => {
+      painter.lineStyle(1, 0x00ffee, 1);
+      painter.strokeRect(
+        value.currentPositionX! - value.width/2,
+        value.currentPositionY! - value.height/2,
+        value.width!,
+        value.height!
+      );
+
+      painter.strokeRect(
+        value.expectedPositionX! - value.width/2,
+        value.expectedPositionY! - value.height/2,
+        value.width!,
+        value.height!
+      );
+      painter.lineStyle(1, 0x00ffee, 1);
+      painter.strokeLineShape(
+        new Phaser.Geom.Line(
+          value.currentPositionX!,
+          value.currentPositionY!,
+          value.expectedPositionX!,
+          value.expectedPositionY!
+        )
+      );
+    });
+  }
   update(delta: number) {
+    this.renderDebugPath();
     this.controls?.update(delta);
   }
 }
