@@ -22,12 +22,20 @@ export enum CoreErrorCodes {
 
 export const MOVABLE_UNIT_CONSTANTS = {
   MAX_STEER_FORCE: 10,
-  MAX_REPEL_FORCE: 70,
+  MAX_REPEL_FORCE: 30,
 
-  DESIRED_DIST_FROM_TARGET: 20,
-  ACCEPTABLE_DIST_FROM_EXPECTED_POS: 1,
+  MAX_DISTANCE_OFFSET_ALLOWED_FROM_EXPECTED_POSITION: 50,
+
+  /**
+   * NEARBY_SEARCH_RADI serves following purpose
+   * 1. detect nearby allies under attack
+   * 2. find attack target
+   */
   NEARBY_SEARCH_RADI: 150,
-  ENEMY_SEARCH_RADIUS: 200,
-  DESIRED_SEPERATION_DIST: 55, //to initiate repulsion force
-  MAX_TARGETPOS_OVERLAP_DIST: 50,
+
+  /**
+   * 
+   */
+  MINIMUM_SEPERATION_DISTANCE_BETWEEN_UNITS: 30, //to initiate repulsion force
+  MAX_TARGETPOS_OVERLAP_DIST: 70,
 };

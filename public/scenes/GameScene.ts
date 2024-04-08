@@ -1,5 +1,4 @@
 import { PacketType } from "../../common/PacketType";
-import { SoldierType } from "../../common/SoldierType";
 import { PlayerState } from "../../gameserver/schema/PlayerState";
 import { SoldierState } from "../../gameserver/schema/SoldierState";
 import { NetworkManager } from "../NetworkManager";
@@ -550,20 +549,18 @@ export class GameScene extends BaseScene {
     );
     playerState?.soldiers.forEach((value) => {
       painter.lineStyle(1, 0x00ffee, 1);
-      painter.strokeRect(
-        value.currentPositionX! - value.width/2,
-        value.currentPositionY! - value.height/2,
-        value.width!,
-        value.height!
+      painter.strokeCircle(
+        value.currentPositionX!,
+        value.currentPositionY!,
+        value.radius!,
       );
 
-      painter.strokeRect(
-        value.expectedPositionX! - value.width/2,
-        value.expectedPositionY! - value.height/2,
-        value.width!,
-        value.height!
+      painter.strokeCircle(
+        value.expectedPositionX!,
+        value.expectedPositionY!,
+        value.radius!,
       );
-      painter.lineStyle(1, 0x00ffee, 1);
+      painter.lineStyle(1, 0xffffee, 1);
       painter.strokeLineShape(
         new Phaser.Geom.Line(
           value.currentPositionX!,

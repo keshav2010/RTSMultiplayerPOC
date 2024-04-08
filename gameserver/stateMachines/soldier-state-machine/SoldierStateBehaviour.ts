@@ -1,4 +1,4 @@
-import SoldierConstants from "../../unitConstants";
+import { MOVABLE_UNIT_CONSTANTS } from "../../config";
 import SAT from "sat";
 import { IStateActions } from "../../core/CustomStateMachine";
 import { AllianceTypes } from "../../AllianceTracker";
@@ -22,9 +22,10 @@ export default {
 
     // if nearby unit getting attacked.
     const nearbyUnits = stateManager.scene.getNearbyUnits(
-      soldier.getSceneItem().pos.x + soldier.getSceneItem().w / 2,
-      soldier.getSceneItem().pos.y + soldier.getSceneItem().h / 2,
-      SoldierConstants.NEARBY_SEARCH_RADI
+      soldier.getSceneItem().pos.x,
+      soldier.getSceneItem().pos.y,
+      MOVABLE_UNIT_CONSTANTS.NEARBY_SEARCH_RADI,
+      ['MOVABLE']
     );
     if (nearbyUnits.length < 2) return;
 
@@ -68,12 +69,12 @@ export default {
       soldier.stateMachine.controller.send("ReachedPosition");
       stateMachineTrigged = true;
     }
-
+    soldier.move(delta, stateManager);
     const nearbyUnits = stateManager.scene.getNearbyUnits(
-      soldier.getSceneItem().pos.x + soldier.getSceneItem().w / 2,
-      soldier.getSceneItem().pos.y + soldier.getSceneItem().h / 2,
-      SoldierConstants.NEARBY_SEARCH_RADI,
-      ['MOVABLE']
+      soldier.getSceneItem().pos.x,
+      soldier.getSceneItem().pos.y,
+      MOVABLE_UNIT_CONSTANTS.NEARBY_SEARCH_RADI,
+      ["MOVABLE"]
     );
 
     if (nearbyUnits.length < 2) return;
@@ -81,14 +82,15 @@ export default {
     nearbyUnits.forEach((unit) => {
       if (unit.id === soldier.id) return;
 
-      const nearbySoldierUnit = stateManager.scene.getSceneItemById<SoldierState>(unit.id);
+      const nearbySoldierUnit =
+        stateManager.scene.getSceneItemById<SoldierState>(unit.id);
       if (!nearbySoldierUnit) return;
       // if nearby unit (of same team) has same destination (approx.)
       let overlapExpectedPos =
         new SAT.Vector()
           .copy(nearbySoldierUnit.getExpectedPosition())
           .sub(soldier.getExpectedPosition())
-          .len() <= SoldierConstants.MAX_TARGETPOS_OVERLAP_DIST;
+          .len() <= MOVABLE_UNIT_CONSTANTS.MAX_TARGETPOS_OVERLAP_DIST;
 
       let anyOneAtDest =
         nearbySoldierUnit.hasReachedDestination() ||
@@ -121,7 +123,7 @@ export default {
       .copy(attackTarget.getSceneItem().pos)
       .sub(soldier.getSceneItem().pos)
       .len();
-    if (distToTarget > SoldierConstants.DESIRED_DIST_FROM_TARGET) {
+    if (distToTarget > MOVABLE_UNIT_CONSTANTS.NEARBY_SEARCH_RADI) {
       soldier.stateMachine.controller.send("TargetNotInRange");
       return;
     }
@@ -153,10 +155,10 @@ export default {
     try {
       soldier.setAttackTarget(null);
       var nearbyUnits = stateManager.scene.getNearbyUnits(
-        soldier.getSceneItem().pos.x + soldier.getSceneItem().w / 2,
-        soldier.getSceneItem().pos.y + soldier.getSceneItem().h / 2,
-        SoldierConstants.ENEMY_SEARCH_RADIUS,
-        ['MOVABLE']
+        soldier.getSceneItem().pos.x,
+        soldier.getSceneItem().pos.y,
+        MOVABLE_UNIT_CONSTANTS.NEARBY_SEARCH_RADI,
+        ["MOVABLE"]
       );
       if (nearbyUnits.length < 2) {
         throw new Error(
@@ -168,7 +170,9 @@ export default {
       let minDist = Number.POSITIVE_INFINITY;
       let nearestUnit: SoldierState | null = null;
       for (const unit of nearbyUnits) {
-        let unitSoldier = stateManager.scene.getSceneItemById<SoldierState>(unit.id);
+        let unitSoldier = stateManager.scene.getSceneItemById<SoldierState>(
+          unit.id
+        );
         if (
           !unitSoldier ||
           unit.id === soldier.id ||
@@ -245,11 +249,12 @@ export default {
       soldier.expectedPositionX = soldierAttackTarget.getSceneItem().pos.x;
       soldier.expectedPositionY = soldierAttackTarget.getSceneItem().pos.y;
 
+      soldier.move(delta, stateManager);
       const distToTarget = new SAT.Vector()
         .copy(soldierAttackTarget.getSceneItem().pos)
         .sub(soldier.getSceneItem().pos)
         .len();
-      if (distToTarget <= SoldierConstants.DESIRED_DIST_FROM_TARGET) {
+      if (distToTarget <= MOVABLE_UNIT_CONSTANTS.NEARBY_SEARCH_RADI) {
         soldier.stateMachine.controller.send("TargetInRange");
       }
     } catch (err) {

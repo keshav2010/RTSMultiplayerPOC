@@ -39,7 +39,7 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
   }
 
   /**
-   * Gets units which are within the bounding box(square)
+   * Gets units which are within the region
    * @param {*} soldier
    * @param {*} searchRadius
    * @returns
@@ -49,17 +49,24 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
     y: number,
     searchRadius: number,
     type?: SceneObjectType[]
-  ) {
-    let result = this.colliding({ x, y }, (a, b) => {
-      // a=> 1st arg, b => actual quadtree object
-      const aPos = new SAT.Vector(a.x, a.y);
-      const bPos = new SAT.Vector(b.x + b.width! / 2, b.y + b.height! / 2);
-      let distance = aPos.clone().sub(bPos).len();
-      return distance <= 2 * searchRadius;
+) {
+    let result = this.colliding({x, y}, (a, b) => {
+      // Create circles for each object
+      const aCircle = new SAT.Circle(
+        new SAT.Vector(a.x, a.y),
+        Math.max(searchRadius, a.r || 0),
+      );
+      const bCircle = new SAT.Circle(new SAT.Vector(b.x, b.y), b.r);
+
+      // Perform circle-circle collision detection
+      const response = new SAT.Response();
+      const collided = SAT.testCircleCircle(aCircle, bCircle, response);
+      return collided;
     });
+
     if (type) result = result.filter((body) => type?.includes(body.type));
     return result;
-  }
+}
 
   //Check if unit/sceneItem is colliding with other units/soldiers
   checkCollisionOnObject(
@@ -67,16 +74,13 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
     callback: (arg0: SAT.Response, arg1: ISceneItem[]) => void
   ) {
     const mainCollidingObject = sceneItem.getSceneItem();
-    //fetch all bodies which are colliding with the soldier specified by x,y,w,h in arg.
-    let collidingBodies = this.colliding({
-      x: mainCollidingObject.pos.x,
-      y: mainCollidingObject.pos.y,
-      width: mainCollidingObject.w,
-      height: mainCollidingObject.h,
-    });
-
+    //fetch all bodies which are colliding with the soldier specified by x,y,r in arg.
+    let collidingBodies = this.getNearbyUnits(
+      mainCollidingObject.pos.x,
+      mainCollidingObject.pos.y,
+      mainCollidingObject.r
+    );
     //Colliding Bodies will always have 1 element, which is the soldier itself.
-    if (collidingBodies.length < 2) return;
 
     //Obtain "SAT.Response" for each collision.
     const satBoxPolygons = collidingBodies
@@ -92,9 +96,9 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
       }
 
       const res = new SAT.Response();
-      const isColliding = SAT.testPolygonPolygon(
-        mainCollidingObject.toPolygon(),
-        collidingBody.getSceneItem().toPolygon(),
+      const isColliding = SAT.testCircleCircle(
+        mainCollidingObject,
+        collidingBody.getSceneItem(),
         res
       );
       if (!isColliding) return;

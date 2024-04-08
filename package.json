@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "build": "webpack --config webpack.config.js --watch",
+    "build": "webpack  --watch --config webpack.config.js",
     "start": "tsx watch gameserver/index",
     "dev": "webpack --config webpack.config.js --watch && tsx watch gameserver/index.ts",
     "deploy": "npx webpack --config webpack.config.js && tsx gameserver/index",

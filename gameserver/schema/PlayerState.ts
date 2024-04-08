@@ -65,7 +65,6 @@ export class PlayerState extends Schema implements ISceneItem {
       x,
       y,
       100,
-      100,
       "FIXED",
       false
     );

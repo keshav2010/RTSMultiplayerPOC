@@ -11,7 +11,7 @@ import { MOVABLE_UNIT_CONSTANTS } from "../config";
 import { GameStateManagerType } from "./PlayerState";
 import { ISceneItem } from "../core/types/ISceneItem";
 import { TypeQuadtreeItem } from "../core/types/TypeQuadtreeItem";
-import { IBoidAgent } from '../core/types/IBoidAgent';
+import { IBoidAgent } from "../core/types/IBoidAgent";
 
 function mapRange(
   val: number,
@@ -26,10 +26,7 @@ function mapRange(
   return targetRangeStart + normalizedGivenRange * targetRange;
 }
 
-export class SoldierState
-  extends Schema
-  implements ISceneItem, IBoidAgent
-{
+export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
   @type("number") currentPositionX: number = 0;
   @type("number") currentPositionY: number = 0;
 
@@ -43,8 +40,7 @@ export class SoldierState
 
   @type("string") type: SoldierType = "SPEARMAN";
 
-  @type("number") width: number = 32;
-  @type("number") height: number = 32;
+  @type("number") radius: number = 32;
 
   @type("number") health: number = 100;
   @type("number") speed: number;
@@ -104,7 +100,7 @@ export class SoldierState
     this.damage = SoldierTypeConfig[this.type].damage;
     this.cost = SoldierTypeConfig[this.type].cost;
 
-    this.sceneItemRef = new SceneObject(this.id, x, y, 32, 32, "MOVABLE", true);
+    this.sceneItemRef = new SceneObject(this.id, x, y, 32, "MOVABLE", true);
   }
 
   setGroupLeaderId(leaderId: string) {
@@ -119,7 +115,7 @@ export class SoldierState
   }
 
   getExpectedPosition() {
-    return new SAT.Vector(this.expectedPositionX + this.offsetFromPosition.x, this.expectedPositionY + this.offsetFromPosition.y);
+    return new SAT.Vector(this.expectedPositionX, this.expectedPositionY);
   }
 
   setAttackTarget(target: SoldierState | null) {
@@ -149,7 +145,7 @@ export class SoldierState
     let distanceToExpectedPos = expectedPos.sub(this.getSceneItem().pos).len();
     if (
       distanceToExpectedPos <=
-      MOVABLE_UNIT_CONSTANTS.ACCEPTABLE_DIST_FROM_EXPECTED_POS
+      MOVABLE_UNIT_CONSTANTS.MAX_DISTANCE_OFFSET_ALLOWED_FROM_EXPECTED_POSITION
     ) {
       this.isAtDestination = true;
     } else this.isAtDestination = false;
@@ -159,7 +155,8 @@ export class SoldierState
   hasReachedDestination() {
     let distanceToExpectedPos = this.getDistanceFromExpectedPosition();
     this.isAtDestination =
-      distanceToExpectedPos <= MOVABLE_UNIT_CONSTANTS.DESIRED_DIST_FROM_TARGET;
+      distanceToExpectedPos <=
+      MOVABLE_UNIT_CONSTANTS.MAX_DISTANCE_OFFSET_ALLOWED_FROM_EXPECTED_POSITION;
     return this.isAtDestination;
   }
 
@@ -192,7 +189,7 @@ export class SoldierState
 
     if (
       distanceFromExpectedPosition <=
-      MOVABLE_UNIT_CONSTANTS.DESIRED_DIST_FROM_TARGET
+      MOVABLE_UNIT_CONSTANTS.MAX_DISTANCE_OFFSET_ALLOWED_FROM_EXPECTED_POSITION
     ) {
       desiredVector.scale(0);
     } else desiredVector.normalize().scale(this.speed);
@@ -210,8 +207,8 @@ export class SoldierState
   ) {
     const soldier = this.getSceneItem();
     const nearbyUnits = stateManager.scene.getNearbyUnits(
-      soldier.x + soldier.w / 2,
-      soldier.y + soldier.h / 2,
+      soldier.x + soldier.r / 2,
+      soldier.y + soldier.r / 2,
       MOVABLE_UNIT_CONSTANTS.NEARBY_SEARCH_RADI,
       ["MOVABLE"]
     );
@@ -247,7 +244,8 @@ export class SoldierState
         .len();
 
       const unitSeperationBetweenCertainThreshold =
-        distanceBetweenUnits <= MOVABLE_UNIT_CONSTANTS.DESIRED_SEPERATION_DIST;
+        distanceBetweenUnits <=
+        MOVABLE_UNIT_CONSTANTS.MINIMUM_SEPERATION_DISTANCE_BETWEEN_UNITS;
 
       if (!unitSeperationBetweenCertainThreshold) return;
 
@@ -296,34 +294,14 @@ export class SoldierState
 
   tick(delta: number, stateManager: GameStateManagerType) {
     this.currentState = this.stateMachine.currentState as any;
-    const soldier = this.getSceneItem();
-
-    // if group-leader not present anymore, ensure offset is 0
-    if (
-      !stateManager.getPlayer(this.playerId)?.getSoldier(this.groupLeaderId)
-    ) {
+    // in case group-leader instance not found, we reset offset
+    const groupLeaderRef = stateManager
+      .getPlayer(this.playerId)
+      ?.getSoldier(this.groupLeaderId);
+    if (!groupLeaderRef) {
       this.groupLeaderId = null;
       this.offsetFromPosition = new SAT.Vector(0, 0);
-    }
-
-    const frictionForce = this.velocityVector.clone().scale(-1.0 * delta);
-    this.velocityVector.add(frictionForce);
-    const steerForce = this.getSteerVector(this.getExpectedPosition());
-    let seperationForce = this.getSeperationVector(
-      stateManager,
-      (a: SoldierState, b: SoldierState) => {
-        return a.hasReachedDestination() && b.hasReachedDestination();
-      }
-    );
-
-    const netForce = steerForce.clone().add(seperationForce);
-    this.applyForce(netForce);
-
-    this.velocityVector.normalize().scale(this.speed * delta);
-    const newPosition = soldier.pos.clone().add(this.getVelocityVector());
-
-    this.setPosition(newPosition);
-
+    }    
     stateManager.scene.checkCollisionOnObject(
       this,
       (
@@ -369,5 +347,22 @@ export class SoldierState
     );
 
     this.stateMachine.tick({ delta, stateManager, soldier: this });
+  }
+
+  move(delta: number, stateManager: GameStateManagerType) {
+    const steerForce = this.getSteerVector(this.getExpectedPosition());
+    const seperationForce = this.getSeperationVector(
+      stateManager,
+      (a: SoldierState, b: SoldierState) => {
+        return a.hasReachedDestination() && b.hasReachedDestination();
+      }
+    );
+    const netForce = steerForce.clone().add(seperationForce);
+    this.applyForce(netForce);
+    this.velocityVector.normalize().scale(this.speed * delta);
+    const newPosition = this.getSceneItem()!
+      .pos.clone()
+      .add(this.getVelocityVector());
+    this.setPosition(newPosition);
   }
 }
