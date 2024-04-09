@@ -143,20 +143,17 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
   getDistanceFromExpectedPosition() {
     const expectedPos = this.getExpectedPosition().clone();
     let distanceToExpectedPos = expectedPos.sub(this.getSceneItem().pos).len();
-    if (
-      distanceToExpectedPos <=
-      MOVABLE_UNIT_CONSTANTS.MAX_DISTANCE_OFFSET_ALLOWED_FROM_EXPECTED_POSITION
-    ) {
-      this.isAtDestination = true;
-    } else this.isAtDestination = false;
     return distanceToExpectedPos;
   }
 
   hasReachedDestination() {
     let distanceToExpectedPos = this.getDistanceFromExpectedPosition();
+    const currentState = this.stateMachine.currentState;
     this.isAtDestination =
-      distanceToExpectedPos <=
-      MOVABLE_UNIT_CONSTANTS.MAX_DISTANCE_OFFSET_ALLOWED_FROM_EXPECTED_POSITION;
+      distanceToExpectedPos <= 2 ||
+      (distanceToExpectedPos <=
+        MOVABLE_UNIT_CONSTANTS.MAX_DISTANCE_OFFSET_ALLOWED_FROM_EXPECTED_POSITION &&
+        currentState !== "Idle");
     return this.isAtDestination;
   }
 
@@ -184,21 +181,11 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
     const desiredVector = new SAT.Vector()
       .copy(expectedPos)
       .sub(this.getSceneItem().pos);
-
-    const distanceFromExpectedPosition = desiredVector.len();
-
-    if (
-      distanceFromExpectedPosition <=
-      MOVABLE_UNIT_CONSTANTS.MAX_DISTANCE_OFFSET_ALLOWED_FROM_EXPECTED_POSITION
-    ) {
-      desiredVector.scale(0);
-    } else desiredVector.normalize().scale(this.speed);
-
+    desiredVector.normalize().scale(this.speed);
     const steerVector = desiredVector.clone().sub(this.velocityVector);
-
-    if (steerVector.len() > MOVABLE_UNIT_CONSTANTS.MAX_STEER_FORCE)
-      steerVector.normalize().scale(MOVABLE_UNIT_CONSTANTS.MAX_STEER_FORCE);
-    return steerVector;
+    return steerVector.len() > MOVABLE_UNIT_CONSTANTS.MAX_STEER_FORCE
+      ? steerVector.normalize().scale(MOVABLE_UNIT_CONSTANTS.MAX_STEER_FORCE)
+      : steerVector;
   }
 
   getSeperationVector(
@@ -301,7 +288,7 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
     if (!groupLeaderRef) {
       this.groupLeaderId = null;
       this.offsetFromPosition = new SAT.Vector(0, 0);
-    }    
+    }
     stateManager.scene.checkCollisionOnObject(
       this,
       (
