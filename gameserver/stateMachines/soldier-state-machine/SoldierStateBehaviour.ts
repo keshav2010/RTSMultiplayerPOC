@@ -90,7 +90,7 @@ export default {
         new SAT.Vector()
           .copy(nearbySoldierUnit.getExpectedPosition())
           .sub(soldier.getExpectedPosition())
-          .len() <= MOVABLE_UNIT_CONSTANTS.MAX_TARGETPOS_OVERLAP_DIST;
+          .len() <= Math.max(MOVABLE_UNIT_CONSTANTS.MAX_TARGETPOS_OVERLAP_DIST, soldier.radius*2.1);
 
       let anyOneAtDest =
         nearbySoldierUnit.hasReachedDestination() ||
@@ -254,7 +254,7 @@ export default {
         .copy(soldierAttackTarget.getSceneItem().pos)
         .sub(soldier.getSceneItem().pos)
         .len();
-      if (distToTarget <= MOVABLE_UNIT_CONSTANTS.NEARBY_SEARCH_RADI) {
+      if (distToTarget <= MOVABLE_UNIT_CONSTANTS.DISTANCE_DURING_ATTACK) {
         soldier.stateMachine.controller.send("TargetInRange");
       }
     } catch (err) {

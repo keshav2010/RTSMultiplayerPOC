@@ -49,12 +49,12 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
     y: number,
     searchRadius: number,
     type?: SceneObjectType[]
-) {
-    let result = this.colliding({x, y}, (a, b) => {
+  ) {
+    let result = this.colliding({ x, y }, (a, b) => {
       // Create circles for each object
       const aCircle = new SAT.Circle(
         new SAT.Vector(a.x, a.y),
-        Math.max(searchRadius, a.r || 0),
+        Math.max(searchRadius, a.r || 0)
       );
       const bCircle = new SAT.Circle(new SAT.Vector(b.x, b.y), b.r);
 
@@ -66,11 +66,12 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
 
     if (type) result = result.filter((body) => type?.includes(body.type));
     return result;
-}
+  }
 
   //Check if unit/sceneItem is colliding with other units/soldiers
   checkCollisionOnObject(
     sceneItem: ISceneItem,
+    bodyTypeToCheck: SceneObjectType[] | undefined,
     callback: (arg0: SAT.Response, arg1: ISceneItem[]) => void
   ) {
     const mainCollidingObject = sceneItem.getSceneItem();
@@ -78,7 +79,8 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
     let collidingBodies = this.getNearbyUnits(
       mainCollidingObject.pos.x,
       mainCollidingObject.pos.y,
-      mainCollidingObject.r
+      mainCollidingObject.r,
+      bodyTypeToCheck
     );
     //Colliding Bodies will always have 1 element, which is the soldier itself.
 

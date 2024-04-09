@@ -8,7 +8,7 @@ import { SceneObject } from "../core/types/SceneObject";
 import { AllianceTypes } from "../AllianceTracker";
 import SAT from "sat";
 import { MOVABLE_UNIT_CONSTANTS } from "../config";
-import { GameStateManagerType } from "./PlayerState";
+import { GameStateManagerType, PlayerState } from "./PlayerState";
 import { ISceneItem } from "../core/types/ISceneItem";
 import { TypeQuadtreeItem } from "../core/types/TypeQuadtreeItem";
 import { IBoidAgent } from "../core/types/IBoidAgent";
@@ -291,6 +291,7 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
     }
     stateManager.scene.checkCollisionOnObject(
       this,
+      ['MOVABLE'],
       (
         res: {
           a: SoldierState;
@@ -333,6 +334,20 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
       }
     );
 
+    let enemyTowers = stateManager.scene.getNearbyUnits(
+      this.currentPositionX,
+      this.currentPositionY,
+      50,
+      ["FIXED"]
+    );
+    enemyTowers = enemyTowers.filter((quadtreeItem) =>
+      (stateManager.getPlayer(quadtreeItem.id) && quadtreeItem.id !== this.playerId)
+    );
+    enemyTowers
+      .map((d) => stateManager.getPlayer(d.id))
+      .forEach((playerBase) => {
+        if (playerBase) playerBase.spawnFlagHealth -= 0.5 * delta;
+      });
     this.stateMachine.tick({ delta, stateManager, soldier: this });
   }
 
