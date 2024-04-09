@@ -92,12 +92,15 @@ export default {
           );
           if (!isAlreadyInScene) gameStateManager.addSceneItem(player);
         });
-        
+
         sessionState.sessionState = "BATTLE_STATE";
       }
       var deltaTime = delta / 1000;
       playersConnected.forEach((player) => {
         player.tick(deltaTime, gameStateManager);
+        if (player.spawnFlagHealth === 0) {
+          sessionState.removePlayer(player.id, gameStateManager);
+        }
       });
     } catch (err) {
       console.log(err);
@@ -113,5 +116,10 @@ export default {
     delta: number;
     sessionState: SessionState;
     tick: Room;
-  }) => {},
+  }) => {
+    try {
+    } catch (error) {
+      console.log(error);
+    }
+  },
 };

@@ -346,7 +346,10 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
     enemyTowers
       .map((d) => stateManager.getPlayer(d.id))
       .forEach((playerBase) => {
-        if (playerBase) playerBase.spawnFlagHealth -= 0.5 * delta;
+        if (playerBase) {
+          const flagHealth = playerBase.spawnFlagHealth - 0.5 * delta;
+          playerBase.spawnFlagHealth = Math.max(0, flagHealth);
+        }
       });
     this.stateMachine.tick({ delta, stateManager, soldier: this });
   }
