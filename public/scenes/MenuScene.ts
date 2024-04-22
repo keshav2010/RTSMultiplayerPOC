@@ -18,8 +18,8 @@ export class MenuScene extends BaseScene {
   }
   create() {
     let networkManager = this.registry.get("networkManager") as NetworkManager;
-    this.AddObject(this.add.text(100, 20, "War.IO"), "obj_introText");
     addBackgroundImage(this, "background");
+    this.AddObject(this.add.text(100, 20, "War.IO"), "obj_introText");
 
     this.AddObject(
       this.add.dom(600, 200).createFromCache("playerForm"),

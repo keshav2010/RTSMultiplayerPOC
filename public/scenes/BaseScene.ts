@@ -58,9 +58,7 @@ export class BaseScene extends Phaser.Scene {
 
   AddStateChangeListener(cleanupFunction: Function, key?: string) {
     const mKey = key || nanoid();
-    let existingCbSet = this.networkCallsCleanup.get(mKey);
-    if (existingCbSet) existingCbSet.add(cleanupFunction);
-    existingCbSet = new Set();
+    let existingCbSet = this.networkCallsCleanup.get(mKey) || new Set();
     existingCbSet.add(cleanupFunction);
     this.networkCallsCleanup.set(mKey, existingCbSet);
   }

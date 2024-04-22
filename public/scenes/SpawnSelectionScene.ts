@@ -35,7 +35,6 @@ export class SpawnSelectionScene extends BaseScene {
   }
   create() {
     networkManager = this.registry.get("networkManager") as NetworkManager;
-
     networkManager.sendEventToServer(
       PacketType.ByClient.SPAWN_POINT_REQUESTED,
       {
@@ -60,22 +59,25 @@ export class SpawnSelectionScene extends BaseScene {
         }
       })!
     );
-    const clientId = networkManager.getClientId();
-    const sessionState = networkManager.getState();
-    let player = SessionStateClientHelpers.getPlayer(sessionState!, clientId!);
-    if (player) {
+    const sessionState = networkManager.getState()!;
+    SessionStateClientHelpers.getPlayers(sessionState).forEach((player) => {
       this.AddStateChangeListener(
         player.listen("posX", (value) => {
-          this.showSpawnFlag(networkManager, value, player?.posY);
-        })
+          this.showSpawnFlag(networkManager, value, player.posY, player.id);
+        }),
+        `${player.id}_posX_spawnFlag_update`
       );
       this.AddStateChangeListener(
         player.listen("posY", (value) => {
-          this.showSpawnFlag(networkManager, player?.posX, value);
-        })
+          this.showSpawnFlag(networkManager, player.posX, value, player.id);
+        }),
+        `${player.id}_posY_spawnFlag_update`
       );
-    }
-     
+    });
+
+    console.log(
+      SessionStateClientHelpers.getPlayers(sessionState).map((p) => p.id)
+    );
 
     this.AddObject(
       new LoadingBar(this, this, {
@@ -214,23 +216,23 @@ export class SpawnSelectionScene extends BaseScene {
     this.GetObject<LoadingBar>("obj_timerBar")?.draw();
   }
 
-  showSpawnFlag(networkManager: NetworkManager, posX?: number, posY?: number) {
+  showSpawnFlag(
+    networkManager: NetworkManager,
+    posX?: number,
+    posY?: number,
+    playerId?: string
+  ) {
     //show new choice on map for player
-    const clientId = networkManager.getClientId();
-    if (!clientId) {
+    const clientId = playerId || networkManager.getClientId();
+    if(!clientId)
       return;
-    }
-
     const sessionState = networkManager.getState();
     if (!sessionState) return;
 
     let player = SessionStateClientHelpers.getPlayer(sessionState, clientId);
-    if (!player) {
-      return;
-    }
-
     // spawn a castle.
-    const spawnFlag = this.GetObject<PlayerCastle>("obj_spawnFlag");
+    const flagKey = `obj_spawnFlag_${clientId}`;
+    const spawnFlag = this.GetObject<PlayerCastle>(flagKey);
 
     const playerState = SessionStateClientHelpers.getPlayer(
       sessionState,
@@ -240,8 +242,8 @@ export class SpawnSelectionScene extends BaseScene {
       console.error("unable to find player state in spawn selection");
       return;
     }
-    const x = posX || posX === 0 ? posX : player.posX;
-    const y = posY || posY === 0 ? posY : player.posY;
+    const x = posX || posX === 0 ? posX : player!.posX;
+    const y = posY || posY === 0 ? posY : player!.posY;
     if (spawnFlag) {
       spawnFlag.setPosition(x, y);
       spawnFlag.setHealth(2);
@@ -251,7 +253,7 @@ export class SpawnSelectionScene extends BaseScene {
           health: playerState.spawnFlagHealth,
           player: playerState,
         }),
-        "obj_spawnFlag"
+        flagKey
       );
   }
 }

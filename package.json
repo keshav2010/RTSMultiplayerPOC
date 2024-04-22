@@ -32,7 +32,6 @@
     "express-basic-auth": "^1.2.1",
     "html-webpack-plugin": "^5.6.0",
     "jquery": "^3.6.0",
-    "js-quadtree": "^3.3.6",
     "nanoid": "^5.0.4",
     "nodemon": "^2.0.15",
     "npx": "^10.2.2",
