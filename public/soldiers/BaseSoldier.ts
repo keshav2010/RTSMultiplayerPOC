@@ -129,14 +129,20 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
       return;
     }
 
+    const session = networkManager.getState();
+    const clientId = networkManager.getClientId()
+    if(!session || !clientId) 
+      return;
     const playerState = SessionStateClientHelpers.getPlayer(
-      networkManager.getState()!,
-      networkManager.getClientId()!
+      session,
+      clientId
     );
+    if(!playerState)
+        return;
 
     const soldierState = SessionStateClientHelpers.getSoldier(
-      networkManager.getState()!,
-      playerState!,
+      session,
+      playerState,
       this.id
     );
 

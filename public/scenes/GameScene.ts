@@ -53,27 +53,22 @@ $(() => {
 type soldierIdToPhaserMap = Map<string, BaseSoldier>;
 type PlayerId = string;
 export class GameScene extends BaseScene {
-  mapWidth: number;
-  mapHeight: number;
+  canvasWidth: number;
+  canvasHeight: number;
   controls?: Phaser.Cameras.Controls.SmoothedKeyControl;
-
-  // list of own soldiers that are selected by player in game.
-  selectedSoldiersMap: Map<string, BaseSoldier> = new Map<
-    string,
-    BaseSoldier
-  >();
-
-  playerSoldiersGameObject: Map<PlayerId, soldierIdToPhaserMap> = new Map<
-    PlayerId,
-    soldierIdToPhaserMap
-  >();
 
   constructor() {
     super(CONSTANT.SCENES.GAME);
-    this.mapWidth = 3500;
-    this.mapHeight = 1500;
+    this.canvasWidth = 3500;
+    this.canvasHeight = 1500;
   }
+
   preload() {
+    this.data.set("selectedSoldiersMap", new Map<string, BaseSoldier>());
+    this.data.set(
+      "playerSoldiersGameObject",
+      new Map<PlayerId, soldierIdToPhaserMap>()
+    );
     this.load.image("playbutton", "../assets/playbutton.png");
     this.load.image("knight", "../assets/knight.png");
     this.load.image("spearman", "../assets/spearman.png");
@@ -93,14 +88,17 @@ export class GameScene extends BaseScene {
       [ownerPlayer.colorR, ownerPlayer.colorG, ownerPlayer.colorB],
       ownerPlayer.id
     );
+    const playerSoldiersGameObject = this.data.get(
+      "playerSoldiersGameObject"
+    ) as Map<PlayerId, soldierIdToPhaserMap>;
 
-    let soldiersMap = this.playerSoldiersGameObject.get(soldier.playerId);
+    let soldiersMap = playerSoldiersGameObject.get(soldier.playerId);
     if (!soldiersMap) {
-      this.playerSoldiersGameObject.set(
+      playerSoldiersGameObject.set(
         soldier.playerId,
         new Map<string, BaseSoldier>()
       );
-      soldiersMap = this.playerSoldiersGameObject.get(soldier.playerId);
+      soldiersMap = playerSoldiersGameObject.get(soldier.playerId);
     }
     console.log("Added soldier with id ", soldier.id, soldier);
     soldiersMap!.set(soldier.id, spearmen);
@@ -109,10 +107,19 @@ export class GameScene extends BaseScene {
   onSoldierRemoved(soldierId: string, playerId: string) {
     try {
       this.DestroyStateChangeListener(soldierId);
-      this.selectedSoldiersMap.delete(soldierId);
-      const obj = this.playerSoldiersGameObject.get(playerId)!.get(soldierId)!;
+      const selectedSoldiersMap = this.data.get("selectedSoldiersMap") as Map<
+        string,
+        BaseSoldier
+      >;
+      const playerSoldiersGameObject = this.data.get(
+        "playerSoldiersGameObject"
+      ) as Map<PlayerId, soldierIdToPhaserMap>;
+
+      selectedSoldiersMap.delete(soldierId);
+      const obj = playerSoldiersGameObject.get(playerId)!.get(soldierId)!;
       this.DestroyObject(obj);
-      this.playerSoldiersGameObject.get(playerId)!.delete(soldierId);
+      playerSoldiersGameObject.get(playerId)!.delete(soldierId);
+
       console.log(
         `Removed Soldier from scene : ${soldierId} , for player : ${playerId}`
       );
@@ -126,19 +133,29 @@ export class GameScene extends BaseScene {
     if (!playerId) {
       return;
     }
-    const soldierPhaserObj = this.playerSoldiersGameObject
+    const selectedSoldiersMap = this.data.get("selectedSoldiersMap");
+    const playerSoldiersGameObject = this.data.get(
+      "playerSoldiersGameObject"
+    ) as Map<PlayerId, soldierIdToPhaserMap>;
+
+    const soldierPhaserObj = playerSoldiersGameObject
       .get(playerId)
       ?.get(soldierId);
     if (!soldierPhaserObj) return;
-    this.selectedSoldiersMap.set(soldierId, soldierPhaserObj);
+    selectedSoldiersMap.set(soldierId, soldierPhaserObj);
   }
 
   onSoldierUnselected(soldierId: string) {
-    this.selectedSoldiersMap.delete(soldierId);
+    const selectedSoldiersMap = this.data.get("selectedSoldiersMap");
+    selectedSoldiersMap.delete(soldierId);
   }
 
   onSoldierPositionChanged(playerId: string, soldierId: string) {
-    const phaserSceneObject = this.playerSoldiersGameObject
+    const playerSoldiersGameObject = this.data.get(
+      "playerSoldiersGameObject"
+    ) as Map<PlayerId, soldierIdToPhaserMap>;
+
+    const phaserSceneObject = playerSoldiersGameObject
       .get(playerId)
       ?.get(soldierId);
     const state = networkManager.getState();
@@ -175,7 +192,11 @@ export class GameScene extends BaseScene {
     value: number,
     prevValue: number
   ) {
-    this.playerSoldiersGameObject
+    const playerSoldiersGameObject = this.data.get(
+      "playerSoldiersGameObject"
+    ) as Map<PlayerId, soldierIdToPhaserMap>;
+
+    playerSoldiersGameObject
       .get(soldier.playerId)
       ?.get(soldier.id)
       ?.setHealth(value);
@@ -186,14 +207,33 @@ export class GameScene extends BaseScene {
 
     this.AddObject(this.add.graphics(), "obj_selectorGraphics");
     this.AddObject(this.add.graphics(), "obj_brush");
-    this.AddInputEvent("pointerdown", (pointer: any) => {
+
+    networkManager.room?.onLeave((code) => {
+      console.log(`Leaving Room [code: ${code}]`);
+      this.scene.stop(CONSTANT.SCENES.HUD_SCORE);
+      this.scene.start(CONSTANT.SCENES.MENU);
+    });
+
+    this.AddInputEvent("pointerdown", (pointer: Phaser.Input.Pointer) => {
       const selectorGraphics = this.GetObject<Phaser.GameObjects.Graphics>(
         "obj_selectorGraphics"
-      )!;
+      );
+
+      const selectedSoldiersMap = this.data.get("selectedSoldiersMap") as Map<
+        string,
+        BaseSoldier
+      >;
+      const playerSoldiersGameObject = this.data.get(
+        "playerSoldiersGameObject"
+      ) as Map<PlayerId, soldierIdToPhaserMap>;
+
+      if (!selectorGraphics) {
+        return;
+      }
       if (pointer.button === 0) {
         //lmb
         selectorGraphics.clear();
-        this.selectedSoldiersMap.clear();
+        selectedSoldiersMap.clear();
 
         selectorDraw = true;
         pointerDownWorldSpace = {
@@ -211,33 +251,34 @@ export class GameScene extends BaseScene {
         );
       } else if (pointer.button === 2) {
         //if any soldier selected
-        if (this.selectedSoldiersMap.size > 0) {
+        if (selectedSoldiersMap.size > 0) {
           //If enemy unit in nearby radius, randomly select 1 and send attack signal
           let searchAreaSize = 35;
-          let rect = new Phaser.Geom.Rectangle(
-            pointer.worldX - searchAreaSize / 2,
-            pointer.worldY - searchAreaSize / 2,
-            searchAreaSize,
-            searchAreaSize
+          let circle = new Phaser.Geom.Circle(
+            pointer.worldX,
+            pointer.worldY,
+            searchAreaSize * 0.5
           );
-          selectorGraphics.strokeRectShape(rect);
+          selectorGraphics.strokeCircleShape(circle);
 
-          const soldiers = Array.from(
-            this.playerSoldiersGameObject.values()
-          ).map((soldiersMap) => Array.from(soldiersMap.values()));
+          const soldiers = Array.from(playerSoldiersGameObject.values()).map(
+            (soldiersMap) => Array.from(soldiersMap.values())
+          );
+
           const soldiersArray = soldiers.flat(1);
 
           const otherPlayerSoldiers = soldiersArray.filter(
             (d) => d.playerId !== networkManager.getClientId()
           );
 
+          console.log(`Enemy Soldiers : ${otherPlayerSoldiers.length}`);
           // select atmost 1 target soldier (enemy unit to be attacked)
           let targetSoldier = null;
           for (let i = 0; i < otherPlayerSoldiers.length; i++) {
             let soldier = otherPlayerSoldiers[i];
             let bound = soldier.getBounds();
             selectorGraphics.strokeRectShape(bound);
-            if (Phaser.Geom.Intersects.RectangleToRectangle(bound, rect)) {
+            if (Phaser.Geom.Intersects.CircleToRectangle(circle, bound)) {
               targetSoldier = soldier;
               break;
             }
@@ -246,7 +287,7 @@ export class GameScene extends BaseScene {
           //if wants to attack a soldier, mark it as target
           if (targetSoldier) {
             const selectedSoldiersForAttack = Array.from(
-              this.selectedSoldiersMap.values()
+              selectedSoldiersMap.values()
             );
             networkManager.sendEventToServer(
               PacketType.ByClient.SOLDIER_ATTACK_REQUESTED,
@@ -260,7 +301,7 @@ export class GameScene extends BaseScene {
             networkManager.sendEventToServer(
               PacketType.ByClient.SOLDIER_MOVE_REQUESTED,
               {
-                soldierIds: Array.from(this.selectedSoldiersMap.values()).map(
+                soldierIds: Array.from(selectedSoldiersMap.values()).map(
                   (v) => v.id
                 ),
                 expectedPositionX: pointer.worldX,
@@ -273,6 +314,7 @@ export class GameScene extends BaseScene {
         //this.scene.events.emit(GAMEEVENTS.RIGHT_CLICK, pointer.position);
       }
     });
+
     this.AddInputEvent("pointerup", () => {
       const selectorGraphics = this.GetObject<Phaser.GameObjects.Graphics>(
         "obj_selectorGraphics"
@@ -283,6 +325,14 @@ export class GameScene extends BaseScene {
     });
 
     this.AddInputEvent("pointermove", (pointer: any) => {
+      const selectedSoldiersMap = this.data.get("selectedSoldiersMap") as Map<
+        string,
+        BaseSoldier
+      >;
+      const playerSoldiersGameObject = this.data.get(
+        "playerSoldiersGameObject"
+      ) as Map<PlayerId, soldierIdToPhaserMap>;
+
       const selectorGraphics = this.GetObject<Phaser.GameObjects.Graphics>(
         "obj_selectorGraphics"
       )!;
@@ -317,13 +367,13 @@ export class GameScene extends BaseScene {
           return;
         }
 
-        const soldierMap = this.playerSoldiersGameObject.get(playerId);
+        const soldierMap = playerSoldiersGameObject.get(playerId);
         if (!soldierMap) {
           return;
         }
         let s = soldierMap.values();
         if (!s) {
-          console.log(this.playerSoldiersGameObject.get(playerId));
+          console.log(playerSoldiersGameObject.get(playerId));
           return;
         }
         let soldiers = [...s];
@@ -347,13 +397,13 @@ export class GameScene extends BaseScene {
     this.scene.launch(CONSTANT.SCENES.HUD_SCORE);
 
     this.cameras.main
-      .setBounds(0, 0, this.mapWidth, this.mapHeight)
+      .setBounds(0, 0, this.canvasWidth, this.canvasHeight)
       .setName("WorldCamera");
 
     var mapGraphics = this.AddObject(this.add.graphics());
     mapGraphics.depth = -5;
     mapGraphics.fillStyle(0x002200, 1);
-    mapGraphics.fillRect(0, 0, this.mapWidth, this.mapHeight);
+    mapGraphics.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
 
     cursors = this.input.keyboard?.createCursorKeys();
     const controlConfig = {
@@ -366,9 +416,10 @@ export class GameScene extends BaseScene {
       acceleration: 0.02,
       maxSpeed: 1.0,
     };
-    this.controls = new Phaser.Cameras.Controls.SmoothedKeyControl(
+    const cameraControl = new Phaser.Cameras.Controls.SmoothedKeyControl(
       controlConfig
     );
+    this.AddObject(cameraControl, "obj_cameraControl");
 
     this.AddSceneEvent(
       PacketType.ByServer.NEW_CHAT_MESSAGE,
@@ -385,8 +436,8 @@ export class GameScene extends BaseScene {
       state,
       networkManager.getClientId()!
     );
-    if (!player) {
-      console.error(`Client not connected.`);
+    if (!player || !networkManager.room) {
+      console.error(`Client not connected to server anymore`);
       this.scene.start(CONSTANT.SCENES.MENU);
       return;
     }
@@ -542,31 +593,33 @@ export class GameScene extends BaseScene {
   renderDebugPath() {
     const painter = this.GetObject<Phaser.GameObjects.Graphics>("obj_brush")!;
     painter.clear();
-    const sessionState = networkManager.getState()!;
+    const clientId = networkManager.getClientId();
+    const sessionState = networkManager.getState();
+    if (!sessionState || !clientId) return;
     const playerState = SessionStateClientHelpers.getPlayer(
       sessionState,
-      networkManager.getClientId()!
+      clientId
     );
     playerState?.soldiers.forEach((value) => {
       painter.lineStyle(1, 0x00ffee, 1);
       painter.strokeCircle(
-        value.currentPositionX!,
-        value.currentPositionY!,
-        value.radius!,
+        value.currentPositionX,
+        value.currentPositionY,
+        value.radius!
       );
 
       painter.strokeCircle(
-        value.expectedPositionX!,
-        value.expectedPositionY!,
-        value.radius!,
+        value.expectedPositionX,
+        value.expectedPositionY,
+        value.radius
       );
       painter.lineStyle(1, 0xffffee, 1);
       painter.strokeLineShape(
         new Phaser.Geom.Line(
-          value.currentPositionX!,
-          value.currentPositionY!,
-          value.expectedPositionX!,
-          value.expectedPositionY!
+          value.currentPositionX,
+          value.currentPositionY,
+          value.expectedPositionX,
+          value.expectedPositionY
         )
       );
     });

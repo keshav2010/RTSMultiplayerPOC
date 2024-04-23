@@ -8,6 +8,7 @@ import { GameScene } from "./GameScene";
 import SessionStateClientHelpers from "../helpers/SessionStateClientHelpers";
 import { NetworkManager } from "../NetworkManager";
 import { PlayerState } from "../../gameserver/schema/PlayerState";
+import { BaseSoldier } from "../soldiers/BaseSoldier";
 export class PlayerStatisticHUD extends BaseScene {
   constructor() {
     super(CONSTANT.SCENES.HUD_SCORE);
@@ -69,8 +70,8 @@ export class PlayerStatisticHUD extends BaseScene {
 
     this.AddObject(this.add.image(900, 40, "exitbutton"))
       .setInteractive()
-      .on("pointerdown", () => {
-        networkManager.disconnectGameServer();
+      .on("pointerdown", async () => {
+        await networkManager.disconnectGameServer();
       });
 
     var count = 0;
@@ -80,7 +81,7 @@ export class PlayerStatisticHUD extends BaseScene {
         if (isCreated) soldierCount.setText(`Soldiers: ${++count}`);
       }
     );
-    
+
     gameScene.AddSceneEvent(
       PacketType.ByServer.PLAYER_LEFT,
       (data: { playerState: PlayerState }) => {
@@ -92,8 +93,13 @@ export class PlayerStatisticHUD extends BaseScene {
         if (!playerObject) {
           return;
         }
-        
-        const soldiersPhaserObjectMap = gameScene.playerSoldiersGameObject.get(playerObject.id);
+
+        const playerSoldiersGameObject = gameScene.data.get(
+          "playerSoldiersGameObject"
+        ) as Map<string, Map<string, BaseSoldier>>;
+        const soldiersPhaserObjectMap = playerSoldiersGameObject.get(
+          playerObject.id
+        );
         soldiersPhaserObjectMap?.forEach((soldier, soldierId) => {
           gameScene.onSoldierRemoved(soldier.id, playerObject.id);
         });
@@ -110,10 +116,7 @@ export class PlayerStatisticHUD extends BaseScene {
       this.add.text(50, 110, "Soldiers Queued: 0"),
       "obj_soldiersQueued"
     );
-    this.AddObject(
-      this.add.text(50, 140, "Next Spawn In: 0"),
-      "obj_spawnETA"
-    );
+    this.AddObject(this.add.text(50, 140, "Next Spawn In: 0"), "obj_spawnETA");
 
     gameScene.AddSceneEvent(
       PacketType.ByServer.SOLDIER_SPAWN_REQUEST_UPDATED,
@@ -130,7 +133,9 @@ export class PlayerStatisticHUD extends BaseScene {
       }) => {
         const textObject =
           this.GetObject<Phaser.GameObjects.Text>("obj_spawnETA");
-        textObject?.setText(`Spawning Next In : ${Math.floor(countdown)} X${count}`);
+        textObject?.setText(
+          `Spawning Next In : ${Math.floor(countdown)} X${count}`
+        );
       }
     );
 

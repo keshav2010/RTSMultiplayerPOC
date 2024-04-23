@@ -18,7 +18,7 @@ export class NetworkManager {
     phaserGame: Phaser.Game,
     phaserRegistry: Phaser.Data.DataManager
   ) {
-    this.client = new Colyseus.Client(`wss://${URL}`);
+    this.client = new Colyseus.Client(`ws://${URL}`);
     this.room = null;
 
     this.game = phaserGame;
@@ -47,7 +47,8 @@ export class NetworkManager {
       console.log("[room / onMessage] :", { type, message });
     });
     this.room.onLeave((code) => {
-      this.disconnectGameServer();
+      console.log(`Leaving Room ${this.room?.name}, code: ${code}`);
+      this.room = null;
     });
     this.room.onError((code, message) => {
       console.log("[room / onError] :", { code, message });
@@ -68,22 +69,12 @@ export class NetworkManager {
     return this.room != null;
   }
 
-  async disconnectPreviousSession() {
-    if (!this.room) {
-      return;
-    }
-    await this.room.leave();
-    this.room.removeAllListeners();
-    this.room = null;
-  }
-
   async disconnectGameServer() {
-    if (!this.room) {
-      return;
+    try {
+      await this.room?.leave();
+    } catch (error) {
+      console.log(`disconnect failed`);
     }
-    await this.room.leave();
-    this.room.removeAllListeners();
-    this.room = null;
   }
 
   sendEventToServer<T = any>(eventType: string, data: T) {
@@ -106,17 +97,20 @@ export class NetworkManager {
   async hostAndJoinSession(roomName: string) {
     try {
       console.log(`[hostSession] : room(${roomName}) host requested.`);
-      if (this.room) {
-        await this.disconnectGameServer();
-      } else {
-        console.log("[NetworkManager] No room connected, creating new one");
-      }
+      
+      await this.disconnectGameServer().catch((err) => {
+        console.log(err);
+      });
+
+      console.log(
+        `[hostSession] : Attempted to disconnect to any existing room, Now Creating new session.`
+      );
       this.room = await this.client.create("session_room", {
         name: roomName,
         playerName: this.getPlayerName(),
       });
 
-      console.log("created successfully.", this.room);
+      console.log("session created successfully.", this.room.roomId);
       this.setupRoomListener();
     } catch (err) {
       console.log(err);

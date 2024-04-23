@@ -10,6 +10,7 @@ export class BaseScene extends Phaser.Scene {
     string,
     | Phaser.GameObjects.Graphics
     | PlayerCastle
+    | Phaser.Cameras.Controls.SmoothedKeyControl
     | Phaser.GameObjects.Text
     | Phaser.GameObjects.DOMElement
     | Phaser.GameObjects.Image
@@ -66,9 +67,8 @@ export class BaseScene extends Phaser.Scene {
     try {
       this.networkCallsCleanup.get(key)?.forEach((cb) => cb());
       this.networkCallsCleanup.delete(key);
-      console.log('Clean State Change Listener.');
-    }
-    catch(error) {
+      console.log("Clean State Change Listener.");
+    } catch (error) {
       console.log(error);
     }
   }
@@ -77,6 +77,7 @@ export class BaseScene extends Phaser.Scene {
     T extends
       | Phaser.GameObjects.Graphics
       | PlayerCastle
+      | Phaser.Cameras.Controls.SmoothedKeyControl
       | Phaser.GameObjects.Text
       | Phaser.GameObjects.DOMElement
       | Phaser.GameObjects.Image
@@ -129,13 +130,15 @@ export class BaseScene extends Phaser.Scene {
       | Phaser.GameObjects.Text
       | Phaser.GameObjects.DOMElement
       | Phaser.GameObjects.Image
+      | Phaser.Cameras.Controls.SmoothedKeyControl
   >(obj: T) {
-    if (obj.type === "Group") obj.destroy(true);
+    if ((obj as any)?.type === "Group") obj.destroy(true);
     else obj.destroy();
   }
 
   DestroyObjects() {
-    this.objectSet.forEach((obj) => {
+    this.objectSet.forEach((obj, key) => {
+      console.log(`[Destroy] ${key}`);
       this.DestroyObject(obj);
     });
     this.objectSet.clear();
@@ -159,7 +162,6 @@ export class BaseScene extends Phaser.Scene {
   }
 
   Destroy() {
-
     console.log(`[BaseScene] : Destroy Invoked`);
     this.DestroyObjects();
     this.DestroyInputEvents();
