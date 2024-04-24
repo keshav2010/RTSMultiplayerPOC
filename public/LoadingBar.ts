@@ -15,6 +15,7 @@ export default class LoadingBar extends Phaser.GameObjects.Graphics {
       y: number;
       width: number;
       height: number;
+      depth ?: number;
     }
   ) {
     super(scene, {
@@ -23,13 +24,12 @@ export default class LoadingBar extends Phaser.GameObjects.Graphics {
     });
     this.width = args?.width || 25;
     this.height = args?.height || 4;
-
     scene.add.existing(this);
 
     this.parent = parent;
     this.maxValue = args?.maxValue || 100;
-    this.depth = -1;
     this.currentValue = args?.currentValue || 100;
+    this.setDepth(args?.depth || 1);
     this.draw();
   }
   setValue(value: number) {

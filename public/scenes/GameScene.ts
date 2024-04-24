@@ -59,8 +59,8 @@ export class GameScene extends BaseScene {
 
   constructor() {
     super(CONSTANT.SCENES.GAME);
-    this.canvasWidth = 3500;
-    this.canvasHeight = 1500;
+    this.canvasWidth = 5000;
+    this.canvasHeight = 5000;
   }
 
   preload() {
@@ -72,8 +72,9 @@ export class GameScene extends BaseScene {
     this.load.image("playbutton", "../assets/playbutton.png");
     this.load.image("knight", "../assets/knight.png");
     this.load.image("spearman", "../assets/spearman.png");
-    this.load.image("map", "../assets/map.png");
     this.load.image("flag", "../assets/flag.png");
+    this.load.image("img_groundtiles", "../assets/groundtiles.png");
+    this.load.tilemapTiledJSON("map1", "../assets/map1.json");
   }
 
   onSoldierAdded(soldier: SoldierState, ownerPlayer: PlayerState) {
@@ -205,8 +206,23 @@ export class GameScene extends BaseScene {
   create() {
     networkManager = this.registry.get("networkManager") as NetworkManager;
 
-    this.AddObject(this.add.graphics(), "obj_selectorGraphics");
-    this.AddObject(this.add.graphics(), "obj_brush");
+    const stylus = this.add.graphics();
+    stylus.setDepth(9999);
+
+    const debug_painter = this.add.graphics();
+    debug_painter.setDepth(10000);
+    this.AddObject(stylus, "obj_selectorGraphics");
+    this.AddObject(debug_painter, "obj_brush");
+
+    const map = this.make.tilemap({
+      key: "map1",
+    });
+    console.log(`map set`, map);
+    const tileset = map.addTilesetImage("groundtiles", "img_groundtiles");
+    console.log(`tileset set `, tileset)
+    const layer = map.createLayer("groundlayer", tileset!, 0, 0);
+    
+    this.data.set("map1", map);
 
     networkManager.room?.onLeave((code) => {
       console.log(`Leaving Room [code: ${code}]`);
@@ -400,10 +416,11 @@ export class GameScene extends BaseScene {
       .setBounds(0, 0, this.canvasWidth, this.canvasHeight)
       .setName("WorldCamera");
 
-    var mapGraphics = this.AddObject(this.add.graphics());
+    var mapGraphics = this.add.graphics();
     mapGraphics.depth = -5;
-    mapGraphics.fillStyle(0x002200, 1);
+    mapGraphics.fillStyle(0x000000, 1);
     mapGraphics.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+    this.AddObject(mapGraphics);
 
     cursors = this.input.keyboard?.createCursorKeys();
     const controlConfig = {

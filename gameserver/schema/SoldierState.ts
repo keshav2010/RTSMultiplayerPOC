@@ -194,8 +194,8 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
   ) {
     const soldier = this.getSceneItem();
     const nearbyUnits = stateManager.scene.getNearbyUnits(
-      soldier.x + soldier.r / 2,
-      soldier.y + soldier.r / 2,
+      soldier.x,
+      soldier.y,
       MOVABLE_UNIT_CONSTANTS.NEARBY_SEARCH_RADI,
       ["MOVABLE"]
     );
