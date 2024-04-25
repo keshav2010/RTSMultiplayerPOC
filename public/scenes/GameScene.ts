@@ -59,8 +59,8 @@ export class GameScene extends BaseScene {
 
   constructor() {
     super(CONSTANT.SCENES.GAME);
-    this.canvasWidth = 5000;
-    this.canvasHeight = 5000;
+    this.canvasWidth = 1962;
+    this.canvasHeight = 1962;
   }
 
   preload() {
@@ -71,7 +71,7 @@ export class GameScene extends BaseScene {
     );
     this.load.image("playbutton", "../assets/playbutton.png");
     this.load.image("knight", "../assets/knight.png");
-    this.load.image("spearman", "../assets/spearman.png");
+    this.load.image("texture_spearman", "../assets/spearman.png");
     this.load.image("flag", "../assets/flag.png");
     this.load.image("img_groundtiles", "../assets/groundtiles.png");
     this.load.tilemapTiledJSON("map1", "../assets/map1.json");
@@ -84,7 +84,7 @@ export class GameScene extends BaseScene {
       soldier.id,
       soldier.currentPositionX,
       soldier.currentPositionY,
-      "spearman",
+      "texture_spearman",
       null,
       [ownerPlayer.colorR, ownerPlayer.colorG, ownerPlayer.colorB],
       ownerPlayer.id
@@ -220,8 +220,8 @@ export class GameScene extends BaseScene {
     console.log(`map set`, map);
     const tileset = map.addTilesetImage("groundtiles", "img_groundtiles");
     console.log(`tileset set `, tileset)
-    const layer = map.createLayer("groundlayer", tileset!, 0, 0);
-    
+    const layer = map.createLayer("groundlayer", tileset!);
+
     this.data.set("map1", map);
 
     networkManager.room?.onLeave((code) => {

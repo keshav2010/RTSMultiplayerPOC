@@ -17,13 +17,13 @@ var pointerDownWorldSpace: any = null;
 var cursors;
 
 export class SpawnSelectionScene extends BaseScene {
-  mapWidth: number;
-  mapHeight: number;
+  canvasWidth: number;
+  canvasHeight: number;
   controls: Phaser.Cameras.Controls.SmoothedKeyControl | undefined;
   constructor() {
     super(CONSTANT.SCENES.SPAWNSELECTSCENE);
-    this.mapWidth = 3500;
-    this.mapHeight = 1500;
+    this.canvasWidth = 1962;
+    this.canvasHeight = 1962;
   }
 
   preload() {
@@ -36,17 +36,15 @@ export class SpawnSelectionScene extends BaseScene {
   }
   create() {
     networkManager = this.registry.get("networkManager") as NetworkManager;
-    
+
     const map = this.make.tilemap({
-      key: "map1",
+      key: "map1"
     });
-    console.log(`map set`, map);
     const tileset = map.addTilesetImage("groundtiles", "img_groundtiles");
-    console.log(`tileset set `, tileset)
-    const layer = map.createLayer("groundlayer", tileset!, 0, 0);
-    
+    console.log(`tileset set `, tileset);
+    const layer = map.createLayer("groundlayer", tileset!, 0,0);
     this.data.set("map1", map);
-    
+
     networkManager.sendEventToServer(
       PacketType.ByClient.SPAWN_POINT_REQUESTED,
       {
@@ -165,14 +163,14 @@ export class SpawnSelectionScene extends BaseScene {
     });
 
     this.cameras.main
-      .setBounds(0, 0, this.mapWidth, this.mapHeight)
+      .setBounds(0, 0, this.canvasWidth, this.canvasHeight)
       .setName("WorldCamera");
 
     var mapGraphics = this.AddObject(this.add.graphics());
 
     mapGraphics.depth = -5;
     mapGraphics.fillStyle(0x221200, 1);
-    mapGraphics.fillRect(0, 0, this.mapWidth, this.mapHeight);
+    mapGraphics.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
 
     cursors = this.input.keyboard?.createCursorKeys();
     if (!cursors) return;
@@ -236,8 +234,7 @@ export class SpawnSelectionScene extends BaseScene {
   ) {
     //show new choice on map for player
     const clientId = playerId || networkManager.getClientId();
-    if(!clientId)
-      return;
+    if (!clientId) return;
     const sessionState = networkManager.getState();
     if (!sessionState) return;
 
@@ -259,13 +256,12 @@ export class SpawnSelectionScene extends BaseScene {
     if (spawnFlag) {
       spawnFlag.setPosition(x, y);
       spawnFlag.setHealth(2);
-    } else
-      this.AddObject(
-        new PlayerCastle(this, x, y, "flag", null, {
-          health: playerState.spawnFlagHealth,
-          player: playerState,
-        }),
-        flagKey
-      );
+    } else {
+      const castle = new PlayerCastle(this, x, y, "flag", null, {
+        health: playerState.spawnFlagHealth,
+        player: playerState,
+      });
+      this.AddObject(castle, flagKey);
+    }
   }
 }
