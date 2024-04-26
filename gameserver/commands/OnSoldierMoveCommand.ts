@@ -15,12 +15,14 @@ export class OnSoldierMoveCommand extends Command<SessionRoom, CommandPayload> {
     expectedPositionX: number;
     expectedPositionY: number;
   }>) {
+    const sceneSize = gameManager?.scene.getDimension();
+    if (!sceneSize) return;
+
     const soldierObjects = message.soldierIds
       .map((id) => this.state.getPlayer(client.sessionId)?.getSoldier(id))
       .filter(Boolean) as SoldierState[];
-    if (soldierObjects.length === 0) {
-      return;
-    }
+
+    if (soldierObjects.length === 0) return;
 
     // leader selection for group movement
     const leader = soldierObjects[0];
@@ -28,21 +30,42 @@ export class OnSoldierMoveCommand extends Command<SessionRoom, CommandPayload> {
       soldierObjects[i].setGroupLeaderId(leader.id);
     }
 
-    // update relative position of group units (leader will be assigned center slot in group grid)
+    // create formation centered at expectedPosition
     const matrixRows = Math.ceil(Math.sqrt(soldierObjects.length));
-    const offset = 80;
+    const offset = 96;
+    let expectedPosition = new SAT.Vector(
+      message.expectedPositionX,
+      message.expectedPositionY
+    );
+
+    const boundingBoxWidth = matrixRows * offset;
+    const boundingBoxHeight = boundingBoxWidth;
+
+    const formationBoundingBox = new SAT.Box(
+      expectedPosition,
+      boundingBoxWidth,
+      boundingBoxHeight
+    )
+      .toPolygon()
+      .translate(
+        expectedPosition.x - boundingBoxWidth + offset / 2,
+        expectedPosition.y - boundingBoxHeight + offset / 2
+      );
+    console.log(matrixRows);
+    expectedPosition = formationBoundingBox.getCentroid();
+
+    const soldiersOffset = new Map<string, SAT.Vector>();
     soldierObjects.forEach((soldier, i) => {
-      const offsetX = (i % matrixRows) * offset;
-      const offsetY = Math.floor(i / matrixRows) * offset;
-      soldier.offsetFromPosition = new SAT.Vector(offsetX, offsetY);
+      const row = Math.floor(i / matrixRows) * offset;
+      const col = (i % matrixRows) * offset;
+      soldiersOffset.set(soldier.id, new SAT.Vector(col, row));
     });
 
     // expected position will also be assigned in an order to maintain group formation
     soldierObjects.forEach((soldier) => {
-      const targetPos = new SAT.Vector(
-        message.expectedPositionX + soldier.offsetFromPosition.x,
-        message.expectedPositionY + soldier.offsetFromPosition.y
-      );
+      const targetPos = expectedPosition
+        .clone()
+        .add(soldiersOffset.get(soldier.id)!);
       soldier.setTargetPosition(targetPos);
     });
   }

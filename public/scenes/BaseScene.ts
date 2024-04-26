@@ -91,6 +91,7 @@ export class BaseScene extends Phaser.Scene {
     T extends
       | Phaser.GameObjects.Graphics
       | PlayerCastle
+      | Phaser.Cameras.Controls.SmoothedKeyControl
       | Phaser.GameObjects.Text
       | Phaser.GameObjects.DOMElement
       | Phaser.GameObjects.Image

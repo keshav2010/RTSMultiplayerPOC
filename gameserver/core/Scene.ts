@@ -5,6 +5,8 @@ import { ISceneItem } from "./types/ISceneItem"
 import { SceneObjectType } from "./types/SceneObject";
 export class Scene extends Quadtree<TypeQuadtreeItem> {
   sceneItemMap: Map<string, ISceneItem>;
+  width: number;
+  height: number;
 
   constructor(opts: {
     x?: number;
@@ -14,7 +16,13 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
     maxElements?: number;
   }) {
     super(opts);
+    this.width = opts.width;
+    this.height = opts.height;
     this.sceneItemMap = new Map<string, ISceneItem>();
+  }
+
+  getDimension() {
+    return new SAT.Vector(this.width, this.height);
   }
 
   removeSceneItem(itemId: string) {

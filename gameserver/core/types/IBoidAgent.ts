@@ -20,7 +20,6 @@ export interface IBoidAgent {
   getVelocityVector: (...args: any) => SAT.Vector;
 
   groupLeaderId?: string | null;
-  offsetFromPosition: SAT.Vector;
   setGroupLeaderId: (arg: string) => void;
   getGroupLeaderId: () => string | undefined | null;
 

@@ -70,7 +70,6 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
   }>(SoldierStateMachineJSON, soldierStateBehaviours);
 
   groupLeaderId?: string | null;
-  offsetFromPosition: SAT.Vector = new SAT.Vector(0, 0);
   constructor(
     playerId: string,
     soldierType: SoldierType,
@@ -287,7 +286,6 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
       ?.getSoldier(this.groupLeaderId);
     if (!groupLeaderRef) {
       this.groupLeaderId = null;
-      this.offsetFromPosition = new SAT.Vector(0, 0);
     }
     stateManager.scene.checkCollisionOnObject(
       this,

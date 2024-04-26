@@ -31,8 +31,8 @@ export class GameStateManager<PlayerSchema extends IDfied> {
   ) {
     this.GameStarted = false;
     this.scene = new Scene({
-      width: 15,
-      height: 15,
+      width: 1920,
+      height: 1920,
     });
     this.playerMap = new Map();
     this.countdown = SERVER_CONFIG.COUNTDOWN;
@@ -61,8 +61,8 @@ export class GameStateManager<PlayerSchema extends IDfied> {
     this.stateMachine.tick(args);
   }
 
-  addSceneItem(item: ISceneItem) {
-    this.scene.addSceneItem(item);
+  addSceneItem(item: ISceneItem, doObserve: boolean = true) {
+    this.scene.addSceneItem(item, doObserve);
   }
   removeSceneItem(itemId: string) {
     this.scene.removeSceneItem(itemId);
