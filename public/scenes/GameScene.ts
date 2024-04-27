@@ -612,6 +612,19 @@ export class GameScene extends BaseScene {
   renderDebugPath() {
     const painter = this.GetObject<Phaser.GameObjects.Graphics>("obj_brush")!;
     painter.clear();
+    const soldierPhaserObjs = <Map<PlayerId, soldierIdToPhaserMap>>(
+      this.data.get("playerSoldiersGameObject")
+    );
+    for (let [playerId, soldierMap] of soldierPhaserObjs) {
+      for (let [soldierId, soldierPhaserObj] of soldierMap) {
+        const serverPos = <{ x: number; y: number }>(
+          soldierPhaserObj.getData("serverPosition")
+        );
+        painter.lineStyle(3, 0x000000, 1);
+        painter.strokeCircle(serverPos.x, serverPos.y, 32!);
+      }
+    }
+
     const clientId = networkManager.getClientId();
     const sessionState = networkManager.getState();
     if (!sessionState || !clientId) return;
@@ -620,13 +633,7 @@ export class GameScene extends BaseScene {
       clientId
     );
     playerState?.soldiers.forEach((value) => {
-      painter.lineStyle(1, 0x00ffee, 1);
-      painter.strokeCircle(
-        value.currentPositionX,
-        value.currentPositionY,
-        value.radius!
-      );
-
+      painter.lineStyle(3, 0xffffff, 1);
       painter.strokeCircle(
         value.expectedPositionX,
         value.expectedPositionY,
@@ -643,6 +650,7 @@ export class GameScene extends BaseScene {
       );
     });
   }
+
   update(delta: number) {
     this.renderDebugPath();
     this.controls?.update(delta);
@@ -656,8 +664,8 @@ export class GameScene extends BaseScene {
           soldierPhaserObj.getData("serverPosition")
         );
         soldierPhaserObj.setPosition(
-          Phaser.Math.Linear(soldierPhaserObj.x, serverPos.x, 0.5),
-          Phaser.Math.Linear(soldierPhaserObj.y, serverPos.y, 0.5)
+          Phaser.Math.Linear(soldierPhaserObj.x, serverPos.x, 0.15),
+          Phaser.Math.Linear(soldierPhaserObj.y, serverPos.y, 0.15)
         );
       }
     }
