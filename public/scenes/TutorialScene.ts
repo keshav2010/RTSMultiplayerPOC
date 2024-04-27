@@ -5,7 +5,7 @@ import { addBackgroundImage } from "../helpers/addBackgroundImage";
 const URL = `${window.location.host}`;
 export class MenuScene extends BaseScene {
   constructor() {
-    super(CONSTANT.SCENES.MENU);
+    super(CONSTANT.SCENES.TUTORIAL);
     console.log(URL);
   }
   init() {
@@ -35,11 +35,13 @@ export class MenuScene extends BaseScene {
     let playBtn = playerForm.getChildByName("btnJoin");
     let createSessionBtn = playerForm.getChildByName("btnCreate");
     const tutorialBtn = playerForm.getChildByName("btnTutorial");
-    
+
     let inputField = playerForm.getChildByName("nameInput");
 
     inputField?.addEventListener("input", (event) => {
-      var inputName = playerForm.getChildByName("nameInput") as Element & { value: string };
+      var inputName = playerForm.getChildByName("nameInput") as Element & {
+        value: string;
+      };
       if (!inputName) return;
       if (inputName.value !== "") {
         let name = inputName.value.trim().replace(" ", "-");
@@ -54,7 +56,7 @@ export class MenuScene extends BaseScene {
       event.stopPropagation();
       this.scene.start(CONSTANT.SCENES.TUTORIAL);
     });
-    
+
     playerForm.addListener("click");
     playerForm.on("click", function (event: any) {
       event.stopPropagation();
@@ -86,7 +88,9 @@ export class MenuScene extends BaseScene {
     const networkManager = this.registry.get(
       "networkManager"
     ) as NetworkManager;
-    var inputName = playerForm.getChildByName("nameInput") as Element & { value: string };
+    var inputName = playerForm.getChildByName("nameInput") as Element & {
+      value: string;
+    };
     if (inputName?.nodeValue !== "") {
       let name = inputName?.value.trim().replace(" ", "-");
       networkManager.setPlayerName(name || "");
@@ -109,7 +113,7 @@ export class MenuScene extends BaseScene {
         this.scene.start(CONSTANT.SCENES.MENU);
       };
       //join session
-      await(
+      await (
         this.registry.get("networkManager") as NetworkManager
       ).connectGameServer(`${URL}/${sessionId}`);
     } catch (err) {
@@ -130,11 +134,8 @@ export class MenuScene extends BaseScene {
         "obj_playerForm"
       )?.getChildByName("nameInput") as Element & { value: string })!.value;
       const sessions = await networkManager.getAvailableSession();
-      console.log('available sessions ', sessions);
-    }
-    catch(error) {
-
-    }
+      console.log("available sessions ", sessions);
+    } catch (error) {}
   }
   async onCreateSessionClick() {
     try {
@@ -148,9 +149,7 @@ export class MenuScene extends BaseScene {
       const playerName = (this.GetObject<Phaser.GameObjects.DOMElement>(
         "obj_playerForm"
       )?.getChildByName("nameInput") as Element & { value: string })!.value;
-      await networkManager?.hostAndJoinSession(
-        `${playerName}`
-      );
+      await networkManager?.hostAndJoinSession(`${playerName}`);
 
       console.log("[client id] : ", networkManager?.getClientId());
       this.scene.start(CONSTANT.SCENES.SESSIONLOBBY);

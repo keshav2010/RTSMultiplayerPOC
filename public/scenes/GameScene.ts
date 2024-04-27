@@ -78,7 +78,6 @@ export class GameScene extends BaseScene {
   }
 
   onSoldierAdded(soldier: SoldierState, ownerPlayer: PlayerState) {
-    console.log("Adding a soldier ", soldier.id);
     const spearmen = new Spearman(
       this,
       soldier.id,
@@ -89,6 +88,10 @@ export class GameScene extends BaseScene {
       [ownerPlayer.colorR, ownerPlayer.colorG, ownerPlayer.colorB],
       ownerPlayer.id
     );
+    spearmen.setData("serverPosition", {
+      x: soldier.currentPositionX,
+      y: soldier.currentPositionY,
+    });
     const playerSoldiersGameObject = this.data.get(
       "playerSoldiersGameObject"
     ) as Map<PlayerId, soldierIdToPhaserMap>;
@@ -101,7 +104,6 @@ export class GameScene extends BaseScene {
       );
       soldiersMap = playerSoldiersGameObject.get(soldier.playerId);
     }
-    console.log("Added soldier with id ", soldier.id, soldier);
     soldiersMap!.set(soldier.id, spearmen);
   }
 
@@ -182,10 +184,10 @@ export class GameScene extends BaseScene {
       return;
     }
 
-    phaserSceneObject?.setPosition(
-      soldierState.currentPositionX,
-      soldierState.currentPositionY
-    );
+    phaserSceneObject.setData("serverPosition", {
+      x: soldierState.currentPositionX,
+      y: soldierState.currentPositionY,
+    });
   }
 
   onSoldierHealthUpdate(
@@ -219,7 +221,7 @@ export class GameScene extends BaseScene {
     });
     console.log(`map set`, map);
     const tileset = map.addTilesetImage("groundtiles", "img_groundtiles");
-    console.log(`tileset set `, tileset)
+    console.log(`tileset set `, tileset);
     const layer = map.createLayer("groundlayer", tileset!);
 
     this.data.set("map1", map);
@@ -644,5 +646,20 @@ export class GameScene extends BaseScene {
   update(delta: number) {
     this.renderDebugPath();
     this.controls?.update(delta);
+
+    const soldierPhaserObjs = <Map<PlayerId, soldierIdToPhaserMap>>(
+      this.data.get("playerSoldiersGameObject")
+    );
+    for (let [playerId, soldierMap] of soldierPhaserObjs) {
+      for (let [soldierId, soldierPhaserObj] of soldierMap) {
+        const serverPos = <{ x: number; y: number }>(
+          soldierPhaserObj.getData("serverPosition")
+        );
+        soldierPhaserObj.setPosition(
+          Phaser.Math.Linear(soldierPhaserObj.x, serverPos.x, 0.5),
+          Phaser.Math.Linear(soldierPhaserObj.y, serverPos.y, 0.5)
+        );
+      }
+    }
   }
 }
