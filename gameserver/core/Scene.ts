@@ -7,6 +7,7 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
   sceneItemMap: Map<string, ISceneItem>;
   width: number;
   height: number;
+  tileSize: number;
 
   constructor(opts: {
     x?: number;
@@ -16,6 +17,7 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
     maxElements?: number;
   }) {
     super(opts);
+    this.tileSize = 32;
     this.width = opts.width;
     this.height = opts.height;
     this.sceneItemMap = new Map<string, ISceneItem>();

@@ -19,10 +19,6 @@ export interface IBoidAgent {
   velocityVector: SAT.Vector;
   getVelocityVector: (...args: any) => SAT.Vector;
 
-  groupLeaderId?: string | null;
-  setGroupLeaderId: (arg: string) => void;
-  getGroupLeaderId: () => string | undefined | null;
-
   getDistanceFromExpectedPosition: () => number;
   applyForce: (force: SAT.Vector) => void;
 }

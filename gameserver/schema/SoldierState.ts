@@ -12,7 +12,7 @@ import { GameStateManagerType, PlayerState } from "./PlayerState";
 import { ISceneItem } from "../core/types/ISceneItem";
 import { TypeQuadtreeItem } from "../core/types/TypeQuadtreeItem";
 import { IBoidAgent } from "../core/types/IBoidAgent";
-
+import * as helper from "../helpers";
 function mapRange(
   val: number,
   mapRangeStart: number,
@@ -100,13 +100,6 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
     this.cost = SoldierTypeConfig[this.type].cost;
 
     this.sceneItemRef = new SceneObject(this.id, x, y, 32, "MOVABLE", true);
-  }
-
-  setGroupLeaderId(leaderId: string) {
-    this.groupLeaderId = leaderId;
-  }
-  getGroupLeaderId() {
-    return this.groupLeaderId;
   }
 
   getSceneItem() {
@@ -280,16 +273,9 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
 
   tick(delta: number, stateManager: GameStateManagerType) {
     this.currentState = this.stateMachine.currentState as any;
-    // in case group-leader instance not found, we reset offset
-    const groupLeaderRef = stateManager
-      .getPlayer(this.playerId)
-      ?.getSoldier(this.groupLeaderId);
-    if (!groupLeaderRef) {
-      this.groupLeaderId = null;
-    }
     stateManager.scene.checkCollisionOnObject(
       this,
-      ['MOVABLE'],
+      ["MOVABLE"],
       (
         res: {
           a: SoldierState;
@@ -338,8 +324,10 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
       50,
       ["FIXED"]
     );
-    enemyTowers = enemyTowers.filter((quadtreeItem) =>
-      (stateManager.getPlayer(quadtreeItem.id) && quadtreeItem.id !== this.playerId)
+    enemyTowers = enemyTowers.filter(
+      (quadtreeItem) =>
+        stateManager.getPlayer(quadtreeItem.id) &&
+        quadtreeItem.id !== this.playerId
     );
     enemyTowers
       .map((d) => stateManager.getPlayer(d.id))
@@ -366,6 +354,17 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
     const newPosition = this.getSceneItem()!
       .pos.clone()
       .add(this.getVelocityVector());
-    this.setPosition(newPosition);
+
+    const soldierRadius = this.radius;
+    this.setPosition(
+      helper.clampVector(
+        newPosition,
+        new SAT.Vector(soldierRadius, soldierRadius),
+        stateManager.scene
+          .getDimension()
+          .clone()
+          .sub(new SAT.Vector(soldierRadius, soldierRadius))
+      )
+    );
   }
 }

@@ -15,7 +15,7 @@ export class SceneObject extends SAT.Circle {
     id: string,
     x: number,
     y: number,
-    radius = 35,
+    radius = 32,
     type: SceneObjectType,
     collidable: boolean = true
   ) {
