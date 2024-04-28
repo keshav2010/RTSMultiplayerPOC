@@ -412,15 +412,20 @@ export class GameScene extends BaseScene {
     this.scene.launch(CONSTANT.SCENES.HUD_SCORE);
 
     this.cameras.main
-      .setBounds(0, 0, this.canvasWidth, this.canvasHeight)
+      .setBounds(
+        -this.canvasWidth / 2,
+        -this.canvasHeight / 2,
+        this.canvasWidth * 2,
+        this.canvasHeight * 2
+      )
       .setName("WorldCamera");
+    this.cameras.main.setBackgroundColor("rgba(255,255,255,0.3)");
 
     var mapGraphics = this.add.graphics();
     mapGraphics.depth = -5;
     mapGraphics.fillStyle(0x000000, 1);
     mapGraphics.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
     this.AddObject(mapGraphics);
-
     cursors = this.input.keyboard?.createCursorKeys();
     const controlConfig = {
       camera: this.cameras.main,

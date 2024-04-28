@@ -38,11 +38,11 @@ export class SpawnSelectionScene extends BaseScene {
     networkManager = this.registry.get("networkManager") as NetworkManager;
 
     const map = this.make.tilemap({
-      key: "map1"
+      key: "map1",
     });
     const tileset = map.addTilesetImage("groundtiles", "img_groundtiles");
     console.log(`tileset set `, tileset);
-    const layer = map.createLayer("groundlayer", tileset!, 0,0);
+    const layer = map.createLayer("groundlayer", tileset!);
     this.data.set("map1", map);
 
     networkManager.sendEventToServer(
@@ -163,8 +163,14 @@ export class SpawnSelectionScene extends BaseScene {
     });
 
     this.cameras.main
-      .setBounds(0, 0, this.canvasWidth, this.canvasHeight)
+      .setBounds(
+        -this.canvasWidth / 2,
+        -this.canvasHeight / 2,
+        this.canvasWidth * 2,
+        this.canvasHeight * 2
+      )
       .setName("WorldCamera");
+    this.cameras.main.setBackgroundColor("rgba(255,255,255,0.3)");
 
     var mapGraphics = this.AddObject(this.add.graphics());
 
@@ -189,7 +195,7 @@ export class SpawnSelectionScene extends BaseScene {
       controlConfig
     );
 
-    this.AddSceneEvent(
+    this.AddInputEvent(
       "wheel",
       (
         pointer: any,
