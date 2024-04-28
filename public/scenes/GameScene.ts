@@ -9,6 +9,8 @@ import SessionStateClientHelpers from "../helpers/SessionStateClientHelpers";
 import { BaseSoldier } from "../soldiers/BaseSoldier";
 import { Spearman } from "../soldiers/Spearman";
 import { BaseScene } from "./BaseScene";
+import SpinnerPlugin from "phaser3-rex-plugins/templates/spinner/spinner-plugin.js";
+
 import $ from "jquery";
 
 var selectorColor = 0xffff00;
@@ -56,7 +58,7 @@ export class GameScene extends BaseScene {
   canvasWidth: number;
   canvasHeight: number;
   controls?: Phaser.Cameras.Controls.SmoothedKeyControl;
-
+  rexSpinner: SpinnerPlugin.Spinner | undefined;
   constructor() {
     super(CONSTANT.SCENES.GAME);
     this.canvasWidth = 1962;
@@ -88,10 +90,6 @@ export class GameScene extends BaseScene {
       [ownerPlayer.colorR, ownerPlayer.colorG, ownerPlayer.colorB],
       ownerPlayer.id
     );
-    spearmen.setData("serverPosition", {
-      x: soldier.currentPositionX,
-      y: soldier.currentPositionY,
-    });
     const playerSoldiersGameObject = this.data.get(
       "playerSoldiersGameObject"
     ) as Map<PlayerId, soldierIdToPhaserMap>;
@@ -207,7 +205,6 @@ export class GameScene extends BaseScene {
 
   create() {
     networkManager = this.registry.get("networkManager") as NetworkManager;
-
     const stylus = this.add.graphics();
     stylus.setDepth(9999);
 

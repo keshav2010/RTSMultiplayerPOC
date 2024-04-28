@@ -1,6 +1,7 @@
 import CONSTANTS from "../constant";
 import SessionStateClientHelpers from "../helpers/SessionStateClientHelpers";
 import LoadingBar from "../LoadingBar";
+import SAT from 'sat';
 import { NetworkManager } from "../NetworkManager";
 const GAMEEVENTS = CONSTANTS.GAMEEVENTS;
 class BackgroundHighlight extends Phaser.GameObjects.Graphics {
@@ -49,7 +50,7 @@ class BackgroundHighlight extends Phaser.GameObjects.Graphics {
   }
 }
 export class BaseSoldier extends Phaser.GameObjects.Sprite {
-  id: string;
+  readonly id: string;
   initialParam: any;
   color: number[];
   expectedPositionX: number;
@@ -58,6 +59,7 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
   highlightBackground: BackgroundHighlight;
   DEBUGTEXT: Phaser.GameObjects.Text;
   playerId: string | null;
+
   /**
    * @param {*} scene
    * @param {number} x
@@ -81,7 +83,6 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     scene.add.existing(this);
     this.setInteractive();
     this.id = id;
-    console.log("BASESOLDIER ", this.id);
     this.playerId = playerId;
 
     scene.events.on("update", this.update, this);
@@ -123,7 +124,7 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     const networkManager = this?.scene?.registry?.get(
       "networkManager"
     ) as NetworkManager;
-    if(!networkManager) {
+    if (!networkManager) {
       console.log(
         `Could not find network-manager for soldier :${this.id}, most likely is deleted from scene (value of scene : ${this.scene})`
       );
@@ -131,15 +132,10 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     }
 
     const session = networkManager.getState();
-    const clientId = networkManager.getClientId()
-    if(!session || !clientId) 
-      return;
-    const playerState = SessionStateClientHelpers.getPlayer(
-      session,
-      clientId
-    );
-    if(!playerState)
-        return;
+    const clientId = networkManager.getClientId();
+    if (!session || !clientId) return;
+    const playerState = SessionStateClientHelpers.getPlayer(session, clientId);
+    if (!playerState) return;
 
     const soldierState = SessionStateClientHelpers.getSoldier(
       session,

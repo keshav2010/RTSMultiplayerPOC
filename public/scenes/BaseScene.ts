@@ -4,17 +4,13 @@ import { NetworkManager } from "../NetworkManager";
 import { ClientStateManager } from "../ClientStateManager";
 import CONSTANT from "../constant";
 import { nanoid } from "nanoid";
+interface Destroyable {
+  destroy: Function;
+}
+type ManagedTypes = Destroyable;
 
 export class BaseScene extends Phaser.Scene {
-  objectSet: Map<
-    string,
-    | Phaser.GameObjects.Graphics
-    | PlayerCastle
-    | Phaser.Cameras.Controls.SmoothedKeyControl
-    | Phaser.GameObjects.Text
-    | Phaser.GameObjects.DOMElement
-    | Phaser.GameObjects.Image
-  >;
+  objectSet: Map<string, ManagedTypes>;
   registeredInputEvents: Set<string>;
   registeredSceneEvents: Set<string>;
 
@@ -73,29 +69,13 @@ export class BaseScene extends Phaser.Scene {
     }
   }
 
-  AddObject<
-    T extends
-      | Phaser.GameObjects.Graphics
-      | PlayerCastle
-      | Phaser.Cameras.Controls.SmoothedKeyControl
-      | Phaser.GameObjects.Text
-      | Phaser.GameObjects.DOMElement
-      | Phaser.GameObjects.Image
-  >(newObject: T, key?: string): T {
+  AddObject<T extends ManagedTypes>(newObject: T, key?: string): T {
     let mKey = nanoid();
     this.objectSet.set(key || mKey, newObject);
     return newObject;
   }
 
-  GetObject<
-    T extends
-      | Phaser.GameObjects.Graphics
-      | PlayerCastle
-      | Phaser.Cameras.Controls.SmoothedKeyControl
-      | Phaser.GameObjects.Text
-      | Phaser.GameObjects.DOMElement
-      | Phaser.GameObjects.Image
-  >(key: string) {
+  GetObject<T extends ManagedTypes>(key: string) {
     return this.objectSet.get(key) as T | undefined;
   }
 
@@ -124,15 +104,7 @@ export class BaseScene extends Phaser.Scene {
   }
 
   // Recursively destroy an object, including any children if it's a group
-  DestroyObject<
-    T extends
-      | Phaser.GameObjects.Graphics
-      | PlayerCastle
-      | Phaser.GameObjects.Text
-      | Phaser.GameObjects.DOMElement
-      | Phaser.GameObjects.Image
-      | Phaser.Cameras.Controls.SmoothedKeyControl
-  >(obj: T) {
+  DestroyObject<T extends ManagedTypes>(obj: T) {
     if ((obj as any)?.type === "Group") obj.destroy(true);
     else obj.destroy();
   }

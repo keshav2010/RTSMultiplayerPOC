@@ -17,21 +17,25 @@ export class OnSoldierAttackCommand extends Command<
     targetPlayerId: string;
     targetUnitId: string;
   }>) {
-    const attacker = this.state.getPlayer(client.id);
-    const victim = this.state.getPlayer(message.targetPlayerId);
-    if (!attacker || !victim) {
-      return;
-    }
-    const targetSoldier = victim.getSoldier(message.targetUnitId);
-    if (!targetSoldier) {
-      return;
-    }
+    try {
+      const attacker = this.state.getPlayer(client.id);
+      const victim = this.state.getPlayer(message.targetPlayerId);
+      if (!attacker || !victim) {
+        return;
+      }
+      const targetSoldier = victim.getSoldier(message.targetUnitId);
+      if (!targetSoldier) {
+        return;
+      }
 
-    const attackerUnits = attacker
-      .getAllSoldiers()
-      .filter((soldier) => message.soldiers.includes(soldier.id));
-    attackerUnits.forEach((unit: SoldierState) => {
-      unit.attackUnit(targetSoldier, gameManager!);
-    });
+      const attackerUnits = attacker
+        .getAllSoldiers()
+        .filter((soldier) => message.soldiers.includes(soldier.id));
+      attackerUnits.forEach((unit: SoldierState) => {
+        unit.attackUnit(targetSoldier, gameManager!);
+      });
+    } catch (error) {
+      console.error(error);
+    }
   }
 }
