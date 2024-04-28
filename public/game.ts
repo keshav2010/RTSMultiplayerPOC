@@ -10,7 +10,7 @@ import SpinnerPlugin from "phaser3-rex-plugins/templates/spinner/spinner-plugin.
 
 import Phaser from "phaser";
 const config = {
-  type: Phaser.WEBGL,
+  type: Phaser.AUTO,
   width: 1200,
   height: 800,
   scale: {
