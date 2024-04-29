@@ -9,6 +9,7 @@ import { OnSoldierMoveCommand } from "./OnSoldierMoveCommand";
 import { OnSoldierAttackCommand } from "./OnSoldierAttackCommand";
 import { OnSpawnPointSelectCommand } from "./OnSpawnPointSelectCommand";
 import { CommandPayload } from "./CommandPayloadType";
+import { OnChatBroadcastCommand } from "./OnChatBroadcastCommand";
 
 export class CommandFactory {
   static createCommand(
@@ -36,7 +37,8 @@ export class CommandFactory {
 
       case PacketType.ByClient.SPAWN_POINT_REQUESTED:
         return new OnSpawnPointSelectCommand();
-
+      case PacketType.ByClient.CLIENT_SENT_CHAT:
+        return new OnChatBroadcastCommand();
       default:
         return null;
     }

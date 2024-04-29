@@ -21,7 +21,7 @@ var pointerDownWorldSpace: { x: any; y: any } | null = null;
 var cursors;
 
 var networkManager: NetworkManager;
-function SendChatMessage() {
+const SendChatMessage = () => {
   try {
     var messageText = $("#chat-message").val();
     networkManager.sendEventToServer(PacketType.ByClient.CLIENT_SENT_CHAT, {
@@ -30,8 +30,8 @@ function SendChatMessage() {
   } catch (err) {
     console.error(err);
   }
-}
-function addNewChatMessage(msg: string, sender: string) {
+};
+const addNewChatMessage = (msg: string, sender: string) => {
   let msgBlock = `<div>
         <div class="d-flex justify-content-between">
             <p class="small mb-1">${sender}</p>
@@ -45,7 +45,7 @@ function addNewChatMessage(msg: string, sender: string) {
         </div>
     </div>`;
   $(".chat-body").append(msgBlock);
-}
+};
 $(() => {
   $("#send-chat-btn").on("click", function () {
     SendChatMessage();
@@ -238,9 +238,6 @@ export class GameScene extends BaseScene {
         string,
         BaseSoldier
       >;
-      const playerSoldiersGameObject = this.data.get(
-        "playerSoldiersGameObject"
-      ) as Map<PlayerId, soldierIdToPhaserMap>;
 
       if (!selectorGraphics) {
         return;
@@ -267,12 +264,13 @@ export class GameScene extends BaseScene {
       } else if (pointer.button === 2) {
         //if any soldier selected
         if (selectedSoldiersMap.size > 0) {
-          //If enemy unit in nearby radius, randomly select 1 and send attack signal
-          let searchAreaSize = 35;
+          const playerSoldiersGameObject = this.data.get(
+            "playerSoldiersGameObject"
+          ) as Map<PlayerId, soldierIdToPhaserMap>;
           let circle = new Phaser.Geom.Circle(
             pointer.worldX,
             pointer.worldY,
-            searchAreaSize * 0.5
+            16
           );
           selectorGraphics.strokeCircleShape(circle);
 
@@ -286,7 +284,6 @@ export class GameScene extends BaseScene {
             (d) => d.playerId !== networkManager.getClientId()
           );
 
-          console.log(`Enemy Soldiers : ${otherPlayerSoldiers.length}`);
           // select atmost 1 target soldier (enemy unit to be attacked)
           let targetSoldier = null;
           for (let i = 0; i < otherPlayerSoldiers.length; i++) {
@@ -325,8 +322,6 @@ export class GameScene extends BaseScene {
             );
           }
         }
-
-        //this.scene.events.emit(GAMEEVENTS.RIGHT_CLICK, pointer.position);
       }
     });
 
@@ -444,9 +439,10 @@ export class GameScene extends BaseScene {
 
     this.AddSceneEvent(
       PacketType.ByServer.NEW_CHAT_MESSAGE,
-      (data: { message: string; playerId: string }) => {
-        let { message, playerId } = data;
-        addNewChatMessage(message, playerId);
+      (data: { message: string; sender: string }) => {
+        const { message, sender } = data;
+        console.log("recived event in scene ", message, sender);
+        addNewChatMessage(message, sender);
       }
     );
 

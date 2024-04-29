@@ -2,8 +2,7 @@
 import { Command } from "@colyseus/command";
 import { SessionRoom } from "../SessionRoom";
 import { CommandPayload } from "./CommandPayloadType";
-import { Client } from "colyseus";
-import { nanoid } from "nanoid";
+import { PacketType } from "../../common/PacketType";
 export class OnChatBroadcastCommand extends Command<
   SessionRoom,
   CommandPayload
@@ -14,17 +13,13 @@ export class OnChatBroadcastCommand extends Command<
     gameManager,
   }: CommandPayload<{
     sessionId: string;
-    name: string;
-    x: number;
-    y: number;
+    message: string;
   }>) {
     const sessionId = client.sessionId;
-    this.state.addPlayer(
-      sessionId,
-      message.name,
-      message?.x || 0,
-      message?.y || 0
-    );
-    console.log(`[OnChatBroadcastCommand]: Added player. ${message.name}`);
+    console.log(`[OnChatBroadcastCommand]: Received Chat.`, message);
+    this.room.broadcast(PacketType.ByServer.NEW_CHAT_MESSAGE, {
+      sender: sessionId,
+      message: message.message,
+    });
   }
 }

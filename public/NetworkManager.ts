@@ -1,6 +1,7 @@
 import * as Colyseus from "colyseus.js";
 import Phaser from "phaser";
 import { SessionState } from "../gameserver/schema/SessionState";
+import { PacketType } from "../common/PacketType";
 const URL = `${window.location.host}`;
 export type RoomEventHandlerCallbackType = (
   type: "onStateChange" | "onMessage" | "onLeave" | "onError",
@@ -18,7 +19,7 @@ export class NetworkManager {
     phaserGame: Phaser.Game,
     phaserRegistry: Phaser.Data.DataManager
   ) {
-    this.client = new Colyseus.Client(`wss://${URL}`);
+    this.client = new Colyseus.Client(`ws://${URL}`);
     this.room = null;
 
     this.game = phaserGame;
@@ -44,7 +45,11 @@ export class NetworkManager {
       console.log("init state change", state);
     });
     this.room.onMessage("*", (type, message) => {
-      console.log("[room / onMessage] :", { type, message });
+      if (type === PacketType.ByServer.NEW_CHAT_MESSAGE) {
+        this.game.scene.getScenes(true).forEach((scene) => {
+          scene.events.emit(type, message);
+        });
+      }
     });
     this.room.onLeave((code) => {
       console.log(`Leaving Room ${this.room?.name}, code: ${code}`);
@@ -97,7 +102,7 @@ export class NetworkManager {
   async hostAndJoinSession(roomName: string) {
     try {
       console.log(`[hostSession] : room(${roomName}) host requested.`);
-      
+
       await this.disconnectGameServer().catch((err) => {
         console.log(err);
       });
