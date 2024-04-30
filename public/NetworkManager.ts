@@ -19,7 +19,8 @@ export class NetworkManager {
     phaserGame: Phaser.Game,
     phaserRegistry: Phaser.Data.DataManager
   ) {
-    this.client = new Colyseus.Client(`ws://${URL}`);
+    const protocol = window.location.protocol.includes('http') ?  'ws' : 'wss';
+    this.client = new Colyseus.Client(`${protocol}://${URL}`);
     this.room = null;
 
     this.game = phaserGame;
