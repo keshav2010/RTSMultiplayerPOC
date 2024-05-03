@@ -67,11 +67,6 @@ export class MenuScene extends BaseScene {
       this.scene.start(CONSTANT.SCENES.SESSIONBROWSER);
     });
 
-    createSessionBtn?.addEventListener("pointerdown", async (event) => {
-      event.stopPropagation();
-      await this.onCreateSessionClick();
-    });
-
     this.AddSceneEvent("shutdown", (data: any) => {
       console.log("shutdown ", data.config.key);
       this.Destroy();
@@ -136,25 +131,5 @@ export class MenuScene extends BaseScene {
       const sessions = await networkManager.getAvailableSession();
       console.log("available sessions ", sessions);
     } catch (error) {}
-  }
-  async onCreateSessionClick() {
-    try {
-      const networkManager = this.registry.get(
-        "networkManager"
-      ) as NetworkManager;
-      if (!networkManager) {
-        throw new Error("NetworkManager is not defined");
-      }
-
-      const playerName = (this.GetObject<Phaser.GameObjects.DOMElement>(
-        "obj_playerForm"
-      )?.getChildByName("nameInput") as Element & { value: string })!.value;
-      await networkManager?.hostAndJoinSession(`${playerName}`);
-
-      console.log("[client id] : ", networkManager?.getClientId());
-      this.scene.start(CONSTANT.SCENES.SESSIONLOBBY);
-    } catch (error) {
-      console.log(error);
-    }
   }
 }

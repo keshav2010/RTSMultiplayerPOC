@@ -33,6 +33,7 @@ export class GameStateManager<PlayerSchema extends IDfied> {
     this.scene = new Scene({
       width: 1920,
       height: 1920,
+      tileSize: 32
     });
     this.playerMap = new Map();
     this.countdown = SERVER_CONFIG.COUNTDOWN;

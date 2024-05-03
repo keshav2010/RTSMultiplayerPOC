@@ -27,7 +27,7 @@ export const MOVABLE_UNIT_CONSTANTS = {
   MAX_DISTANCE_OFFSET_ALLOWED_FROM_EXPECTED_POSITION: 50,
 
   // how much distance between two units so they can ttack each other
-  DISTANCE_DURING_ATTACK: 70,
+  DISTANCE_DURING_ATTACK: 33,
 
   /**
    * NEARBY_SEARCH_RADI serves following purpose

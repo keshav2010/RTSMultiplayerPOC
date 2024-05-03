@@ -1,13 +1,13 @@
 import Quadtree from "quadtree-lib";
 import SAT from "sat";
-import { TypeQuadtreeItem } from "./types/TypeQuadtreeItem"
-import { ISceneItem } from "./types/ISceneItem"
+import { TypeQuadtreeItem } from "./types/TypeQuadtreeItem";
+import { ISceneItem } from "./types/ISceneItem";
 import { SceneObjectType } from "./types/SceneObject";
 export class Scene extends Quadtree<TypeQuadtreeItem> {
   sceneItemMap: Map<string, ISceneItem>;
-  width: number;
-  height: number;
-  tileSize: number;
+  readonly width: number;
+  readonly height: number;
+  readonly tileSize: number;
 
   constructor(opts: {
     x?: number;
@@ -15,9 +15,10 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
     width: number;
     height: number;
     maxElements?: number;
+    tileSize?: number;
   }) {
     super(opts);
-    this.tileSize = 32;
+    this.tileSize = opts.tileSize || 32;
     this.width = opts.width;
     this.height = opts.height;
     this.sceneItemMap = new Map<string, ISceneItem>();
@@ -57,23 +58,22 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
   getNearbyUnits(
     x: number,
     y: number,
-    searchRadius: number,
+    squareWidth: number,
     type?: SceneObjectType[]
   ) {
-    let result = this.colliding({ x, y }, (a, b) => {
-      // Create circles for each object
-      const aCircle = new SAT.Circle(
-        new SAT.Vector(a.x, a.y),
-        Math.max(searchRadius, a.r || 0)
-      );
-      const bCircle = new SAT.Circle(new SAT.Vector(b.x, b.y), b.r);
-
-      // Perform circle-circle collision detection
-      const response = new SAT.Response();
-      const collided = SAT.testCircleCircle(aCircle, bCircle, response);
-      return collided;
-    });
-
+    const query: TypeQuadtreeItem = {
+      x: x - squareWidth / 2,
+      y: y - squareWidth / 2,
+      w: squareWidth,
+      h: squareWidth,
+      width: squareWidth,
+      height: squareWidth,
+      r: squareWidth / 2,
+      id: "query-object",
+      type: "FIXED",
+      collidable: false,
+    };
+    let result = this.colliding(query);
     if (type) result = result.filter((body) => type?.includes(body.type));
     return result;
   }
@@ -85,32 +85,41 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
     callback: (arg0: SAT.Response, arg1: ISceneItem[]) => void
   ) {
     const mainCollidingObject = sceneItem.getSceneItem();
+
     //fetch all bodies which are colliding with the soldier specified by x,y,r in arg.
-    let collidingBodies = this.getNearbyUnits(
+    let bodiesNearby = this.getNearbyUnits(
       mainCollidingObject.pos.x,
       mainCollidingObject.pos.y,
-      mainCollidingObject.r,
+      mainCollidingObject.width,
       bodyTypeToCheck
     );
-    //Colliding Bodies will always have 1 element, which is the soldier itself.
 
     //Obtain "SAT.Response" for each collision.
-    const satBoxPolygons = collidingBodies
-      .map((d) => this.sceneItemMap.get(d.id))
-      .filter((body) => body && body.getSceneItem().collidable);
+    const satBoxPolygons = <ISceneItem[]>(
+      bodiesNearby
+        .map((d) => this.sceneItemMap.get(d.id))
+        .filter((body) => Boolean(body?.getSceneItem().collidable))
+    );
 
     satBoxPolygons.forEach((collidingBody) => {
       if (!collidingBody) return;
-
       const isSelf = collidingBody.getSceneItem().id === mainCollidingObject.id;
       if (isSelf) {
         return;
       }
-
       const res = new SAT.Response();
+      const collidingSceneBody = collidingBody.getSceneItem();
+      const circleCollider1 = new SAT.Circle(
+        mainCollidingObject.getCircleCenter(),
+        mainCollidingObject.r
+      );
+      const circleCollider2 = new SAT.Circle(
+        collidingSceneBody.getCircleCenter(),
+        collidingSceneBody.r
+      );
       const isColliding = SAT.testCircleCircle(
-        mainCollidingObject,
-        collidingBody.getSceneItem(),
+        circleCollider1,
+        circleCollider2,
         res
       );
       if (!isColliding) return;
@@ -118,12 +127,12 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
       res.b = collidingBody;
 
       // get corresponding items.
-      const itemsInMap = collidingBodies.filter((d) =>
-        this.sceneItemMap.has(d.id)
+      const itemsInMap = satBoxPolygons.filter(
+        (d) => Boolean(d) && d && this.sceneItemMap.has(d.id)
       );
       const otherCollidingBodies = itemsInMap.map(
         (item) => this.sceneItemMap.get(item.id)!
-      );
+      )!;
       callback(res, otherCollidingBodies);
     });
   }

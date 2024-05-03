@@ -80,7 +80,7 @@ export class NetworkManager {
     try {
       await this.room?.leave();
     } catch (error) {
-      console.log(`disconnect failed`);
+      console.log(`disconnect failed`, error);
     }
   }
 
@@ -104,7 +104,6 @@ export class NetworkManager {
   async hostAndJoinSession(roomName: string) {
     try {
       console.log(`[hostSession] : room(${roomName}) host requested.`);
-
       await this.disconnectGameServer().catch((err) => {
         console.log(err);
       });
@@ -116,11 +115,11 @@ export class NetworkManager {
         name: roomName,
         playerName: this.getPlayerName(),
       });
-
       console.log("session created successfully.", this.room.roomId);
       this.setupRoomListener();
     } catch (err) {
-      console.log(err);
+      console.log(`Error occurred during host and join session`, this.room);
+      throw err;
     }
   }
 }

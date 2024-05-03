@@ -4,11 +4,11 @@ import { nanoid } from "nanoid";
 import { SoldierType, SoldierTypeConfig } from "../../common/SoldierType";
 import { GameStateManager } from "../core/GameStateManager";
 import { Scene } from "../core/Scene";
-import { IDfied } from "../core/types/IDfied";
 import { SceneObject } from "../core/types/SceneObject";
 import SAT from "sat";
 import { ISceneItem } from "../core/types/ISceneItem";
 export type GameStateManagerType = GameStateManager<PlayerState>;
+
 export class SpawnRequest extends Schema {
   @type("string") requestId: string = "";
   @type("string") unitType: SoldierType = "SPEARMAN";
@@ -110,7 +110,6 @@ export class PlayerState extends Schema implements ISceneItem {
     console.log("spawning a soldier ", type);
     const newSoldier = new SoldierState(this.id, type, this.posX, this.posY);
     this.soldiers.set(newSoldier.id, newSoldier);
-
     scene.addSceneItem(newSoldier);
     return newSoldier.id;
   }

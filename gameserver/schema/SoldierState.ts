@@ -272,7 +272,9 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
   }
 
   tick(delta: number, stateManager: GameStateManagerType) {
-    this.currentState = this.stateMachine.currentState as any;
+    this.currentState = this.stateMachine
+      .currentState as keyof typeof SoldierStateMachineJSON.states;
+
     stateManager.scene.checkCollisionOnObject(
       this,
       ["MOVABLE"],
@@ -290,6 +292,7 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
         if (!soldierA || !soldierB) {
           return;
         }
+
         // update position so it doesnt overlap with colliding body.
         soldierA.setPosition(
           new SAT.Vector(
@@ -318,25 +321,22 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
       }
     );
 
-    let enemyTowers = stateManager.scene.getNearbyUnits(
-      this.currentPositionX,
-      this.currentPositionY,
-      50,
-      ["FIXED"]
-    );
-    enemyTowers = enemyTowers.filter(
-      (quadtreeItem) =>
-        stateManager.getPlayer(quadtreeItem.id) &&
-        quadtreeItem.id !== this.playerId
-    );
-    enemyTowers
-      .map((d) => stateManager.getPlayer(d.id))
-      .forEach((playerBase) => {
-        if (playerBase) {
-          const flagHealth = playerBase.spawnFlagHealth - 0.5 * delta;
-          playerBase.spawnFlagHealth = Math.max(0, flagHealth);
-        }
-      });
+    const enemyTowers = stateManager.scene
+      .getNearbyUnits(this.currentPositionX, this.currentPositionY, 100, [
+        "FIXED",
+      ])
+      .filter(
+        (quadtreeItem) =>
+          stateManager.getPlayer(quadtreeItem.id) &&
+          quadtreeItem.id !== this.playerId
+      )
+      .map((d) => stateManager.getPlayer(d.id));
+
+    enemyTowers.forEach((playerBase) => {
+      if (!playerBase) return;
+      const flagHealth = playerBase.spawnFlagHealth - 0.45 * delta;
+      playerBase.spawnFlagHealth = Math.max(0, flagHealth);
+    });
     this.stateMachine.tick({ delta, stateManager, soldier: this });
   }
 

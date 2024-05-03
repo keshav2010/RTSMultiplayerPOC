@@ -165,24 +165,4 @@ export class SessionBrowserScene extends BaseScene {
     }
   }
 
-  async onCreateSessionClick() {
-    try {
-      const networkManager = this.registry.get(
-        "networkManager"
-      ) as NetworkManager;
-      if (!networkManager) {
-        throw new Error("NetworkManager is not defined");
-      }
-
-      const playerName = (this.GetObject<Phaser.GameObjects.DOMElement>(
-        "obj_playerForm"
-      )?.getChildByName("nameInput") as Element & { value: string })!.value;
-      await networkManager?.hostAndJoinSession(`${playerName}`);
-
-      console.log("[client id] : ", networkManager?.getClientId());
-      this.scene.start(CONSTANT.SCENES.SESSIONLOBBY);
-    } catch (error) {
-      console.log(error);
-    }
-  }
 }

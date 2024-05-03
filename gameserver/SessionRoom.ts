@@ -24,7 +24,6 @@ export class SessionRoom extends Room<SessionState> {
     this.setState(new SessionState());
     this.onMessage("*", (client, type, message) => {
       try {
-        console.log(`[Message Received] from: ${client.id} | type: ${type}`);
         const commandToDispatch = CommandFactory.createCommand(type as string);
         if (!commandToDispatch)
           throw new Error(`Failed to find command for type ${type}`);
