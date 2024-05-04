@@ -56,14 +56,14 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
    * @returns
    */
   getNearbyUnits(
-    x: number,
-    y: number,
+    centerX: number,
+    centerY: number,
     squareWidth: number,
     type?: SceneObjectType[]
   ) {
     const query: TypeQuadtreeItem = {
-      x: x - squareWidth / 2,
-      y: y - squareWidth / 2,
+      x: centerX - squareWidth / 2,
+      y: centerY - squareWidth / 2,
       w: squareWidth,
       h: squareWidth,
       width: squareWidth,
@@ -74,7 +74,10 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
       collidable: false,
     };
     let result = this.colliding(query);
-    if (type) result = result.filter((body) => type?.includes(body.type));
+    if (type)
+      result = result.filter(
+        (body) => type?.includes(body.type) && body.id !== "query-object"
+      );
     return result;
   }
 
@@ -88,8 +91,8 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
 
     //fetch all bodies which are colliding with the soldier specified by x,y,r in arg.
     let bodiesNearby = this.getNearbyUnits(
-      mainCollidingObject.pos.x,
-      mainCollidingObject.pos.y,
+      mainCollidingObject.getCircleCenter().x,
+      mainCollidingObject.getCircleCenter().y,
       mainCollidingObject.width,
       bodyTypeToCheck
     );

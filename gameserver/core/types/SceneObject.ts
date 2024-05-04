@@ -31,8 +31,8 @@ export class SceneObject extends SAT.Box {
     this.id = id;
 
     // top-left corner of square hitbox
-    this.x = this.pos.x;
-    this.y = this.pos.y;
+    this.x = x;
+    this.y = y;
     this.r = size / 2;
     this.type = type;
     this.collidable = collidable;

@@ -22,8 +22,8 @@ export default {
 
     // if nearby unit getting attacked.
     const nearbyUnits = stateManager.scene.getNearbyUnits(
-      soldier.getSceneItem().pos.x,
-      soldier.getSceneItem().pos.y,
+      soldier.getSceneItem().getCircleCenter().x,
+      soldier.getSceneItem().getCircleCenter().y,
       MOVABLE_UNIT_CONSTANTS.NEARBY_SEARCH_RADI,
       ['MOVABLE']
     );
@@ -78,8 +78,8 @@ export default {
     }
     soldier.move(delta, stateManager);
     const nearbyUnits = stateManager.scene.getNearbyUnits(
-      soldier.getSceneItem().pos.x,
-      soldier.getSceneItem().pos.y,
+      soldier.getSceneItem().getCircleCenter().x,
+      soldier.getSceneItem().getCircleCenter().y,
       MOVABLE_UNIT_CONSTANTS.NEARBY_SEARCH_RADI,
       ["MOVABLE"]
     );
@@ -162,9 +162,9 @@ export default {
   }) => {
     try {
       soldier.setAttackTarget(null);
-      var nearbyUnits = stateManager.scene.getNearbyUnits(
-        soldier.getSceneItem().pos.x,
-        soldier.getSceneItem().pos.y,
+      const nearbyUnits = stateManager.scene.getNearbyUnits(
+        soldier.getSceneItem().getCircleCenter().x,
+        soldier.getSceneItem().getCircleCenter().y,
         MOVABLE_UNIT_CONSTANTS.NEARBY_SEARCH_RADI,
         ["MOVABLE"]
       );

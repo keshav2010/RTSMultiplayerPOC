@@ -10,7 +10,6 @@ import { BaseSoldier } from "../soldiers/BaseSoldier";
 import { Spearman } from "../soldiers/Spearman";
 import { BaseScene } from "./BaseScene";
 import SpinnerPlugin from "phaser3-rex-plugins/templates/spinner/spinner-plugin.js";
-
 import $ from "jquery";
 
 var selectorColor = 0xffff00;
@@ -74,7 +73,7 @@ export class GameScene extends BaseScene {
     this.load.image("playbutton", "../assets/playbutton.png");
     this.load.image("knight", "../assets/knight.png");
     this.load.image("texture_spearman", "../assets/spearman.png");
-    this.load.image("flag", "../assets/flag.png");
+    this.load.image("castle", "../assets/castle.png");
     this.load.image("img_groundtiles", "../assets/groundtiles.png");
     this.load.tilemapTiledJSON("map1", "../assets/map1.json");
   }
@@ -182,10 +181,10 @@ export class GameScene extends BaseScene {
       return;
     }
 
-    phaserSceneObject.setData("serverPosition", {
-      x: soldierState.currentPositionX,
-      y: soldierState.currentPositionY,
-    });
+    phaserSceneObject.setServerPosition(
+      soldierState.currentPositionX,
+      soldierState.currentPositionY
+    );
   }
 
   onSoldierHealthUpdate(
@@ -267,7 +266,7 @@ export class GameScene extends BaseScene {
           const playerSoldiersGameObject = this.data.get(
             "playerSoldiersGameObject"
           ) as Map<PlayerId, soldierIdToPhaserMap>;
-          let circle = new Phaser.Geom.Circle(
+          const circle = new Phaser.Geom.Circle(
             pointer.worldX,
             pointer.worldY,
             16
@@ -335,10 +334,6 @@ export class GameScene extends BaseScene {
     });
 
     this.AddInputEvent("pointermove", (pointer: any) => {
-      const selectedSoldiersMap = this.data.get("selectedSoldiersMap") as Map<
-        string,
-        BaseSoldier
-      >;
       const playerSoldiersGameObject = this.data.get(
         "playerSoldiersGameObject"
       ) as Map<PlayerId, soldierIdToPhaserMap>;
@@ -416,11 +411,6 @@ export class GameScene extends BaseScene {
       .setName("WorldCamera");
     this.cameras.main.setBackgroundColor("rgba(255,255,255,0.3)");
 
-    var mapGraphics = this.add.graphics();
-    mapGraphics.depth = -5;
-    mapGraphics.fillStyle(0x000000, 1);
-    mapGraphics.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
-    this.AddObject(mapGraphics);
     cursors = this.input.keyboard?.createCursorKeys();
     const controlConfig = {
       camera: this.cameras.main,
@@ -590,7 +580,7 @@ export class GameScene extends BaseScene {
     //show initial spawnpoint choice on map for player
     networkManager.getState()?.players.forEach((player) => {
       this.AddObject(
-        new PlayerCastle(this, player.posX, player.posY, "flag", null, {
+        new PlayerCastle(this, player.posX, player.posY, "castle", null, {
           health: 500,
           player: player,
         }),
@@ -607,50 +597,8 @@ export class GameScene extends BaseScene {
       this.events.removeAllListeners();
     });
   }
-  renderDebugPath() {
-    const painter = this.GetObject<Phaser.GameObjects.Graphics>("obj_brush")!;
-    painter.clear();
-    const soldierPhaserObjs = <Map<PlayerId, soldierIdToPhaserMap>>(
-      this.data.get("playerSoldiersGameObject")
-    );
-    for (let [playerId, soldierMap] of soldierPhaserObjs) {
-      for (let [soldierId, soldierPhaserObj] of soldierMap) {
-        const serverPos = <{ x: number; y: number }>(
-          soldierPhaserObj.getData("serverPosition")
-        );
-        painter.lineStyle(3, 0x000000, 1);
-        painter.strokeCircle(serverPos.x, serverPos.y, 32!);
-      }
-    }
-
-    const clientId = networkManager.getClientId();
-    const sessionState = networkManager.getState();
-    if (!sessionState || !clientId) return;
-    const playerState = SessionStateClientHelpers.getPlayer(
-      sessionState,
-      clientId
-    );
-    playerState?.soldiers.forEach((value) => {
-      painter.lineStyle(3, 0xffffff, 1);
-      painter.strokeCircle(
-        value.expectedPositionX,
-        value.expectedPositionY,
-        value.radius
-      );
-      painter.lineStyle(1, 0xffffee, 1);
-      painter.strokeLineShape(
-        new Phaser.Geom.Line(
-          value.currentPositionX,
-          value.currentPositionY,
-          value.expectedPositionX,
-          value.expectedPositionY
-        )
-      );
-    });
-  }
 
   update(delta: number) {
-    this.renderDebugPath();
     this.controls?.update(delta);
 
     const soldierPhaserObjs = <Map<PlayerId, soldierIdToPhaserMap>>(
@@ -658,12 +606,10 @@ export class GameScene extends BaseScene {
     );
     for (let [playerId, soldierMap] of soldierPhaserObjs) {
       for (let [soldierId, soldierPhaserObj] of soldierMap) {
-        const serverPos = <{ x: number; y: number }>(
-          soldierPhaserObj.getData("serverPosition")
-        );
+        const serverPos = soldierPhaserObj.getServerPosition();
         soldierPhaserObj.setPosition(
-          Phaser.Math.Linear(soldierPhaserObj.x, serverPos.x, 0.15),
-          Phaser.Math.Linear(soldierPhaserObj.y, serverPos.y, 0.15)
+          Phaser.Math.Linear(soldierPhaserObj.x, serverPos.x, BaseSoldier.LERP_RATE),
+          Phaser.Math.Linear(soldierPhaserObj.y, serverPos.y, BaseSoldier.LERP_RATE)
         );
       }
     }

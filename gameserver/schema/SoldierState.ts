@@ -186,8 +186,8 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
   ) {
     const soldier = this.getSceneItem();
     const nearbyUnits = stateManager.scene.getNearbyUnits(
-      soldier.x,
-      soldier.y,
+      soldier.getCircleCenter().x,
+      soldier.getCircleCenter().y,
       MOVABLE_UNIT_CONSTANTS.NEARBY_SEARCH_RADI,
       ["MOVABLE"]
     );
@@ -320,20 +320,27 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
         }
       }
     );
+    const soldierCenterPosition = this.getSceneItem().getCircleCenter();
 
     const enemyTowers = stateManager.scene
-      .getNearbyUnits(this.currentPositionX, this.currentPositionY, 100, [
-        "FIXED",
-      ])
+      .getNearbyUnits(
+        this.currentPositionX,
+        this.currentPositionY,
+        100,
+        ["FIXED"]
+      )
       .filter(
         (quadtreeItem) =>
           stateManager.getPlayer(quadtreeItem.id) &&
-          quadtreeItem.id !== this.playerId
+          quadtreeItem.id !== this.playerId &&
+          stateManager.getPlayer(quadtreeItem.id)!.getSceneItem().getCircleCenter().clone().sub(soldierCenterPosition).len() < 100
       )
       .map((d) => stateManager.getPlayer(d.id));
 
     enemyTowers.forEach((playerBase) => {
       if (!playerBase) return;
+      const enemyTowerCenter = playerBase.getSceneItem().getCircleCenter();
+      console.log('dist = ',enemyTowerCenter.clone().sub(soldierCenterPosition).len());
       const flagHealth = playerBase.spawnFlagHealth - 0.45 * delta;
       playerBase.spawnFlagHealth = Math.max(0, flagHealth);
     });

@@ -30,7 +30,7 @@ export class SpawnSelectionScene extends BaseScene {
     this.load.image("playbutton", "../assets/playbutton.png");
     this.load.image("knight", "../assets/knight.png");
     this.load.image("spearman", "../assets/spearman.png");
-    this.load.image("flag", "../assets/flag.png");
+    this.load.image("castle", "../assets/castle.png");
     this.load.image("img_groundtiles", "../assets/groundtiles.png");
     this.load.tilemapTiledJSON("map1", "../assets/map1.json");
   }
@@ -263,7 +263,7 @@ export class SpawnSelectionScene extends BaseScene {
       spawnFlag.setPosition(x, y);
       spawnFlag.setHealth(2);
     } else {
-      const castle = new PlayerCastle(this, x, y, "flag", null, {
+      const castle = new PlayerCastle(this, x, y, "castle", null, {
         health: playerState.spawnFlagHealth,
         player: playerState,
       });

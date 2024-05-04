@@ -26,7 +26,7 @@ export class OnSoldierMoveCommand extends Command<SessionRoom, CommandPayload> {
         .map((id) => this.state.getPlayer(client.sessionId)?.getSoldier(id))
         .filter(Boolean) as SoldierState[];
       if (soldierObjects.length === 0) return;
-      const offset = 96;
+      const offset = 80;
       const gridFormation = new GroupFormation(
         soldierObjects,
         offset,
