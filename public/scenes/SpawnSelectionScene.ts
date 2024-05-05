@@ -6,6 +6,7 @@ import { BaseScene } from "./BaseScene";
 import { PacketType } from "../../common/PacketType";
 import { PlayerCastle } from "../gameObjects/playerCastle";
 import SessionStateClientHelpers from "../helpers/SessionStateClientHelpers";
+import SAT from "sat";
 
 var networkManager: NetworkManager;
 var selectorGraphics: Phaser.GameObjects.Graphics;
@@ -214,11 +215,10 @@ export class SpawnSelectionScene extends BaseScene {
       }
     );
 
-    
     this.AddSceneEvent(
       PacketType.ByServer.SPAWN_POINT_RJCT,
-      (data: { message: any;}) => {
-        console.log('spawn point request rejected');
+      (data: { message: any }) => {
+        console.log("spawn point request rejected", data);
       }
     );
 
@@ -246,8 +246,8 @@ export class SpawnSelectionScene extends BaseScene {
 
   showSpawnFlag(
     networkManager: NetworkManager,
-    posX?: number,
-    posY?: number,
+    posX: number,
+    posY: number,
     playerId?: string
   ) {
     //show new choice on map for player
@@ -271,6 +271,19 @@ export class SpawnSelectionScene extends BaseScene {
     }
     const x = posX || posX === 0 ? posX : player!.posX;
     const y = posY || posY === 0 ? posY : player!.posY;
+
+    const sceneBoundingBox = new SAT.Box(
+      new SAT.Vector(64, 64),
+      this.canvasWidth - 64 * 2,
+      this.canvasHeight - 64 * 2
+    );
+    const requestedPoint = new SAT.Vector(x - 64 / 2, y - 64 / 2);
+    const pointInPolygon = SAT.pointInPolygon(
+      requestedPoint,
+      sceneBoundingBox.toPolygon()
+    );
+    if (!pointInPolygon) return;
+
     if (spawnFlag) {
       spawnFlag.setPosition(x, y);
       spawnFlag.setHealth(2);
