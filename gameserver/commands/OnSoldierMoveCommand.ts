@@ -33,7 +33,10 @@ export class OnSoldierMoveCommand extends Command<SessionRoom, CommandPayload> {
         new SAT.Box(new SAT.Vector(), sceneSize.x, sceneSize.y)
       );
       gridFormation.calculatePositions(
-        new SAT.Vector(message.expectedPositionX, message.expectedPositionY)
+        new SAT.Vector(
+          message.expectedPositionX - soldierObjects[0].radius,
+          message.expectedPositionY - soldierObjects[0].radius
+        )
       );
     } catch (error) {
       console.error(error);

@@ -47,7 +47,7 @@ export class NetworkManager {
       console.log("init state change", state);
     });
     this.room.onMessage("*", (type, message) => {
-      if (type === PacketType.ByServer.NEW_CHAT_MESSAGE) {
+      if (typeof type === "string") {
         this.game.scene.getScenes(true).forEach((scene) => {
           scene.events.emit(type, message);
         });

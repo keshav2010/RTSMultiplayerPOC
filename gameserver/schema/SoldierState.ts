@@ -40,7 +40,7 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
 
   @type("string") type: SoldierType = "SPEARMAN";
 
-  @type("number") radius: number = 32;
+  @type("number") radius: number = 16;
 
   @type("number") health: number = 100;
   @type("number") speed: number;
@@ -99,7 +99,14 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
     this.damage = SoldierTypeConfig[this.type].damage;
     this.cost = SoldierTypeConfig[this.type].cost;
 
-    this.sceneItemRef = new SceneObject(this.id, x, y, 32, "MOVABLE", true);
+    this.sceneItemRef = new SceneObject(
+      this.id,
+      x,
+      y,
+      this.radius * 2,
+      "MOVABLE",
+      true
+    );
   }
 
   getSceneItem() {
@@ -185,9 +192,10 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
     excludeUnitPredicate?: (arg0: SoldierState, arg1: SoldierState) => boolean
   ) {
     const soldier = this.getSceneItem();
+    const centerPos = soldier.getCircleCenter();
     const nearbyUnits = stateManager.scene.getNearbyUnits(
-      soldier.getCircleCenter().x,
-      soldier.getCircleCenter().y,
+      centerPos.x,
+      centerPos.y,
       MOVABLE_UNIT_CONSTANTS.NEARBY_SEARCH_RADI,
       ["MOVABLE"]
     );
@@ -323,24 +331,30 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
     const soldierCenterPosition = this.getSceneItem().getCircleCenter();
 
     const enemyTowers = stateManager.scene
-      .getNearbyUnits(
-        this.currentPositionX,
-        this.currentPositionY,
-        100,
-        ["FIXED"]
-      )
+      .getNearbyUnits(soldierCenterPosition.x, soldierCenterPosition.y, 100, [
+        "FIXED",
+      ])
       .filter(
         (quadtreeItem) =>
           stateManager.getPlayer(quadtreeItem.id) &&
           quadtreeItem.id !== this.playerId &&
-          stateManager.getPlayer(quadtreeItem.id)!.getSceneItem().getCircleCenter().clone().sub(soldierCenterPosition).len() < 100
+          stateManager
+            .getPlayer(quadtreeItem.id)!
+            .getSceneItem()
+            .getCircleCenter()
+            .clone()
+            .sub(soldierCenterPosition)
+            .len() < 100
       )
       .map((d) => stateManager.getPlayer(d.id));
 
     enemyTowers.forEach((playerBase) => {
       if (!playerBase) return;
       const enemyTowerCenter = playerBase.getSceneItem().getCircleCenter();
-      console.log('dist = ',enemyTowerCenter.clone().sub(soldierCenterPosition).len());
+      console.log(
+        "dist = ",
+        enemyTowerCenter.clone().sub(soldierCenterPosition).len()
+      );
       const flagHealth = playerBase.spawnFlagHealth - 0.45 * delta;
       playerBase.spawnFlagHealth = Math.max(0, flagHealth);
     });

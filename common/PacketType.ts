@@ -19,6 +19,7 @@ export enum ServerToClientPacketType {
   SOLDIER_CREATE_ACK = "sca",
   SOLDIER_SPAWN_SCHEDULED = "sspwnsch",
   SPAWN_POINT_ACK = "spnpntack",
+  SPAWN_POINT_RJCT = "spnpntreject",
   GAME_STATE_SYNC = "gss",
   PLAYER_LEFT = "pl",
   PLAYER_INIT = "pi",

@@ -56,19 +56,20 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
    * @returns
    */
   getNearbyUnits(
-    centerX: number,
-    centerY: number,
-    squareWidth: number,
+    topLeftX: number,
+    topLeftY: number,
+    squareSize: number,
     type?: SceneObjectType[]
   ) {
+    const radius = squareSize / 2;
     const query: TypeQuadtreeItem = {
-      x: centerX - squareWidth / 2,
-      y: centerY - squareWidth / 2,
-      w: squareWidth,
-      h: squareWidth,
-      width: squareWidth,
-      height: squareWidth,
-      r: squareWidth / 2,
+      x: topLeftX - radius,
+      y: topLeftY - radius,
+      w: squareSize,
+      h: squareSize,
+      width: squareSize,
+      height: squareSize,
+      r: radius,
       id: "query-object",
       type: "FIXED",
       collidable: false,
