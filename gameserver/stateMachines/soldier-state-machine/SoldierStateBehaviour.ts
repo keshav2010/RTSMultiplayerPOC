@@ -21,11 +21,12 @@ export default {
     }
 
     // if nearby unit getting attacked.
+    const centerPos = soldier.getSceneItem().getCircleCenter();
     const nearbyUnits = stateManager.scene.getNearbyUnits(
-      soldier.getSceneItem().getCircleCenter().x,
-      soldier.getSceneItem().getCircleCenter().y,
+      centerPos.x,
+      centerPos.y,
       MOVABLE_UNIT_CONSTANTS.NEARBY_SEARCH_RADI,
-      ['MOVABLE']
+      ["MOVABLE"]
     );
     if (nearbyUnits.length < 2) return;
 
@@ -77,9 +78,10 @@ export default {
       stateMachineTrigged = true;
     }
     soldier.move(delta, stateManager);
+    const centerPos = soldier.getSceneItem().getCircleCenter();
     const nearbyUnits = stateManager.scene.getNearbyUnits(
-      soldier.getSceneItem().getCircleCenter().x,
-      soldier.getSceneItem().getCircleCenter().y,
+      centerPos.x,
+      centerPos.y,
       MOVABLE_UNIT_CONSTANTS.NEARBY_SEARCH_RADI,
       ["MOVABLE"]
     );
@@ -162,9 +164,10 @@ export default {
   }) => {
     try {
       soldier.setAttackTarget(null);
+      const centerPos = soldier.getSceneItem().getCircleCenter();
       const nearbyUnits = stateManager.scene.getNearbyUnits(
-        soldier.getSceneItem().getCircleCenter().x,
-        soldier.getSceneItem().getCircleCenter().y,
+        centerPos.x,
+        centerPos.y,
         MOVABLE_UNIT_CONSTANTS.NEARBY_SEARCH_RADI,
         ["MOVABLE"]
       );
@@ -270,13 +273,14 @@ export default {
     } catch (err) {
       console.error(err);
       if (soldierAttackTarget) {
-        soldier.targetPositionX = soldierAttackTarget.getSceneItem().pos.x;
-        soldier.targetPositionY = soldierAttackTarget.getSceneItem().pos.y;
+        const targetPos = soldierAttackTarget.getSceneItem().getPosition();
+        soldier.targetPositionX = targetPos.x;
+        soldier.targetPositionY = targetPos.y;
 
-        soldier.expectedPositionX = soldierAttackTarget.getSceneItem().pos.x;
-        soldier.expectedPositionY = soldierAttackTarget.getSceneItem().pos.y;
+        soldier.expectedPositionX = targetPos.x;
+        soldier.expectedPositionY = targetPos.y;
       }
-      soldier.setAttackTarget(null);
+      else soldier.setAttackTarget(null);
     }
   },
 } as IStateActions;

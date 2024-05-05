@@ -57,7 +57,11 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
   ) {
     this.circleOfInfluence = scene.add.graphics();
     this.circleOfInfluence.lineStyle(3, 0xffffff); // Thickness, color, alpha
-    this.circleOfInfluence.strokeCircle(x, y, radius);
+    this.circleOfInfluence.strokeCircle(
+      x + this.width / 2,
+      y + this.height / 2,
+      radius
+    );
 
     // Animate the circle
     this.circleAnimation = scene.tweens.add({
@@ -73,10 +77,10 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     if (this.circleOfInfluence) {
       this.circleOfInfluence.clear();
       this.circleOfInfluence.lineStyle(1, 0xffffff, 1);
-      this.circleOfInfluence.strokeCircle(x, y, this.height / 2); // Assuming a fixed radius
+      this.circleOfInfluence.strokeCircle(x + this.width/2, y + this.height/2, this.height / 2); // Assuming a fixed radius
       this.circleOfInfluence.lineStyle(1, 0x22ffff, 1);
       this.circleOfInfluence.strokeRectShape(
-        new Phaser.Geom.Rectangle(x, y, 64, 64)
+        new Phaser.Geom.Rectangle(x, y, this.width, this.height)
       );
     }
   }

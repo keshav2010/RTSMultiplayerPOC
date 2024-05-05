@@ -119,7 +119,11 @@ export class SpawnSelectionScene extends BaseScene {
             spawnY: pointer.worldY,
           }
         );
-        this.showSpawnFlag(networkManager, pointer.worldX, pointer.worldY);
+        this.showSpawnFlag(
+          networkManager,
+          pointer.worldX - 32,
+          pointer.worldY - 32
+        );
       }
     });
 
@@ -175,7 +179,7 @@ export class SpawnSelectionScene extends BaseScene {
     var mapGraphics = this.AddObject(this.add.graphics());
 
     mapGraphics.depth = -5;
-    mapGraphics.fillStyle(0x221200, 1);
+    mapGraphics.fillStyle(0x000000, 0.2);
     mapGraphics.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
 
     cursors = this.input.keyboard?.createCursorKeys();
@@ -207,6 +211,14 @@ export class SpawnSelectionScene extends BaseScene {
         this.cameras.main.setZoom(
           Math.max(0, this.cameras.main.zoom - deltaY * 0.0003)
         );
+      }
+    );
+
+    
+    this.AddSceneEvent(
+      PacketType.ByServer.SPAWN_POINT_RJCT,
+      (data: { message: any;}) => {
+        console.log('spawn point request rejected');
       }
     );
 

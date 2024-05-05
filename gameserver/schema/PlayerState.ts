@@ -60,14 +60,7 @@ export class PlayerState extends Schema implements ISceneItem {
   constructor(name: string, x: number, y: number, sessionId: string) {
     super();
     this.id = sessionId;
-    this.sceneItemRef = new SceneObject(
-      sessionId,
-      x,
-      y,
-      64,
-      "FIXED",
-      false
-    );
+    this.sceneItemRef = new SceneObject(sessionId, x, y, 64, "FIXED", false);
     this.name = name;
     this.resources = 100;
     this.readyStatus = false;
@@ -130,9 +123,7 @@ export class PlayerState extends Schema implements ISceneItem {
   public updatePosition(x: number, y: number) {
     this.posX = x;
     this.posY = y;
-    this.sceneItemRef.x = x;
-    this.sceneItemRef.y = y;
-    this.sceneItemRef.pos.copy(new SAT.Vector(x, y));
+    this.sceneItemRef.setPosition(new SAT.Vector(x, y));
   }
 
   //TODO:
@@ -141,7 +132,7 @@ export class PlayerState extends Schema implements ISceneItem {
   }
 
   public getSoldier(soldierId?: string | null) {
-    if(!soldierId) return undefined;
+    if (!soldierId) return;
     const soldierState = this.soldiers.get(soldierId);
     return soldierState;
   }

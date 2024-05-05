@@ -215,15 +215,13 @@ export class GameScene extends BaseScene {
     const map = this.make.tilemap({
       key: "map1",
     });
-    console.log(`map set`, map);
     const tileset = map.addTilesetImage("groundtiles", "img_groundtiles");
-    console.log(`tileset set `, tileset);
     const layer = map.createLayer("groundlayer", tileset!);
 
     this.data.set("map1", map);
 
     networkManager.room?.onLeave((code) => {
-      console.log(`Leaving Room [code: ${code}]`);
+      console.log(`Disconnecting [code: ${code}]`);
       this.scene.stop(CONSTANT.SCENES.HUD_SCORE);
       this.scene.start(CONSTANT.SCENES.MENU);
     });
@@ -368,7 +366,6 @@ export class GameScene extends BaseScene {
         //for every sprite belonging to this player, check if it overlaps with rect
         const playerId = networkManager.getClientId();
         if (!playerId) {
-          console.log(`player id ${playerId} not found`);
           return;
         }
 
@@ -378,7 +375,6 @@ export class GameScene extends BaseScene {
         }
         let s = soldierMap.values();
         if (!s) {
-          console.log(playerSoldiersGameObject.get(playerId));
           return;
         }
         let soldiers = [...s];
@@ -431,7 +427,6 @@ export class GameScene extends BaseScene {
       PacketType.ByServer.NEW_CHAT_MESSAGE,
       (data: { message: string; sender: string }) => {
         const { message, sender } = data;
-        console.log("recived event in scene ", message, sender);
         addNewChatMessage(message, sender);
       }
     );
@@ -490,9 +485,6 @@ export class GameScene extends BaseScene {
       this.AddStateChangeListener(
         player.soldiers.onRemove((soldier, key) => {
           const soldierId = soldier.id;
-          console.log(
-            `[Soldier Removed] player-id : ${player.id} > soldier: ${soldierId}`
-          );
           // remove relevant listeners for each soldier.
           this.DestroyStateChangeListener(`health-${soldierId}`);
           this.DestroyStateChangeListener(`currentPosX-${soldierId}`);
@@ -505,8 +497,6 @@ export class GameScene extends BaseScene {
 
     this.AddStateChangeListener(
       state.players.onRemove((player) => {
-        console.log("player removed ", player.id);
-
         const kingdomId = `obj_playerCastle_${player.id}`;
         this.events.emit(PacketType.ByServer.PLAYER_LEFT, {
           playerState: player,
@@ -608,8 +598,16 @@ export class GameScene extends BaseScene {
       for (let [soldierId, soldierPhaserObj] of soldierMap) {
         const serverPos = soldierPhaserObj.getServerPosition();
         soldierPhaserObj.setPosition(
-          Phaser.Math.Linear(soldierPhaserObj.x, serverPos.x, BaseSoldier.LERP_RATE),
-          Phaser.Math.Linear(soldierPhaserObj.y, serverPos.y, BaseSoldier.LERP_RATE)
+          Phaser.Math.Linear(
+            soldierPhaserObj.x,
+            serverPos.x,
+            BaseSoldier.LERP_RATE
+          ),
+          Phaser.Math.Linear(
+            soldierPhaserObj.y,
+            serverPos.y,
+            BaseSoldier.LERP_RATE
+          )
         );
       }
     }

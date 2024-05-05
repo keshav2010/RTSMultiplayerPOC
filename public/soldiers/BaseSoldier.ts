@@ -4,6 +4,7 @@ import LoadingBar from "../LoadingBar";
 import SAT from "sat";
 import { NetworkManager } from "../NetworkManager";
 const GAMEEVENTS = CONSTANTS.GAMEEVENTS;
+
 function rgbToHex(r: number, g: number, b: number) {
   let componentToHex = function (c: number) {
     c = Math.floor(c);
@@ -54,7 +55,7 @@ class BackgroundHighlight extends Phaser.GameObjects.Graphics {
     const radius = this.parentDimension.w/2;
     this.lineStyle(thickness, color);
     this.fillStyle(color, 1);
-    this.fillCircle(0,0, radius);
+    this.fillCircle(radius, radius, radius);
   }
 }
 export class BaseSoldier extends Phaser.GameObjects.Sprite {
@@ -117,7 +118,7 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     this.DEBUGTEXT = scene.add.text(
       x,
       y + 40,
-      `${this.id.substr(0, 15)}\n health:0`,
+      `${this.id.substr(0, 15)}\nhealth:0`,
       { font: "12px Arial", color: "yellow" }
     );
     this.setOrigin(0);
@@ -174,12 +175,12 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
       health:${this.hp.currentValue}`
     );
 
-    // render soldier's server position.
+    // render soldier's circular hitbox on server
     this.debugBrush.lineStyle(1, 0xff00ff, 1);
     const serverPos = this.getServerPosition();
     this.debugBrush.strokeCircle(
-      serverPos.x,
-      serverPos.y,
+      serverPos.x + this.height/2,
+      serverPos.y + this.height/2,
       this.height / 2
     );
     this.debugBrush.strokeRectShape(
@@ -193,11 +194,10 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
 
     // render soldier's expected position
     this.debugBrush.setDepth(1);
-    this.debugBrush.lineStyle(1, 0xffffff, 0.6);
-    this.debugBrush.fillStyle(0xffffff, 0.6);
+    this.debugBrush.fillStyle(0xffffff, 0.3);
     this.debugBrush.fillCircle(
-      soldierState?.expectedPositionX!,
-      soldierState?.expectedPositionY!,
+      soldierState?.expectedPositionX! + this.width/2,
+      soldierState?.expectedPositionY! + this.width/2,
       this.height / 4
     );
 
@@ -205,10 +205,10 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     this.debugBrush.lineStyle(1, 0xffffff, 0.6);
     this.debugBrush.strokeLineShape(
       new Phaser.Geom.Line(
-        this.x,
-        this.y,
-        soldierState!.expectedPositionX,
-        soldierState!.expectedPositionY
+        this.x + this.width/2,
+        this.y + this.width/2,
+        soldierState!.expectedPositionX + this.width/2,
+        soldierState!.expectedPositionY + this.width/2
       )
     );
 
