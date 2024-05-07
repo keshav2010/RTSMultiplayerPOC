@@ -7,6 +7,7 @@ import { Scene } from "../core/Scene";
 import { SceneObject } from "../core/types/SceneObject";
 import SAT from "sat";
 import { ISceneItem } from "../core/types/ISceneItem";
+import { VectorState } from "./VectorState";
 export type GameStateManagerType = GameStateManager<PlayerState>;
 
 export class SpawnRequest extends Schema {
@@ -30,8 +31,7 @@ export class PlayerState extends Schema implements ISceneItem {
   @type("number") resources: number = 100;
   @type("boolean") readyStatus: boolean = false;
 
-  @type("number") posX: number = 0;
-  @type("number") posY: number = 0;
+  @type(VectorState) pos: VectorState = new VectorState();
 
   @type("number") spawnFlagHealth: number = 100;
 
@@ -64,8 +64,7 @@ export class PlayerState extends Schema implements ISceneItem {
     this.name = name;
     this.resources = 100;
     this.readyStatus = false;
-    this.posX = x;
-    this.posY = y;
+    this.pos = new VectorState();
     this.spawnFlagHealth = 100;
     this.soldiers = new MapSchema<SoldierState>();
     this.spawnRequestDetailMap = new MapSchema<SpawnRequest>();
@@ -101,7 +100,7 @@ export class PlayerState extends Schema implements ISceneItem {
 
   public addNewSoldier(type: SoldierType, scene: Scene) {
     console.log("spawning a soldier ", type);
-    const newSoldier = new SoldierState(this.id, type, this.posX, this.posY);
+    const newSoldier = new SoldierState(this.id, type, this.pos.x, this.pos.y);
     this.soldiers.set(newSoldier.id, newSoldier);
     scene.addSceneItem(newSoldier);
     return newSoldier.id;
@@ -121,9 +120,9 @@ export class PlayerState extends Schema implements ISceneItem {
   }
 
   public updatePosition(x: number, y: number) {
-    this.posX = x;
-    this.posY = y;
-    this.sceneItemRef.setPosition(new SAT.Vector(x, y));
+    const v = new SAT.Vector(x, y);
+    this.pos.setVector(v);
+    this.sceneItemRef.setPosition(v);
   }
 
   //TODO:

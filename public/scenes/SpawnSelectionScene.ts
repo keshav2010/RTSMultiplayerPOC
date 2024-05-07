@@ -73,16 +73,10 @@ export class SpawnSelectionScene extends BaseScene {
     const sessionState = networkManager.getState()!;
     SessionStateClientHelpers.getPlayers(sessionState).forEach((player) => {
       this.AddStateChangeListener(
-        player.listen("posX", (value) => {
-          this.showSpawnFlag(networkManager, value, player.posY, player.id);
+        player.listen("pos", (value) => {
+          this.showSpawnFlag(networkManager, value.x, value.y, player.id);
         }),
-        `${player.id}_posX_spawnFlag_update`
-      );
-      this.AddStateChangeListener(
-        player.listen("posY", (value) => {
-          this.showSpawnFlag(networkManager, player.posX, value, player.id);
-        }),
-        `${player.id}_posY_spawnFlag_update`
+        `${player.id}_pos_spawnFlag_update`
       );
     });
 
@@ -250,49 +244,55 @@ export class SpawnSelectionScene extends BaseScene {
     posY: number,
     playerId?: string
   ) {
-    //show new choice on map for player
-    const clientId = playerId || networkManager.getClientId();
-    if (!clientId) return;
-    const sessionState = networkManager.getState();
-    if (!sessionState) return;
+    try {
+      //show new choice on map for player
+      const clientId = playerId || networkManager.getClientId();
+      if (!clientId) return;
+      const sessionState = networkManager.getState();
+      if (!sessionState) return;
 
-    let player = SessionStateClientHelpers.getPlayer(sessionState, clientId);
-    // spawn a castle.
-    const flagKey = `obj_spawnFlag_${clientId}`;
-    const spawnFlag = this.GetObject<PlayerCastle>(flagKey);
+      let player = SessionStateClientHelpers.getPlayer(sessionState, clientId);
+      if (!player) return;
 
-    const playerState = SessionStateClientHelpers.getPlayer(
-      sessionState,
-      clientId
-    );
-    if (!playerState) {
-      console.error("unable to find player state in spawn selection");
-      return;
-    }
-    const x = posX || posX === 0 ? posX : player!.posX;
-    const y = posY || posY === 0 ? posY : player!.posY;
+      // spawn a castle.
+      const flagKey = `obj_spawnFlag_${clientId}`;
+      const spawnFlag = this.GetObject<PlayerCastle>(flagKey);
 
-    const sceneBoundingBox = new SAT.Box(
-      new SAT.Vector(64, 64),
-      this.canvasWidth - 64 * 2,
-      this.canvasHeight - 64 * 2
-    );
-    const requestedPoint = new SAT.Vector(x - 64 / 2, y - 64 / 2);
-    const pointInPolygon = SAT.pointInPolygon(
-      requestedPoint,
-      sceneBoundingBox.toPolygon()
-    );
-    if (!pointInPolygon) return;
+      const playerState = SessionStateClientHelpers.getPlayer(
+        sessionState,
+        clientId
+      );
+      if (!playerState) {
+        console.error("unable to find player state in spawn selection");
+        return;
+      }
+      const x = posX || posX === 0 ? posX : player.pos.x;
+      const y = posY || posY === 0 ? posY : player.pos.y;
 
-    if (spawnFlag) {
-      spawnFlag.setPosition(x, y);
-      spawnFlag.setHealth(2);
-    } else {
-      const castle = new PlayerCastle(this, x, y, "castle", null, {
-        health: playerState.spawnFlagHealth,
-        player: playerState,
-      });
-      this.AddObject(castle, flagKey);
+      const sceneBoundingBox = new SAT.Box(
+        new SAT.Vector(64, 64),
+        this.canvasWidth - 64 * 2,
+        this.canvasHeight - 64 * 2
+      );
+      const requestedPoint = new SAT.Vector(x - 64 / 2, y - 64 / 2);
+      const pointInPolygon = SAT.pointInPolygon(
+        requestedPoint,
+        sceneBoundingBox.toPolygon()
+      );
+      if (!pointInPolygon) return;
+
+      if (spawnFlag) {
+        spawnFlag.setPosition(x, y);
+        spawnFlag.setHealth(2);
+      } else {
+        const castle = new PlayerCastle(this, x, y, "castle", null, {
+          health: playerState.spawnFlagHealth,
+          player: playerState,
+        });
+        this.AddObject(castle, flagKey);
+      }
+    } catch (error) {
+      console.error(error);
     }
   }
 }

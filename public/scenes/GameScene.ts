@@ -569,14 +569,16 @@ export class GameScene extends BaseScene {
 
     //show initial spawnpoint choice on map for player
     networkManager.getState()?.players.forEach((player) => {
+      const objKey = `obj_playerCastle_${player.id}`;
       this.AddObject(
-        new PlayerCastle(this, player.posX, player.posY, "castle", null, {
+        new PlayerCastle(this, player.pos.x, player.pos.y, "castle", null, {
           health: 500,
           player: player,
         }),
-        `obj_playerCastle_${player.id}`
+        objKey
       );
     });
+      
 
     this.AddSceneEvent("shutdown", (data: any) => {
       console.log("shutdown ", data.config.key);

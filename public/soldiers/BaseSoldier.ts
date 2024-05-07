@@ -153,7 +153,6 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
       );
       return;
     }
-    console.log(this.getServerPosition());
     const session = networkManager.getState();
     if (!session || !this.playerId) return;
 
