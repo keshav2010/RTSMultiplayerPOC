@@ -73,8 +73,8 @@ export class SpawnSelectionScene extends BaseScene {
     const sessionState = networkManager.getState()!;
     SessionStateClientHelpers.getPlayers(sessionState).forEach((player) => {
       this.AddStateChangeListener(
-        player.listen("pos", (value) => {
-          this.showSpawnFlag(networkManager, value.x, value.y, player.id);
+        player.pos.onChange(() => {
+          this.showSpawnFlag(networkManager, player.pos.x, player.pos.y, player.id);
         }),
         `${player.id}_pos_spawnFlag_update`
       );

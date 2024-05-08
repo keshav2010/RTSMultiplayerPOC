@@ -38,7 +38,7 @@ export default {
       const isSameTeam = sceneItem.playerId === soldier.playerId;
       return !isSelf && isSameTeam;
     });
-    
+
     for (let i = 0; i < nearbyAllyUnitsAttacked.length; i++) {
       let unit = stateManager.scene.getSceneItemById<SoldierState>(
         nearbyAllyUnitsAttacked[i].id
@@ -48,10 +48,11 @@ export default {
       const isDifferentTeam = unit.playerId !== soldier.playerId;
       if (!unit || isSelf || isDifferentTeam) continue;
 
-      const isAllyDefendingOrAttacking = ["Defend", "Attack"].includes(unit.getState());
-      if(!isAllyDefendingOrAttacking)
-          continue;
-      
+      const isAllyDefendingOrAttacking = ["Defend", "Attack"].includes(
+        unit.getState()
+      );
+      if (!isAllyDefendingOrAttacking) continue;
+
       //if nearby friendly unit is either defending/attacking, then assist it.
       const enemy = unit.getAttackTarget();
       if (!enemy) continue;
@@ -92,14 +93,18 @@ export default {
       if (unit.id === soldier.id) return;
 
       const nearbySoldierUnit =
-      stateManager.scene.getSceneItemById<SoldierState>(unit.id);
+        stateManager.scene.getSceneItemById<SoldierState>(unit.id);
       if (!nearbySoldierUnit) return;
       // if nearby unit (of same team) has same destination (approx.)
       let overlapExpectedPos =
         new SAT.Vector()
           .copy(nearbySoldierUnit.getExpectedPosition())
           .sub(soldier.getExpectedPosition())
-          .len() <= Math.max(MOVABLE_UNIT_CONSTANTS.MAX_TARGETPOS_OVERLAP_DIST, soldier.radius*2.1);
+          .len() <=
+        Math.max(
+          MOVABLE_UNIT_CONSTANTS.MAX_TARGETPOS_OVERLAP_DIST,
+          soldier.radius * 2.1
+        );
 
       let anyOneAtDest =
         nearbySoldierUnit.hasReachedDestination() ||
@@ -132,7 +137,7 @@ export default {
       .copy(attackTarget.getSceneItem().pos)
       .sub(soldier.getSceneItem().pos)
       .len();
-    
+
     if (distToTarget > MOVABLE_UNIT_CONSTANTS.DISTANCE_DURING_ATTACK) {
       soldier.stateMachine.controller.send("TargetNotInRange");
       return;
@@ -190,9 +195,8 @@ export default {
           stateManager.getAlliance(soldier.playerId, unitSoldier.playerId) !==
           AllianceTypes.ENEMIES;
 
-        if (!unitSoldier || isSelf || isAllianceStable)
-          continue;
-        
+        if (!unitSoldier || isSelf || isAllianceStable) continue;
+
         let distBetweenUnits = new SAT.Vector()
           .copy(unitSoldier.getSceneItem().pos)
           .sub(soldier.getSceneItem().pos)
@@ -255,14 +259,14 @@ export default {
       soldier.applyForce(seperationForce);
       soldier.applyForce(steerForce);
 
-      soldier.targetPositionX = soldierAttackTarget.getSceneItem().x;
-      soldier.targetPositionY = soldierAttackTarget.getSceneItem().y;
+      soldier.targetPosition.setVector(soldierAttackTarget.getSceneItem().pos);
 
-      soldier.expectedPositionX = soldierAttackTarget.getSceneItem().x;
-      soldier.expectedPositionY = soldierAttackTarget.getSceneItem().y;
+      soldier.expectedPosition.setVector(
+        soldierAttackTarget.getSceneItem().pos
+      );
 
       soldier.move(delta, stateManager);
-      
+
       const distToTarget = new SAT.Vector()
         .copy(soldierAttackTarget.getSceneItem().pos)
         .sub(soldier.getSceneItem().pos)
@@ -274,13 +278,9 @@ export default {
       console.error(err);
       if (soldierAttackTarget) {
         const targetPos = soldierAttackTarget.getSceneItem().getPosition();
-        soldier.targetPositionX = targetPos.x;
-        soldier.targetPositionY = targetPos.y;
-
-        soldier.expectedPositionX = targetPos.x;
-        soldier.expectedPositionY = targetPos.y;
-      }
-      else soldier.setAttackTarget(null);
+        soldier.targetPosition.setVector(targetPos);
+        soldier.setExpectedPosition(targetPos);
+      } else soldier.setAttackTarget(null);
     }
   },
 } as IStateActions;

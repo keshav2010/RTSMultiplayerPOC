@@ -82,8 +82,8 @@ export class GameScene extends BaseScene {
     const spearmen = new Spearman(
       this,
       soldier.id,
-      soldier.currentPositionX,
-      soldier.currentPositionY,
+      soldier.currentPosition.x,
+      soldier.currentPosition.y,
       "texture_spearman",
       null,
       [ownerPlayer.colorR, ownerPlayer.colorG, ownerPlayer.colorB],
@@ -182,8 +182,8 @@ export class GameScene extends BaseScene {
     }
 
     phaserSceneObject.setServerPosition(
-      soldierState.currentPositionX,
-      soldierState.currentPositionY
+      soldierState.currentPosition.x,
+      soldierState.currentPosition.y
     );
   }
 
@@ -468,16 +468,10 @@ export class GameScene extends BaseScene {
           );
 
           this.AddStateChangeListener(
-            soldier.listen("currentPositionX", (value, prevValue) => {
+            soldier.currentPosition.onChange(() => {
               this.onSoldierPositionChanged(player.id, soldier.id);
             }),
-            `currentPosX-${soldier.id}`
-          );
-          this.AddStateChangeListener(
-            soldier.listen("currentPositionY", (value, prevValue) => {
-              this.onSoldierPositionChanged(player.id, soldier.id);
-            }),
-            `currentPosY-${soldier.id}`
+            `currentPos-${soldier.id}`
           );
         })
       );
@@ -487,8 +481,7 @@ export class GameScene extends BaseScene {
           const soldierId = soldier.id;
           // remove relevant listeners for each soldier.
           this.DestroyStateChangeListener(`health-${soldierId}`);
-          this.DestroyStateChangeListener(`currentPosX-${soldierId}`);
-          this.DestroyStateChangeListener(`currentPosY-${soldierId}`);
+          this.DestroyStateChangeListener(`currentPos-${soldierId}`);
 
           this.onSoldierRemoved(soldierId, player.id);
         })

@@ -195,8 +195,8 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     this.debugBrush.setDepth(1);
     this.debugBrush.fillStyle(0xffffff, 0.3);
     this.debugBrush.fillCircle(
-      soldierState?.expectedPositionX! + this.width/2,
-      soldierState?.expectedPositionY! + this.width/2,
+      soldierState?.expectedPosition.x! + this.width/2,
+      soldierState?.expectedPosition.y! + this.width/2,
       this.height / 4
     );
 
@@ -206,8 +206,8 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
       new Phaser.Geom.Line(
         this.x + this.width/2,
         this.y + this.width/2,
-        soldierState!.expectedPositionX + this.width/2,
-        soldierState!.expectedPositionY + this.width/2
+        soldierState!.expectedPosition.x + this.width/2,
+        soldierState!.expectedPosition.y + this.width/2
       )
     );
 

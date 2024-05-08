@@ -1,16 +1,14 @@
 export interface IBoidAgent {
-  currentPositionX: number;
-  currentPositionY: number;
+  currentPosition: { x: number; y: number };
   setPosition: (arg: SAT.Vector) => void;
 
   // position ideally intended by client
-  targetPositionX: number;
-  targetPositionY: number;
+  targetPosition: { x: number; y: number };
   setTargetPosition: (arg: SAT.Vector) => void;
 
   // fallback position, over target-pos
-  expectedPositionX: number;
-  expectedPositionY: number;
+  expectedPosition: {x: number; y: number};
+
   getExpectedPosition: (...args: any) => SAT.Vector;
   setExpectedPosition: (arg: SAT.Vector) => void;
 

@@ -13,6 +13,7 @@ import { ISceneItem } from "../core/types/ISceneItem";
 import { TypeQuadtreeItem } from "../core/types/TypeQuadtreeItem";
 import { IBoidAgent } from "../core/types/IBoidAgent";
 import * as helper from "../helpers";
+import { VectorState } from "./VectorState";
 function mapRange(
   val: number,
   mapRangeStart: number,
@@ -27,16 +28,13 @@ function mapRange(
 }
 
 export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
-  @type("number") currentPositionX: number = 0;
-  @type("number") currentPositionY: number = 0;
+  @type(VectorState) currentPosition: VectorState = new VectorState();
 
   // pos possible for agent. (fallback for targetPosition)
-  @type("number") expectedPositionX: number = 0;
-  @type("number") expectedPositionY: number = 0;
+  @type(VectorState) expectedPosition: VectorState = new VectorState();
 
   // pos requested by client.
-  @type("number") targetPositionX: number = 0;
-  @type("number") targetPositionY: number = 0;
+  @type(VectorState) targetPosition: VectorState = new VectorState();
 
   @type("string") type: SoldierType = "SPEARMAN";
 
@@ -83,14 +81,10 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
     this.attackTarget = null;
     this.targetVector = null;
 
-    this.currentPositionX = x;
-    this.currentPositionY = y;
-
-    this.expectedPositionX = x;
-    this.expectedPositionY = y;
-
-    this.targetPositionX = x;
-    this.targetPositionY = y;
+    const v = new SAT.Vector(x,y);
+    this.currentPosition.setVector(v);
+    this.expectedPosition.setVector(v);
+    this.targetPosition.setVector(v);
 
     this.type = soldierType;
 
@@ -114,7 +108,7 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
   }
 
   getExpectedPosition() {
-    return new SAT.Vector(this.expectedPositionX, this.expectedPositionY);
+    return this.expectedPosition.getVector();
   }
 
   setAttackTarget(target: SoldierState | null) {
@@ -135,8 +129,7 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
     this.sceneItemRef.pos.copy(vec);
     this.sceneItemRef.x = vec.x;
     this.sceneItemRef.y = vec.y;
-    this.currentPositionX = vec.x;
-    this.currentPositionY = vec.y;
+    this.currentPosition.setVector(vec);
   }
 
   getDistanceFromExpectedPosition() {
@@ -157,10 +150,8 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
   }
 
   setTargetPosition(vec: SAT.Vector) {
-    this.targetPositionX = vec.x;
-    this.targetPositionY = vec.y;
-    this.expectedPositionX = vec.x;
-    this.expectedPositionY = vec.y;
+    this.targetPosition.setVector(vec);
+    this.expectedPosition.setVector(vec);
     this.hasReachedDestination();
     this.attackTarget = null;
     this.steeringVector.scale(0);
@@ -168,8 +159,7 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
     this.stateMachine.controller.send("Move");
   }
   setExpectedPosition(vec: SAT.Vector) {
-    this.expectedPositionX = vec.x;
-    this.expectedPositionY = vec.y;
+    this.expectedPosition.setVector(vec);
   }
 
   getState() {
@@ -304,8 +294,8 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
         // update position so it doesnt overlap with colliding body.
         soldierA.setPosition(
           new SAT.Vector(
-            soldierA.currentPositionX - res.overlapV.x,
-            soldierA.currentPositionY - res.overlapV.y
+            soldierA.currentPosition.x - res.overlapV.x,
+            soldierA.currentPosition.y - res.overlapV.y
           )
         );
 
