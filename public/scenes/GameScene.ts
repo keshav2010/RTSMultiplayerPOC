@@ -86,7 +86,11 @@ export class GameScene extends BaseScene {
       soldier.currentPosition.y,
       "texture_spearman",
       null,
-      [ownerPlayer.colorR, ownerPlayer.colorG, ownerPlayer.colorB],
+      new Phaser.Math.Vector3(
+        ownerPlayer.color.x,
+        ownerPlayer.color.y,
+        ownerPlayer.color.z
+      ),
       ownerPlayer.id
     );
     const playerSoldiersGameObject = this.data.get(
@@ -571,7 +575,6 @@ export class GameScene extends BaseScene {
         objKey
       );
     });
-      
 
     this.AddSceneEvent("shutdown", (data: any) => {
       console.log("shutdown ", data.config.key);

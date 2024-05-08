@@ -4,10 +4,12 @@ export class VectorState extends Schema {
   // Key : sessionId
   @type("number") x = 0;
   @type("number") y = 0;
-  constructor(x: number = 0, y: number = 0) {
+  @type("number") z = 0;
+  constructor(x: number = 0, y: number = 0, z: number = 0) {
     super();
     this.x = x;
     this.y = y;
+    this.z = z;
   }
   getVector() {
     return new SAT.Vector(this.x, this.y);

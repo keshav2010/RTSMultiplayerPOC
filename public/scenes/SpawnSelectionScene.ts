@@ -286,7 +286,7 @@ export class SpawnSelectionScene extends BaseScene {
         spawnFlag.setHealth(2);
       } else {
         const castle = new PlayerCastle(this, x, y, "castle", null, {
-          health: playerState.spawnFlagHealth,
+          health: playerState.castleHealth,
           player: playerState,
         });
         this.AddObject(castle, flagKey);

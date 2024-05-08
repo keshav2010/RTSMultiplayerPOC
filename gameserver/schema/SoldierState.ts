@@ -345,8 +345,8 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
         "dist = ",
         enemyTowerCenter.clone().sub(soldierCenterPosition).len()
       );
-      const flagHealth = playerBase.spawnFlagHealth - 0.45 * delta;
-      playerBase.spawnFlagHealth = Math.max(0, flagHealth);
+      const flagHealth = playerBase.castleHealth - 0.45 * delta;
+      playerBase.castleHealth = Math.max(0, flagHealth);
     });
     this.stateMachine.tick({ delta, stateManager, soldier: this });
   }

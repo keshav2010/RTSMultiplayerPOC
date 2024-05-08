@@ -17,7 +17,7 @@ export class Spearman extends BaseSoldier {
     y: number,
     texture: string | Phaser.Textures.Texture,
     frame: any,
-    color: number[],
+    color: Phaser.Math.Vector3,
     playerId: string
   ) {
     super(

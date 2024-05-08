@@ -33,16 +33,18 @@ export class PlayerState extends Schema implements ISceneItem {
 
   @type(VectorState) pos: VectorState = new VectorState();
 
-  @type("number") spawnFlagHealth: number = 100;
+  @type("number") castleHealth: number = 100;
 
   // key: SoldierId
   @type({ map: SoldierState }) soldiers: MapSchema<SoldierState> =
     new MapSchema<SoldierState>();
 
   // RGB color identifier for this player/client.
-  @type("number") colorR = Math.random() * 255;
-  @type("number") colorG = Math.random() * 255;
-  @type("number") colorB = Math.random() * 255;
+  @type(VectorState) color = new VectorState(
+    Math.random() * 255,
+    Math.random() * 255,
+    Math.random() * 255
+  );
 
   // Spawn Requests (key: requestId , val: obj {unitType, count, countdown})
   @type({ map: SpawnRequest }) spawnRequestDetailMap: MapSchema<SpawnRequest> =
@@ -65,7 +67,7 @@ export class PlayerState extends Schema implements ISceneItem {
     this.resources = 100;
     this.readyStatus = false;
     this.pos = new VectorState();
-    this.spawnFlagHealth = 100;
+    this.castleHealth = 100;
     this.soldiers = new MapSchema<SoldierState>();
     this.spawnRequestDetailMap = new MapSchema<SpawnRequest>();
     this.spawnRequestQueue = new ArraySchema<string>();

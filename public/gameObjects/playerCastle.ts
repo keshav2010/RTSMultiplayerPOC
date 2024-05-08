@@ -33,7 +33,7 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     this.DEBUGTEXT = scene.add.text(
       x,
       y + this.height / 2 + 15,
-      `[${this.player.name}] - health:${this.player.spawnFlagHealth}`,
+      `[${this.player.name}] - health:${this.player.castleHealth}`,
       { font: "12px Arial" }
     );
     this.DEBUGTEXT.setOrigin(0.5);
@@ -98,7 +98,7 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     this.DEBUGTEXT.setPosition(this.x, this.y + this.height / 2 + 15);
     this.DEBUGTEXT.setText(
       `[${this.player.name}] - health:${Math.floor(
-        this.player.spawnFlagHealth
+        this.player.castleHealth
       )}`
     );
     this.DEBUGTEXT.depth = 2;

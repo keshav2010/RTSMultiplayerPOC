@@ -17,16 +17,12 @@ function rgbToHex(r: number, g: number, b: number) {
 }
 class BackgroundHighlight extends Phaser.GameObjects.Graphics {
   parent: Phaser.GameObjects.Sprite;
-  r: number;
-  g: number;
-  b: number;
   parentDimension: SAT.Box;
+  color: Phaser.Math.Vector3;
   constructor(
     scene: Phaser.Scene,
     parent: Phaser.GameObjects.Sprite,
-    r: number,
-    g: number,
-    b: number
+    color: Phaser.Math.Vector3
   ) {
     super(scene, {
       x: parent.x,
@@ -40,9 +36,7 @@ class BackgroundHighlight extends Phaser.GameObjects.Graphics {
     scene.add.existing(this);
     this.parent = parent;
     this.depth = 1;
-    this.r = r;
-    this.g = g;
-    this.b = b;
+    this.color = new Phaser.Math.Vector3().copy(color);
     this.alpha = 0.5;
   }
 
@@ -51,7 +45,7 @@ class BackgroundHighlight extends Phaser.GameObjects.Graphics {
     this.copyPosition(this.parent);
     var thickness = 1;
     this.setAlpha(0.4);
-    const color = rgbToHex(this.r, this.g, this.b);
+    const color = rgbToHex(this.color.x, this.color.y, this.color.z);
     const radius = this.parentDimension.w/2;
     this.lineStyle(thickness, color);
     this.fillStyle(color, 1);
@@ -61,7 +55,7 @@ class BackgroundHighlight extends Phaser.GameObjects.Graphics {
 export class BaseSoldier extends Phaser.GameObjects.Sprite {
   readonly id: string;
   initialParam: any;
-  color: number[];
+  color: Phaser.Math.Vector3;
   expectedPositionX: number;
   expectedPositionY: number;
   hp: LoadingBar;
@@ -85,7 +79,7 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     y: number,
     texture: string | Phaser.Textures.Texture,
     frame: string | number | undefined,
-    color: number[],
+    color: Phaser.Math.Vector3,
     playerId: null | string
   ) {
     super(scene, x, y, texture, frame);
@@ -99,7 +93,7 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     this.playerId = playerId;
 
     scene.events.on("update", this.update, this);
-    this.color = color;
+    this.color = new Phaser.Math.Vector3().copy(color);
     this.expectedPositionX = x;
     this.expectedPositionY = y;
     this.setPosition(x, y);
@@ -107,13 +101,7 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     this.scale = 1;
     this.hp = new LoadingBar(scene, this);
 
-    this.highlightBackground = new BackgroundHighlight(
-      scene,
-      this,
-      this.color[0],
-      this.color[1],
-      this.color[2]
-    );
+    this.highlightBackground = new BackgroundHighlight(scene, this, this.color);
 
     this.DEBUGTEXT = scene.add.text(
       x,

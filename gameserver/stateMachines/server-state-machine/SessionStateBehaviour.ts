@@ -98,7 +98,7 @@ export default {
       var deltaTime = delta / 1000;
       playersConnected.forEach((player) => {
         player.tick(deltaTime, gameStateManager);
-        if (player.spawnFlagHealth === 0) {
+        if (player.castleHealth === 0) {
           sessionState.removePlayer(player.id, gameStateManager);
         }
       });
