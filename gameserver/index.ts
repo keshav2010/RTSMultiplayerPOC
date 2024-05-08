@@ -17,7 +17,9 @@ import { playground } from "@colyseus/playground";
 import { monitor } from "@colyseus/monitor";
 import path from "path";
 import fs from "fs";
-import dotenv from 'dotenv';
+import { readFile } from "fs/promises";
+
+import dotenv from "dotenv";
 import basicAuth from "express-basic-auth";
 
 const username = process.env.ADMIN_USERNAME as string;
@@ -29,7 +31,7 @@ const basicAuthMiddleware = basicAuth({
   },
   // sends WWW-Authenticate header, which will prompt the user to fill
   // credentials in
-  challenge: true
+  challenge: true,
 });
 
 dotenv.config();
@@ -40,6 +42,7 @@ app.use(cors());
 
 app.use(express.static("dist"));
 app.use(express.static("public"));
+app.use(express.static("static"));
 
 app.use("/monitor", basicAuthMiddleware, monitor());
 app.use("/playground", basicAuthMiddleware, playground);
@@ -49,7 +52,17 @@ app.use("/playground", basicAuthMiddleware, playground);
  * It is recommended to protect this route with a password
  * Read more: https://docs.colyseus.io/tools/monitor/#restrict-access-to-the-panel-using-a-password
  */
-
+const cachedMap = new Map<string, string>();
+async function loadMap(filename: string) {
+  const pathName = path.resolve(__dirname, "static", "maps");
+  const fp = path.resolve(pathName, `${filename}.json`);
+  if (cachedMap.get(fp)) {
+    return cachedMap.get(fp);
+  }
+  const data = JSON.parse(await readFile(fp, { encoding: "utf8" }));
+  cachedMap.set(filename, data);
+  return data;
+}
 app.get("/", async (req, res) => {
   try {
     const pathName = path.resolve(__dirname, "dist");
@@ -75,6 +88,20 @@ app.get("/", async (req, res) => {
   }
 });
 
+app.get("/maps", async (req, res) => {
+  try {
+    const requestedFile = <string>req.query.id;
+    const jsonMap = await loadMap(requestedFile);
+    return res.status(200).json({
+      data: jsonMap,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Error fetching map",
+    });
+  }
+});
 const gameServer = new Server({
   server: createServer(app),
   // transport: new uWebSocketsTransport(),
@@ -83,4 +110,4 @@ const gameServer = new Server({
 });
 gameServer.define("session_room", SessionRoom);
 gameServer.listen(Number(PORT));
-console.log('SERVER WILL BE LISTENING ON PORT ', PORT);
+console.log("SERVER WILL BE LISTENING ON PORT ", PORT);
