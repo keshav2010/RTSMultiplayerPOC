@@ -29,6 +29,10 @@ export class PlayerState extends Schema implements ISceneItem {
 
   @type("string") name: string = "";
   @type("number") resources: number = 100;
+
+  // whether player/client has received all static data (ex: map json)
+  @type("boolean") isLoaded: boolean = false;
+
   @type("boolean") readyStatus: boolean = false;
 
   @type(VectorState) pos: VectorState = new VectorState();
@@ -101,7 +105,6 @@ export class PlayerState extends Schema implements ISceneItem {
   }
 
   public addNewSoldier(type: SoldierType, scene: Scene) {
-    console.log("spawning a soldier ", type);
     const newSoldier = new SoldierState(this.id, type, this.pos.x, this.pos.y);
     this.soldiers.set(newSoldier.id, newSoldier);
     scene.addSceneItem(newSoldier);

@@ -11,14 +11,8 @@ export class OnPlayerReadyCommand extends Command<SessionRoom, CommandPayload> {
     readyStatus: boolean;
   }>) {
     const player = this.state.getPlayer(client.sessionId);
-    if (!player) return;
+    if (!player || !player.isLoaded) return;
     player.readyStatus = message.readyStatus;
-
-    console.log(
-      `Threshold : ${this.state.countReadyPlayers()} / ${
-        SERVER_CONFIG.MINIMUM_PLAYERS_PER_SESSION
-      }`
-    );
     if (
       this.state.countReadyPlayers() >= SERVER_CONFIG.MINIMUM_PLAYERS_PER_SESSION
     ) {

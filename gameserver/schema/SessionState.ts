@@ -12,6 +12,8 @@ export class SessionState extends Schema {
     | "BATTLE_STATE"
     | "BATTLE_END_STATE" = "SESSION_LOBBY_STATE";
   @type("number") countdown: number = SERVER_CONFIG.COUNTDOWN_DEFAULT;
+  @type("string") mapId: string = "map1";
+
   constructor() {
     super();
   }
@@ -42,7 +44,14 @@ export class SessionState extends Schema {
   }
   public countReadyPlayers() {
     return [...this.players.values()].reduce((acc, curr) => {
-      acc = acc + (curr.readyStatus ? 1 : 0);
+      acc = acc + (curr.readyStatus && curr.isLoaded ? 1 : 0);
+      return acc;
+    }, 0);
+  }
+
+  public countLoadedPlayers() {
+    return [...this.players.values()].reduce((acc, curr) => {
+      acc = acc + (curr.isLoaded ? 1 : 0);
       return acc;
     }, 0);
   }
