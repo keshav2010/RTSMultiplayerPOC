@@ -1,5 +1,6 @@
 export enum ClientToServerPacketType {
   CLIENT_INIT_REQUESTED = "cir",
+  CLIENT_MAP_LOADED = "cml",
   PLAYER_READY = "plr",
   PLAYER_UNREADY = "plur",
   SOLDIER_CREATE_REQUESTED = "slcrreq",

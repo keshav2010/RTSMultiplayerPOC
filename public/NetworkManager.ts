@@ -3,6 +3,7 @@ import Phaser from "phaser";
 import { SessionState } from "../gameserver/schema/SessionState";
 import { PacketType } from "../common/PacketType";
 const URL = `${window.location.host}`;
+import axios from 'axios';
 export type RoomEventHandlerCallbackType = (
   type: "onStateChange" | "onMessage" | "onLeave" | "onError",
   data: any
@@ -15,12 +16,16 @@ export class NetworkManager {
   registry: Phaser.Data.DataManager;
   playerName: string | null;
   eventHandlersBinded: boolean;
+
+  // the JSON stringified data for scene map (tiled2D json format)
+  mapData: string | undefined | null;
+
   constructor(
     phaserGame: Phaser.Game,
     phaserRegistry: Phaser.Data.DataManager
   ) {
     console.log(window.location);
-    const protocol = window.location.protocol.includes('https:') ?  'wss' : 'ws';
+    const protocol = window.location.protocol.includes("https:") ? "wss" : "ws";
     this.client = new Colyseus.Client(`${protocol}://${URL}`);
     this.room = null;
 
@@ -43,9 +48,7 @@ export class NetworkManager {
     if (!this.room) {
       return;
     }
-    this.room.onStateChange.once((state) => {
-      console.log("init state change", state);
-    });
+
     this.room.onMessage("*", (type, message) => {
       if (typeof type === "string") {
         this.game.scene.getScenes(true).forEach((scene) => {
@@ -53,14 +56,37 @@ export class NetworkManager {
         });
       }
     });
+
     this.room.onLeave((code) => {
       console.log(`Leaving Room ${this.room?.name}, code: ${code}`);
       this.room = null;
+      this.mapData = null;
     });
+
     this.room.onError((code, message) => {
       console.log("[room / onError] :", { code, message });
       // this.game.events.emit();
     });
+  }
+
+  async fetchRoomMap() {
+    try {
+      const res = await axios({
+        method: "GET",
+        url: "/maps",
+        params: {
+          id: this.room!.state.mapId || "",
+        },
+      });
+      if (res.status === 200 || res.status === 304) {
+        this.mapData = res.data;
+        return;
+      }
+      throw new Error(`Map not found.`);
+    } catch (error) {
+      this.mapData = null;
+      throw error;
+    }
   }
 
   async connectGameServer(roomId: string) {

@@ -33,6 +33,11 @@ export class SessionLobbyScene extends BaseScene {
       )
     );
 
+    this.AddObject(
+      this.add.text(50, 40, `Fetching Map...`).setScale(1.5, 1.5),
+      "obj_mapLoadStatus"
+    );
+
     const cb = networkManager.getState()?.listen("sessionState", (value) => {
       console.log("session state updated ", value)
       if(value === "SPAWN_SELECTION_STATE")
@@ -127,6 +132,25 @@ export class SessionLobbyScene extends BaseScene {
       })!
     );
 
+    networkManager
+      .fetchRoomMap()
+      .then(() => {
+        this.GetObject<Phaser.GameObjects.Text>("obj_mapLoadStatus")
+          ?.setText(`Map Successfully Fetched.`);
+        networkManager.sendEventToServer(
+          PacketType.ByClient.CLIENT_MAP_LOADED,
+          {
+            isLoaded: true,
+          }
+        );
+      })
+      .catch((error) => {
+        console.error(error);
+        this.GetObject<Phaser.GameObjects.Text>("obj_mapLoadStatus")
+        ?.setText(`Error fetching Scene Map.`);
+        networkManager.disconnectGameServer();
+      });
+
     this.AddSceneEvent("shutdown", (data: any) => {
       console.log("shutdown ", data.config.key);
       this.Destroy();
@@ -139,7 +163,7 @@ export class SessionLobbyScene extends BaseScene {
   update(delta: number) {
     const timeLeft = Number((networkManager.room?.state.countdown || 0) / 1000);
     this.GetObject<Phaser.GameObjects.Text>("obj_countdown")?.setText(
-      `Spawn Selection Starts in : ${timeLeft - 1} Seconds (${
+      `Spawn Selection Starts in : ${timeLeft} Seconds (${
         networkManager?.room?.state.sessionState
       })`
     );

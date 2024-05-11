@@ -40,7 +40,7 @@ export class CustomStateMachine<TickArg = any> {
     this.currentState = this.machine.initialState.value as string;
     this.controller = interpret(this.machine)
       .onTransition((state: any) => {
-        this.currentState = state.value;
+        this.currentState = state.value as string;
       })
       .start();
   }

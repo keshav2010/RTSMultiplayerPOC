@@ -14,17 +14,22 @@ export default {
     sessionState: SessionState;
     room: Room;
   }) => {
-    const deltaTime = delta;
     if (sessionState.sessionState !== "SESSION_LOBBY_STATE") {
       sessionState.sessionState = "SESSION_LOBBY_STATE";
       await room.unlock();
     }
-    if (
-      sessionState.players.size >= SERVER_CONFIG.MINIMUM_PLAYERS_PER_SESSION
-    ) {
-      sessionState.countdown -= deltaTime;
-      sessionState.countdown = Math.max(0, sessionState.countdown);
-      if (sessionState.countdown <= 0) {
+
+    const atleastMinimumPlayersJoined =
+      sessionState.players.size >= SERVER_CONFIG.MINIMUM_PLAYERS_PER_SESSION;
+    const allClientsLoaded =
+      sessionState.countLoadedPlayers() >= sessionState.players.size;
+
+    if(!allClientsLoaded) {
+      sessionState.countdown = SERVER_CONFIG.COUNTDOWN;
+    }
+    if (allClientsLoaded && atleastMinimumPlayersJoined) {
+      sessionState.countdown = Math.max(0, sessionState.countdown - delta);
+      if (sessionState.countdown === 0) {
         console.log("session-lobby-state timed out, starting match/game");
         sessionState.countdown = SERVER_CONFIG.COUNTDOWN_SPAWN_SELECTIONS;
         gameStateManager.stateMachine.controller.send("StartMatch");
@@ -51,9 +56,7 @@ export default {
         await room.unlock();
       }
       //in seconds
-      const deltaTime = delta;
-      sessionState.countdown -= deltaTime;
-      sessionState.countdown = Math.max(0, sessionState.countdown);
+      sessionState.countdown = Math.max(0, sessionState.countdown - delta);
 
       if (sessionState.countdown <= 0) {
         console.log("countdown completed for spawn-selection");
