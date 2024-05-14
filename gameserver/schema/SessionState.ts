@@ -2,6 +2,7 @@ import { Schema, MapSchema, type } from "@colyseus/schema";
 import { GameStateManagerType, PlayerState } from "./PlayerState";
 import { nanoid } from "nanoid";
 import { SERVER_CONFIG } from "../config";
+import { TilemapState } from "./TilemapState";
 
 export class SessionState extends Schema {
   // Key : sessionId
@@ -13,7 +14,7 @@ export class SessionState extends Schema {
     | "BATTLE_END_STATE" = "SESSION_LOBBY_STATE";
   @type("number") countdown: number = SERVER_CONFIG.COUNTDOWN_DEFAULT;
   @type("string") mapId: string = "map1";
-
+  @type(TilemapState) tilemap = new TilemapState();
   constructor() {
     super();
   }

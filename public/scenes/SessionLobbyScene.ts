@@ -132,24 +132,19 @@ export class SessionLobbyScene extends BaseScene {
       })!
     );
 
-    networkManager
-      .fetchRoomMap()
-      .then(() => {
-        this.GetObject<Phaser.GameObjects.Text>("obj_mapLoadStatus")
-          ?.setText(`Map Successfully Fetched.`);
+    networkManager.room?.state.tilemap.onChange(() => {
+      this.GetObject<Phaser.GameObjects.Text>("obj_mapLoadStatus")?.setText(
+        `Map Successfully Fetched.`
+      );
+      if (networkManager.room!.state.tilemap.tilemap1D.toArray().length > 0) {
         networkManager.sendEventToServer(
           PacketType.ByClient.CLIENT_MAP_LOADED,
           {
             isLoaded: true,
           }
         );
-      })
-      .catch((error) => {
-        console.error(error);
-        this.GetObject<Phaser.GameObjects.Text>("obj_mapLoadStatus")
-        ?.setText(`Error fetching Scene Map.`);
-        networkManager.disconnectGameServer();
-      });
+      }
+    });
 
     this.AddSceneEvent("shutdown", (data: any) => {
       console.log("shutdown ", data.config.key);

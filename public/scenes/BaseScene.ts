@@ -134,7 +134,7 @@ export class BaseScene extends Phaser.Scene {
     this.registeredInputEvents = new Set();
   }
 
-  setupSceneTilemap(map2DData: number[][], ) {
+  setupSceneTilemap(map2DData: number[][]) {
     const map = this.make.tilemap({
       data: map2DData!,
       tileWidth: 32,
