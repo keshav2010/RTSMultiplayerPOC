@@ -111,9 +111,9 @@ export class NetworkManager {
   getMapData() {
     if (this.room) {
       return this.convertTo2DArray(
-        this.mapData!.layers.at(0)!.data,
-        this.mapData!.layers.at(0)!.width,
-        this.mapData!.layers.at(0)!.height
+        this.room.state.tilemap.tilemap1D.toArray(),
+        this.room.state.tilemap.tilemapWidth,
+        this.room.state.tilemap.tilemapHeight
       );
     }
     return null;

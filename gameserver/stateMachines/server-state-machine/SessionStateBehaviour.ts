@@ -15,6 +15,7 @@ export default {
     room: Room;
   }) => {
     if (sessionState.sessionState !== "SESSION_LOBBY_STATE") {
+      sessionState.tilemap.generateTilemap();
       sessionState.sessionState = "SESSION_LOBBY_STATE";
       await room.unlock();
     }
