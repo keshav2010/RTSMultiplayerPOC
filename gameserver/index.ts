@@ -21,6 +21,7 @@ import { readFile } from "fs/promises";
 
 import dotenv from "dotenv";
 import basicAuth from "express-basic-auth";
+import { ITiled2DMap } from "../common/ITiled2DMap";
 
 const username = process.env.ADMIN_USERNAME as string;
 const password = process.env.ADMIN_PASSWORD as string;
@@ -52,7 +53,11 @@ app.use("/playground", basicAuthMiddleware, playground);
  * It is recommended to protect this route with a password
  * Read more: https://docs.colyseus.io/tools/monitor/#restrict-access-to-the-panel-using-a-password
  */
-const cachedMap = new Map<string, string>();
+const cachedMap = new Map<
+  string,
+  ITiled2DMap
+>();
+
 async function loadMap(filename: string) {
   const pathName = path.resolve(__dirname, "static", "maps");
   const fp = path.resolve(pathName, `${filename}.json`);
@@ -61,7 +66,7 @@ async function loadMap(filename: string) {
   }
   const data = JSON.parse(await readFile(fp, { encoding: "utf8" }));
   cachedMap.set(filename, data);
-  return data;
+  return data as ITiled2DMap;
 }
 app.get("/", async (req, res) => {
   try {
@@ -92,6 +97,8 @@ app.get("/maps", async (req, res) => {
   try {
     const requestedFile = <string>req.query.id;
     const jsonMap = await loadMap(requestedFile);
+    if(!jsonMap)
+        throw new Error(`map not found`);
     return res.status(200).json({
       data: jsonMap,
     });

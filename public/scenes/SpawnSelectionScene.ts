@@ -33,17 +33,16 @@ export class SpawnSelectionScene extends BaseScene {
     this.load.image("spearman", "../assets/spearman.png");
     this.load.image("castle", "../assets/castle.png");
     this.load.image("img_groundtiles", "../assets/groundtiles.png");
-    this.load.tilemapTiledJSON("map1", "../assets/map1.json");
   }
   create() {
     networkManager = this.registry.get("networkManager") as NetworkManager;
-
-    const map = this.make.tilemap({
-      key: "map1",
-    });
-    const tileset = map.addTilesetImage("groundtiles", "img_groundtiles");
-    console.log(`tileset set `, tileset);
-    const layer = map.createLayer("groundlayer", tileset!);
+    const parsedMap = networkManager.getMapData();
+    if(!parsedMap) {
+      console.error('Failed to parse map');
+      networkManager.disconnectGameServer();
+      return;
+    }
+    const map = this.setupSceneTilemap(parsedMap!);
     this.data.set("map1", map);
 
     networkManager.sendEventToServer(

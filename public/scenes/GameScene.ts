@@ -75,7 +75,6 @@ export class GameScene extends BaseScene {
     this.load.image("texture_spearman", "../assets/spearman.png");
     this.load.image("castle", "../assets/castle.png");
     this.load.image("img_groundtiles", "../assets/groundtiles.png");
-    this.load.tilemapTiledJSON("map1", "../assets/map1.json");
   }
 
   onSoldierAdded(soldier: SoldierState, ownerPlayer: PlayerState) {
@@ -208,6 +207,15 @@ export class GameScene extends BaseScene {
 
   create() {
     networkManager = this.registry.get("networkManager") as NetworkManager;
+    const parsedMap = networkManager.getMapData();
+    if(!parsedMap) {
+      console.error('Failed to parse map');
+      networkManager.disconnectGameServer();
+      return;
+    }
+    const map = this.setupSceneTilemap(parsedMap!);
+    this.data.set("map1", map);
+
     const stylus = this.add.graphics();
     stylus.setDepth(9999);
 
@@ -215,12 +223,6 @@ export class GameScene extends BaseScene {
     debug_painter.setDepth(10000);
     this.AddObject(stylus, "obj_selectorGraphics");
     this.AddObject(debug_painter, "obj_brush");
-
-    const map = this.make.tilemap({
-      key: "map1",
-    });
-    const tileset = map.addTilesetImage("groundtiles", "img_groundtiles");
-    const layer = map.createLayer("groundlayer", tileset!);
 
     this.data.set("map1", map);
 
