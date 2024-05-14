@@ -1,7 +1,8 @@
 import * as Colyseus from "colyseus.js";
 import Phaser from "phaser";
 import { SessionState } from "../gameserver/schema/SessionState";
-import { PacketType } from "../common/PacketType";
+import { ITiled2DMap } from '../common/ITiled2DMap';
+
 const URL = `${window.location.host}`;
 import axios from 'axios';
 export type RoomEventHandlerCallbackType = (
@@ -18,7 +19,7 @@ export class NetworkManager {
   eventHandlersBinded: boolean;
 
   // the JSON stringified data for scene map (tiled2D json format)
-  mapData: string | undefined | null;
+  private mapData: ITiled2DMap | null = null;
 
   constructor(
     phaserGame: Phaser.Game,
@@ -69,6 +70,24 @@ export class NetworkManager {
     });
   }
 
+  convertTo2DArray(
+    data: number[],
+    width: number,
+    height: number
+  ): number[][] | null {
+    if (width * height !== data.length) {
+      return null;
+    }
+    const result: number[][] = [];
+    let index = 0;
+    for (let i = 0; i < height; i++) {
+      const row = data.slice(index, index + width);
+      result.push(row);
+      index += width;
+    }
+    return result;
+  }
+
   async fetchRoomMap() {
     try {
       const res = await axios({
@@ -79,7 +98,7 @@ export class NetworkManager {
         },
       });
       if (res.status === 200 || res.status === 304) {
-        this.mapData = res.data;
+        this.mapData = res.data.data;
         return;
       }
       throw new Error(`Map not found.`);
@@ -87,6 +106,17 @@ export class NetworkManager {
       this.mapData = null;
       throw error;
     }
+  }
+
+  getMapData() {
+    if (this.room) {
+      return this.convertTo2DArray(
+        this.mapData!.layers.at(0)!.data,
+        this.mapData!.layers.at(0)!.width,
+        this.mapData!.layers.at(0)!.height
+      );
+    }
+    return null;
   }
 
   async connectGameServer(roomId: string) {

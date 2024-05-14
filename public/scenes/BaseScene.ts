@@ -134,6 +134,24 @@ export class BaseScene extends Phaser.Scene {
     this.registeredInputEvents = new Set();
   }
 
+  setupSceneTilemap(map2DData: number[][], ) {
+    const map = this.make.tilemap({
+      data: map2DData!,
+      tileWidth: 32,
+      tileHeight: 32,
+      width: 60,
+      height: 60,
+    });
+    const tileset = map.addTilesetImage("groundtiles", "img_groundtiles");
+    const groundLayer = map.createBlankLayer("groundlayer", tileset!);
+    map2DData.forEach((row, y) => {
+      row.forEach((tileIdInTileset, x) => {
+        groundLayer?.putTileAt(tileIdInTileset - 1, x, y);
+      });
+    });
+    return map;
+  }
+
   Destroy() {
     console.log(`[BaseScene] : Destroy Invoked`);
     this.DestroyObjects();
