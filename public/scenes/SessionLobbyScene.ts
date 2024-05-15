@@ -2,11 +2,14 @@ import CONSTANT from "../constant";
 import { BaseScene } from "./BaseScene";
 import { PacketType } from "../../common/PacketType";
 import { NetworkManager } from "../NetworkManager";
+import SpinnerPlugin from "phaser3-rex-plugins/templates/spinner/spinner-plugin.js";
+import Spinner from "phaser3-rex-plugins/templates/spinner/spinner/Spinner";
 
 var networkManager: NetworkManager;
 var buttonState = false;
 
 export class SessionLobbyScene extends BaseScene {
+  rexSpinner: SpinnerPlugin | undefined;
   constructor() {
     super(CONSTANT.SCENES.SESSIONLOBBY);
   }
@@ -34,8 +37,17 @@ export class SessionLobbyScene extends BaseScene {
     );
 
     this.AddObject(
-      this.add.text(50, 40, `Fetching Map...`).setScale(1.5, 1.5),
+      this.add.text(50, 40, `Procedurally Generating Tilemap...`),
       "obj_mapLoadStatus"
+    );
+    this.AddObject(
+      this.rexSpinner!.add.spinner({
+        width: 40,
+        height: 40,
+        x: 10,
+        y: 40,
+      }),
+      "obj_tilemapLoadingSpinner"
     );
 
     const cb = networkManager.getState()?.listen("sessionState", (value) => {
@@ -132,19 +144,21 @@ export class SessionLobbyScene extends BaseScene {
       })!
     );
 
-    networkManager.room?.state.tilemap.onChange(() => {
-      this.GetObject<Phaser.GameObjects.Text>("obj_mapLoadStatus")?.setText(
-        `Map Successfully Fetched.`
-      );
-      if (networkManager.room!.state.tilemap.tilemap1D.toArray().length > 0) {
+    this.AddStateChangeListener(
+      networkManager.room?.state.tilemap.listen("ready", (isTilemapReady) => {
+        if (!isTilemapReady) return;
+        this.GetObject<Phaser.GameObjects.Text>("obj_mapLoadStatus")?.setText(
+          `Generated Tilemap.`
+        );
+        this.DestroyObject(this.GetObject('obj_tilemapLoadingSpinner') as Spinner);
         networkManager.sendEventToServer(
           PacketType.ByClient.CLIENT_MAP_LOADED,
           {
             isLoaded: true,
           }
         );
-      }
-    });
+      })
+    );
 
     this.AddSceneEvent("shutdown", (data: any) => {
       console.log("shutdown ", data.config.key);

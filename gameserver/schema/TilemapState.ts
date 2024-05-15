@@ -1,4 +1,5 @@
 import { Schema, type, ArraySchema, MapSchema } from "@colyseus/schema";
+import { createNoise2D } from 'simplex-noise';
 
 const TilesType = {
   dirt: 16,
@@ -17,21 +18,25 @@ export class TilemapState extends Schema {
   /** width in tiles */
   @type("number") tilemapWidth = 60;
 
+  @type("boolean") ready = false;
+  simplex: any;
+
   constructor() {
     super();
+    this.simplex = createNoise2D();
+
     this.generateTilemap();
   }
 
-  generateTilemap() {
+  async generateTilemap() {
+    this.ready = false;
     const { tilemapWidth, tilemapHeight } = this;
-    const perlinScale = 1.5;
-    this.tilemap1D.clear();
-    console.log('generating tilemap');
-    const noiseMap: number[][] = [];
+    const perlinScale = Math.max(0.03,0.05*Math.random()); // Lower scale for larger features
+    const noiseMap = Array.from({ length: tilemapHeight }, () => Array(tilemapWidth).fill(0));
+
     for (let y = 0; y < tilemapHeight; y++) {
-      noiseMap[y] = [];
       for (let x = 0; x < tilemapWidth; x++) {
-        noiseMap[y][x] = this.perlin(x * perlinScale, y * perlinScale);
+        noiseMap[y][x] = this.simplex(x * perlinScale, y * perlinScale);
       }
     }
 
@@ -39,10 +44,11 @@ export class TilemapState extends Schema {
       for (let x = 0; x < tilemapWidth; x++) {
         const noiseValue = noiseMap[y][x];
         let tileTypeIndex = TilesType.dirt;
-
-        if (noiseValue < 0.05*Math.random()) {
+        if (noiseValue < -0.5) {
           tileTypeIndex = TilesType.water;
-        } else if (noiseValue < Math.random()) {
+        } else if (noiseValue < -0.1 && Math.random() < 0.05) {
+          tileTypeIndex = TilesType.water;
+        } else if (noiseValue < 0.5*Math.random()) {
           tileTypeIndex = TilesType.dirt;
         } else {
           tileTypeIndex = TilesType.grass;
@@ -50,6 +56,7 @@ export class TilemapState extends Schema {
         this.tilemap1D.push(tileTypeIndex);
       }
     }
+    this.ready = true;
   }
 
   perlin(x: number, y: number): number {

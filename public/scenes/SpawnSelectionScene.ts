@@ -37,11 +37,6 @@ export class SpawnSelectionScene extends BaseScene {
   create() {
     networkManager = this.registry.get("networkManager") as NetworkManager;
     const parsedMap = networkManager.getMapData();
-    if(!parsedMap) {
-      console.error('Failed to parse map');
-      networkManager.disconnectGameServer();
-      return;
-    }
     const map = this.setupSceneTilemap(parsedMap!);
     this.data.set("map1", map);
 

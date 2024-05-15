@@ -53,7 +53,8 @@ export class BaseScene extends Phaser.Scene {
     );
   }
 
-  AddStateChangeListener(cleanupFunction: Function, key?: string) {
+  AddStateChangeListener(cleanupFunction ?: Function, key?: string) {
+    if(!cleanupFunction) return;
     const mKey = key || nanoid();
     let existingCbSet = this.networkCallsCleanup.get(mKey) || new Set();
     existingCbSet.add(cleanupFunction);
@@ -105,6 +106,8 @@ export class BaseScene extends Phaser.Scene {
 
   // Recursively destroy an object, including any children if it's a group
   DestroyObject<T extends ManagedTypes>(obj: T) {
+    if(!obj)
+        return;
     if ((obj as any)?.type === "Group") obj.destroy(true);
     else obj.destroy();
   }
