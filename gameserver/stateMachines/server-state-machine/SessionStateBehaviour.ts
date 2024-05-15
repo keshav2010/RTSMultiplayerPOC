@@ -31,7 +31,6 @@ export default {
     if (allClientsLoaded && atleastMinimumPlayersJoined) {
       sessionState.countdown = Math.max(0, sessionState.countdown - delta);
       if (sessionState.countdown === 0) {
-        console.log("session-lobby-state timed out, starting match/game");
         sessionState.countdown = SERVER_CONFIG.COUNTDOWN_SPAWN_SELECTIONS;
         gameStateManager.stateMachine.controller.send("StartMatch");
       }
