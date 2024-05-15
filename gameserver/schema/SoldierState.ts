@@ -14,6 +14,7 @@ import { TypeQuadtreeItem } from "../core/types/TypeQuadtreeItem";
 import { IBoidAgent } from "../core/types/IBoidAgent";
 import * as helper from "../helpers";
 import { VectorState } from "./VectorState";
+import { SessionState } from "./SessionState";
 function mapRange(
   val: number,
   mapRangeStart: number,
@@ -269,9 +270,22 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
     return this.velocityVector.clone();
   }
 
-  tick(delta: number, stateManager: GameStateManagerType) {
+  tick(delta: number, stateManager: GameStateManagerType, sessionState: SessionState) {
     this.currentState = this.stateMachine
       .currentState as keyof typeof SoldierStateMachineJSON.states;
+
+    const centerPos = this.currentPosition
+      .getVector()
+      .add(new SAT.Vector(16, 16));
+    const currentTile = sessionState.tilemap.getTileTypeAt(
+      centerPos.x,
+      centerPos.y
+    );
+    if (currentTile === "water") {
+      this.speed = SoldierTypeConfig[this.type].speed * 0.4;
+    } else if (currentTile === "dirt") {
+      this.speed = SoldierTypeConfig[this.type].speed * 0.7;
+    } else this.speed = SoldierTypeConfig[this.type].speed;
 
     stateManager.scene.checkCollisionOnObject(
       this,

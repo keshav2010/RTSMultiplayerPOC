@@ -25,7 +25,7 @@ export default {
     const allClientsLoaded =
       sessionState.countLoadedPlayers() >= sessionState.players.size;
 
-    if(!allClientsLoaded) {
+    if (!allClientsLoaded) {
       sessionState.countdown = SERVER_CONFIG.COUNTDOWN;
     }
     if (allClientsLoaded && atleastMinimumPlayersJoined) {
@@ -100,7 +100,7 @@ export default {
       }
       var deltaTime = delta / 1000;
       playersConnected.forEach((player) => {
-        player.tick(deltaTime, gameStateManager);
+        player.tick(deltaTime, gameStateManager, sessionState);
         if (player.castleHealth === 0) {
           sessionState.removePlayer(player.id, gameStateManager);
         }

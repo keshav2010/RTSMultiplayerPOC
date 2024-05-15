@@ -8,6 +8,7 @@ import { SceneObject } from "../core/types/SceneObject";
 import SAT from "sat";
 import { ISceneItem } from "../core/types/ISceneItem";
 import { VectorState } from "./VectorState";
+import { SessionState } from "./SessionState";
 export type GameStateManagerType = GameStateManager<PlayerState>;
 
 export class SpawnRequest extends Schema {
@@ -111,13 +112,17 @@ export class PlayerState extends Schema implements ISceneItem {
     return newSoldier.id;
   }
 
-  public tick(deltaTime: number, gameStateManager: GameStateManagerType) {
+  public tick(
+    deltaTime: number,
+    gameStateManager: GameStateManagerType,
+    sessionState: SessionState
+  ) {
     this.resources += this.resourceGrowthRateHz * deltaTime;
     this.processSpawnRequest(deltaTime, gameStateManager.scene);
 
     //TODO: tick each soldier
     this.soldiers.forEach((soldier) => {
-      soldier.tick(deltaTime, gameStateManager);
+      soldier.tick(deltaTime, gameStateManager, sessionState);
     });
 
     this.resourceGrowthRateHz = this.resourceGrowthRateHz - 0.1 * deltaTime;

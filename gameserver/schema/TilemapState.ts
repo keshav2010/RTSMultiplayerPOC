@@ -6,6 +6,11 @@ const TilesType = {
   grass: 56,
   water: 154,
 };
+const TilesTypeById: { [key: number]: string } = {
+  16: "dirt",
+  56: "grass",
+  154: "water",
+};
 export class TilemapState extends Schema {
   // Key : sessionId
   @type(["number"]) tilemap1D = new ArraySchema<number>();
@@ -26,6 +31,14 @@ export class TilemapState extends Schema {
     this.simplex = createNoise2D();
 
     this.generateTilemap();
+  }
+
+  getTileTypeAt(x: number, y: number) {
+    const col = Math.floor(x/this.tilewidth);
+    const row = Math.floor(y/this.tileheight);
+    const index1D = col + row * this.tilemapWidth;
+    const tileId =  this.tilemap1D.at(index1D);
+    return TilesTypeById[tileId];
   }
 
   async generateTilemap() {
