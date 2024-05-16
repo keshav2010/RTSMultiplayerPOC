@@ -208,12 +208,17 @@ export class GameScene extends BaseScene {
   create() {
     networkManager = this.registry.get("networkManager") as NetworkManager;
     const parsedMap = networkManager.getMapData();
-    if(!parsedMap) {
-      console.error('Failed to parse map');
+    if (!parsedMap) {
+      console.error("Failed to parse map");
       networkManager.disconnectGameServer();
       return;
     }
-    const map = this.setupSceneTilemap(parsedMap!);
+    const tilemap = networkManager.getState()!.tilemap;
+    const map = this.setupSceneTilemap(
+      parsedMap!,
+      tilemap.tileheight,
+      tilemap.tilemapHeight
+    );
     this.data.set("map1", map);
 
     const stylus = this.add.graphics();

@@ -53,8 +53,21 @@ export class BaseScene extends Phaser.Scene {
     );
   }
 
-  AddStateChangeListener(cleanupFunction ?: Function, key?: string) {
-    if(!cleanupFunction) return;
+  updateTilemap(
+    networkManager: NetworkManager,
+    tileOwner: string,
+    tileId: number
+  ) {
+    const map = this.data.get("map1") as Phaser.Tilemaps.Tilemap;
+    const row = Math.floor(tileId / map.width);
+    const col = tileId % map.width;
+    const tile = map.getTileAt(col, row, false, "groundLayer");
+    if (!tile) return;
+    tile.setAlpha(tileOwner !== networkManager.getClientId() ? 0.2 : 1);
+  }
+
+  AddStateChangeListener(cleanupFunction?: Function, key?: string) {
+    if (!cleanupFunction) return;
     const mKey = key || nanoid();
     let existingCbSet = this.networkCallsCleanup.get(mKey) || new Set();
     existingCbSet.add(cleanupFunction);
@@ -106,8 +119,7 @@ export class BaseScene extends Phaser.Scene {
 
   // Recursively destroy an object, including any children if it's a group
   DestroyObject<T extends ManagedTypes>(obj: T) {
-    if(!obj)
-        return;
+    if (!obj) return;
     if ((obj as any)?.type === "Group") obj.destroy(true);
     else obj.destroy();
   }
@@ -137,19 +149,24 @@ export class BaseScene extends Phaser.Scene {
     this.registeredInputEvents = new Set();
   }
 
-  setupSceneTilemap(map2DData: number[][]) {
+  setupSceneTilemap(
+    map2DData: number[][],
+    tileSize: number,
+    tilemapSize: number
+  ) {
     const map = this.make.tilemap({
       data: map2DData!,
-      tileWidth: 32,
-      tileHeight: 32,
-      width: 60,
-      height: 60,
+      tileWidth: tileSize,
+      tileHeight: tileSize,
+      width: tilemapSize,
+      height: tilemapSize,
     });
+
     const tileset = map.addTilesetImage("groundtiles", "img_groundtiles");
-    const groundLayer = map.createBlankLayer("groundlayer", tileset!);
+    const groundLayer = map.createBlankLayer("groundLayer", tileset!);
     map2DData.forEach((row, y) => {
-      row.forEach((tileIdInTileset, x) => {
-        groundLayer?.putTileAt(tileIdInTileset - 1, x, y);
+      row.forEach((tile, x) => {
+        groundLayer?.putTileAt(tile - 1, x, y);
       });
     });
     return map;
