@@ -207,6 +207,13 @@ export class GameScene extends BaseScene {
 
   create() {
     networkManager = this.registry.get("networkManager") as NetworkManager;
+    const GameSessionState = networkManager.getState();
+
+    if (!GameSessionState) {
+      networkManager.disconnectGameServer();
+      return;
+    }
+    
     const parsedMap = networkManager.getMapData();
     if (!parsedMap) {
       console.error("Failed to parse map");
@@ -220,6 +227,28 @@ export class GameScene extends BaseScene {
       tilemap.tilemapHeight
     );
     this.data.set("map1", map);
+
+    // render tilemap with initial data
+    for (
+      let tileId = 0;
+      tileId < GameSessionState.tilemap.ownershipTilemap1D.length;
+      tileId++
+    ) {
+      this.updateTilemap(
+        networkManager,
+        GameSessionState.tilemap.ownershipTilemap1D[tileId],
+        tileId
+      );
+    }
+
+    // update tilemap for every tile update received.
+    this.AddStateChangeListener(
+      GameSessionState.tilemap.ownershipTilemap1D.onChange(
+        (owner, tileIndex) => {
+          this.updateTilemap(networkManager, owner, tileIndex);
+        }
+      )
+    );
 
     const stylus = this.add.graphics();
     stylus.setDepth(9999);

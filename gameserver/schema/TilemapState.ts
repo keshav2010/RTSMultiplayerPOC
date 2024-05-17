@@ -3,16 +3,27 @@ import { createNoise2D } from "simplex-noise";
 import { PlayerState } from "./PlayerState";
 import SAT from "sat";
 
+export enum ETileType {
+  DIRT = "dirt",
+  GRASS = "grass",
+  WATER = "water",
+}
+
 const TilesType = {
-  dirt: 16,
-  grass: 56,
-  water: 154,
+  [ETileType.DIRT]: 16,
+  [ETileType.GRASS]: 56,
+  [ETileType.WATER]: 154,
 };
-const TilesTypeById: { [key: number]: string } = {
-  16: "dirt",
-  56: "grass",
-  154: "water",
+
+const TilesTypeById: { [key: number]: ETileType } = {
+  16: ETileType.DIRT,
+  56: ETileType.GRASS,
+  154: ETileType.WATER,
 };
+
+export function getTileType(tileValue: number): ETileType {
+  return TilesTypeById[tileValue];
+}
 
 export class TilemapState extends Schema {
   static TILE_INFLUENCE_DISTANCE: number = 10;

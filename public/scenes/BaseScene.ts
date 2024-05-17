@@ -4,6 +4,7 @@ import { NetworkManager } from "../NetworkManager";
 import { ClientStateManager } from "../ClientStateManager";
 import CONSTANT from "../constant";
 import { nanoid } from "nanoid";
+import { ETileType, getTileType } from "../../gameserver/schema/TilemapState";
 interface Destroyable {
   destroy: Function;
 }
@@ -56,14 +57,25 @@ export class BaseScene extends Phaser.Scene {
   updateTilemap(
     networkManager: NetworkManager,
     tileOwner: string,
-    tileId: number
+    tile1DIndex: number
   ) {
+    const GameStateManager = networkManager.getState();
+    if (!GameStateManager) return;
+
     const map = this.data.get("map1") as Phaser.Tilemaps.Tilemap;
-    const row = Math.floor(tileId / map.width);
-    const col = tileId % map.width;
+    const row = Math.floor(tile1DIndex / map.width);
+    const col = tile1DIndex % map.width;
     const tile = map.getTileAt(col, row, false, "groundLayer");
     if (!tile) return;
-    tile.setAlpha(tileOwner !== networkManager.getClientId() ? 0.2 : 1);
+    const tileType = getTileType(
+      GameStateManager.tilemap.tilemap1D.at(tile1DIndex)
+    );
+    if (tileType === ETileType.WATER) return;
+
+    // tile.setAlpha(tileOwner !== networkManager.getClientId() ? 1 : 1);
+    if (tileOwner === "NONE") tile.tint = 0xffffff;
+    else if (tileOwner === networkManager.getClientId()) tile.tint = 0xffffa0;
+    else tile.tint = 0xffdddd;
   }
 
   AddStateChangeListener(cleanupFunction?: Function, key?: string) {
