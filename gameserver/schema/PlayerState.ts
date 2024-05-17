@@ -9,6 +9,7 @@ import SAT from "sat";
 import { ISceneItem } from "../core/types/ISceneItem";
 import { VectorState } from "./VectorState";
 import { SessionState } from "./SessionState";
+import { CaptureFlagState } from "./CaptureFlagState";
 export type GameStateManagerType = GameStateManager<PlayerState>;
 
 export class SpawnRequest extends Schema {
@@ -58,8 +59,10 @@ export class PlayerState extends Schema implements ISceneItem {
   @type(["string"]) spawnRequestQueue: ArraySchema<string> =
     new ArraySchema<string>();
 
+  @type([CaptureFlagState]) captureFlags = new ArraySchema<CaptureFlagState>();
+
   // non-synced info
-  resourceGrowthRateHz = 2;
+  @type("number") resourceGrowthRateHz = 2;
   maxResources = 200;
 
   sceneItemRef!: SceneObject;
@@ -79,6 +82,26 @@ export class PlayerState extends Schema implements ISceneItem {
   }
   getSceneItem() {
     return this.sceneItemRef;
+  }
+
+  createCaptureFlag(x: number, y: number, sessionState: SessionState) {
+    if (this.captureFlags.length >= 4) {
+      return;
+    }
+    const captureFlag = new CaptureFlagState(x, y);
+    this.captureFlags.push(captureFlag);
+    sessionState.tilemap.updateOwnershipMap(sessionState.getPlayers());
+  }
+
+  removeCaptureFlag(flagId: string, sessionState: SessionState) {
+    const flagObj = this.captureFlags.findIndex(
+      (flag) => flag.flagId === flagId
+    );
+    if (flagObj < 0) {
+      return;
+    }
+    this.captureFlags.deleteAt(flagObj);
+    sessionState.tilemap.updateOwnershipMap(sessionState.getPlayers());
   }
 
   private processSpawnRequest(deltaTime: number, scene: Scene) {
@@ -124,6 +147,8 @@ export class PlayerState extends Schema implements ISceneItem {
   ) {
     this.resources += this.resourceGrowthRateHz * deltaTime;
     this.processSpawnRequest(deltaTime, gameStateManager.scene);
+
+    this.captureFlags.forEach((flagState) => flagState.tick(deltaTime));
 
     //TODO: tick each soldier
     this.soldiers.forEach((soldier) => {

@@ -1,6 +1,16 @@
 import { PlayerState } from "../../gameserver/schema/PlayerState";
-import LoadingBar from "../LoadingBar";
+import LoadingBar from "./LoadingBar";
 import Phaser from "phaser";
+
+const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
+  color: "#fff",
+  strokeThickness: 1,
+  fontSize: 18,
+  stroke: "#000000",
+  wordWrap: {
+    width: 120,
+  }
+};
 
 export class PlayerCastle extends Phaser.GameObjects.Sprite {
   player: PlayerState;
@@ -31,12 +41,13 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     this.scale = 1;
     this.hp = new LoadingBar(scene, this);
     this.DEBUGTEXT = scene.add.text(
-      x,
-      y + this.height / 2 + 15,
-      `[${this.player.name}] - health:${this.player.castleHealth}`,
-      { font: "12px Arial" }
+      x + this.width,
+      y + this.height*2,
+      `${this.player.name} \n
+      health:${this.player.castleHealth}`,
+      textStyle
     );
-    this.DEBUGTEXT.setOrigin(0.5);
+
     this.on("destroy", () => {
       scene.events.off("update", this.update, this);
       this.hp.destroy();
@@ -95,9 +106,13 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
   }
   update() {
     this.hp.draw();
-    this.DEBUGTEXT.setPosition(this.x, this.y + this.height / 2 + 15);
+    this.hp.setScale(2, 2);
+    this.hp.setPosition(this.x + (this.width>>1), this.y - this.height);
+
+    this.DEBUGTEXT.setPosition(this.x, this.y + this.height);
     this.DEBUGTEXT.setText(
-      `[${this.player.name}] - health:${Math.floor(
+      `[${this.player.name}]\n
+      ${Math.floor(
         this.player.castleHealth
       )}`
     );

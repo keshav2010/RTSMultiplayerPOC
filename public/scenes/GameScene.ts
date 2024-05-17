@@ -552,6 +552,7 @@ export class GameScene extends BaseScene {
         this.events.emit(PacketType.ByServer.PLAYER_RESOURCE_UPDATED, {
           playerId: networkManager.getClientId()!,
           resources: value,
+          resourceGrowthRate: player.resourceGrowthRateHz
         });
       })
     );

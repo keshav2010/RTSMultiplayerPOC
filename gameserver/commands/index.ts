@@ -11,6 +11,8 @@ import { OnSpawnPointSelectCommand } from "./OnSpawnPointSelectCommand";
 import { CommandPayload } from "./CommandPayloadType";
 import { OnChatBroadcastCommand } from "./OnChatBroadcastCommand";
 import { OnPlayerLoadedCommand } from "./OnPlayerLoadedCommand";
+import { OnCaptureFlagCreateCommand } from "./OnCaptureFlagCreateCommand";
+import { OnCaptureFlagDeleteCommand } from "./OnCaptureFlagDeleteCommand";
 
 export class CommandFactory {
   static createCommand(
@@ -41,9 +43,16 @@ export class CommandFactory {
 
       case PacketType.ByClient.CLIENT_SENT_CHAT:
         return new OnChatBroadcastCommand();
-      
+
       case PacketType.ByClient.CLIENT_MAP_LOADED:
         return new OnPlayerLoadedCommand();
+
+      case PacketType.ByClient.CAPTURE_FLAG_CREATE_REQUESTED:
+        return new OnCaptureFlagCreateCommand();
+
+      case PacketType.ByClient.CAPTURE_FLAG_DELETE_REQUESTED:
+        return new OnCaptureFlagDeleteCommand();
+
       default:
         return null;
     }

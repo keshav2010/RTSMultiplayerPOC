@@ -74,8 +74,8 @@ export class BaseScene extends Phaser.Scene {
 
     // tile.setAlpha(tileOwner !== networkManager.getClientId() ? 1 : 1);
     if (tileOwner === "NONE") tile.tint = 0xffffff;
-    else if (tileOwner === networkManager.getClientId()) tile.tint = 0xffffa0;
-    else tile.tint = 0xffdddd;
+    else if (tileOwner === networkManager.getClientId()) tile.tint = 0xffff00;
+    else tile.tint = 0xffcccc;
   }
 
   AddStateChangeListener(cleanupFunction?: Function, key?: string) {

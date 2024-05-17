@@ -12,6 +12,8 @@ export enum ClientToServerPacketType {
   CLIENT_SENT_CHAT = "clientchat",
   SPAWN_POINT_SELECTED = "spwnpntslct",
   SOLDIER_SPAWN_REQUESTED = "unitspwnreq",
+  CAPTURE_FLAG_CREATE_REQUESTED = "cptrflgrqst",
+  CAPTURE_FLAG_DELETE_REQUESTED = "cptrflgdltrqst",
 }
 export enum ServerToClientPacketType {
   NEW_CHAT_MESSAGE = "newcm",

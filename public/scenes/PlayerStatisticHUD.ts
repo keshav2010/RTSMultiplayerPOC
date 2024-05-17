@@ -9,6 +9,14 @@ import SessionStateClientHelpers from "../helpers/SessionStateClientHelpers";
 import { NetworkManager } from "../NetworkManager";
 import { PlayerState } from "../../gameserver/schema/PlayerState";
 import { BaseSoldier } from "../soldiers/BaseSoldier";
+
+const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
+  color: "#fff",
+  strokeThickness: 4,
+  fontSize: 16,
+  stroke: "#000000",
+  fontFamily: 'Helvetica',
+};
 export class PlayerStatisticHUD extends BaseScene {
   constructor() {
     super(CONSTANT.SCENES.HUD_SCORE);
@@ -57,14 +65,22 @@ export class PlayerStatisticHUD extends BaseScene {
       );
     });
 
-    const resourceText = this.AddObject(this.add.text(50, 50, "Resources: 0"));
-    const soldierCount = this.AddObject(this.add.text(50, 80, "Soldiers: 0"));
-    const spawnQueueText = this.AddObject(this.add.text(50, 110, ""));
+    const resourceText = this.AddObject(
+      this.add.text(10, 50, "Economy: 0", textStyle)
+    );
+    const soldierCount = this.AddObject(
+      this.add.text(10, 80, "Soldiers: 0", textStyle)
+    );
+    const spawnQueueText = this.AddObject(
+      this.add.text(10, 110, "", textStyle)
+    );
+
     const Controls = this.AddObject(
       this.add.text(
         10,
         10,
-        "Dev Testing [MMB => spawn soldier, drag n select units, RightClick for move/attack"
+        "Dev Testing [MMB => spawn soldier, drag n select units, RightClick for move/attack",
+        textStyle
       )
     );
 
@@ -74,11 +90,19 @@ export class PlayerStatisticHUD extends BaseScene {
         await networkManager.disconnectGameServer();
       });
 
-    var count = 0;
+    // TODO: optimise
     gameScene.AddSceneEvent(
       PacketType.ByServer.SOLDIER_CREATE_ACK,
       ({ isCreated }: { isCreated: boolean }) => {
-        if (isCreated) soldierCount.setText(`Soldiers: ${++count}`);
+        if (isCreated)
+          soldierCount.setText(
+            `Total Soldiers: ${[
+              ...networkManager.getState()!.players.values(),
+            ].reduce((acc, curr) => {
+              acc = acc + curr.soldiers.size;
+              return acc;
+            }, 0)}`
+          );
       }
     );
 
@@ -113,10 +137,10 @@ export class PlayerStatisticHUD extends BaseScene {
     );
 
     this.AddObject(
-      this.add.text(50, 110, "Soldiers Queued: 0"),
-      "obj_soldiersQueued"
+      this.add.text(50, 110, "Soldiers Queued: 0", textStyle),
+      "obj_text_soldiersQueued"
     );
-    this.AddObject(this.add.text(50, 140, "Next Spawn In: 0"), "obj_spawnETA");
+    this.AddObject(this.add.text(50, 140, "Next Spawn In: 0", textStyle), "obj_spawnETA");
 
     gameScene.AddSceneEvent(
       PacketType.ByServer.SOLDIER_SPAWN_REQUEST_UPDATED,
@@ -141,10 +165,22 @@ export class PlayerStatisticHUD extends BaseScene {
 
     gameScene.AddSceneEvent(
       PacketType.ByServer.PLAYER_RESOURCE_UPDATED,
-      ({ playerId, resources }: { playerId: string; resources: number }) => {
+      ({
+        playerId,
+        resources,
+        resourceGrowthRate,
+      }: {
+        playerId: string;
+        resources: number;
+        resourceGrowthRate: number;
+      }) => {
         try {
           if (playerId === playerId)
-            resourceText.setText(`Resources: ${resources.toFixed(2)}`);
+            resourceText.setText(
+              `Economy: ${resources.toFixed(
+                2
+              )} ( change/sec: ${resourceGrowthRate.toFixed(2)})`
+            );
         } catch (err) {
           console.log(err);
         }
@@ -154,7 +190,7 @@ export class PlayerStatisticHUD extends BaseScene {
     gameScene.AddSceneEvent(
       PacketType.ByServer.SOLDIER_SPAWN_SCHEDULED,
       ({ playerId, queueSize }: { playerId: string; queueSize: number }) => {
-        this.GetObject<Phaser.GameObjects.Text>("obj_soldiersQueued")?.setText(
+        this.GetObject<Phaser.GameObjects.Text>("obj_text_soldiersQueued")?.setText(
           `Soldiers Queued: ${queueSize}`
         );
       }
