@@ -34,6 +34,13 @@ export class SessionState extends Schema {
   public getPlayer(sessionId: string) {
     return this.players.get(sessionId);
   }
+  public getPlayers() {
+    let playersArr= [];
+    for(let player of this.players.entries()) {
+      playersArr.push(player[1]);
+    }
+    return playersArr;
+  }
   public removePlayer(sessionId: string, gameManager: GameStateManagerType) {
     const player = this.players.get(sessionId);
     if (!player) {

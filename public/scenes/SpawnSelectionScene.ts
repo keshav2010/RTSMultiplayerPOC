@@ -36,9 +36,44 @@ export class SpawnSelectionScene extends BaseScene {
   }
   create() {
     networkManager = this.registry.get("networkManager") as NetworkManager;
+    const GameSessionState = networkManager.getState();
+
+    if (!GameSessionState) {
+      networkManager.disconnectGameServer();
+      return;
+    }
+
     const parsedMap = networkManager.getMapData();
-    const map = this.setupSceneTilemap(parsedMap!);
+    const tilemap = GameSessionState.tilemap;
+    const map = this.setupSceneTilemap(
+      parsedMap!,
+      tilemap.tileheight,
+      tilemap.tilemapHeight
+    );
+
     this.data.set("map1", map);
+
+    // render tilemap with initial data
+    for (
+      let tileId = 0;
+      tileId < GameSessionState.tilemap.ownershipTilemap1D.length;
+      tileId++
+    ) {
+      this.updateTilemap(
+        networkManager,
+        GameSessionState.tilemap.ownershipTilemap1D[tileId],
+        tileId
+      );
+    }
+
+    // update tilemap for every tile update received.
+    this.AddStateChangeListener(
+      GameSessionState.tilemap.ownershipTilemap1D.onChange(
+        (owner, tileIndex) => {
+          this.updateTilemap(networkManager, owner, tileIndex);
+        }
+      )
+    );
 
     networkManager.sendEventToServer(
       PacketType.ByClient.SPAWN_POINT_REQUESTED,
@@ -51,39 +86,33 @@ export class SpawnSelectionScene extends BaseScene {
     selectorGraphics = this.AddObject(this.add.graphics());
     selectorGraphics.clear();
 
-    console.log(
-      "Spawn-selection-scene started",
-      networkManager.getState()?.countdown,
-      networkManager.getState()?.sessionState
-    );
-
     this.AddStateChangeListener(
-      networkManager.getState()?.listen("sessionState", (value) => {
+      GameSessionState.listen("sessionState", (value) => {
         if (value === "BATTLE_STATE") {
           this.scene.start(CONSTANT.SCENES.GAME);
         }
       })!
     );
-    const sessionState = networkManager.getState()!;
-    SessionStateClientHelpers.getPlayers(sessionState).forEach((player) => {
+    SessionStateClientHelpers.getPlayers(GameSessionState).forEach((player) => {
       this.AddStateChangeListener(
         player.pos.onChange(() => {
-          this.showSpawnFlag(networkManager, player.pos.x, player.pos.y, player.id);
+          this.showSpawnFlag(
+            networkManager,
+            player.pos.x,
+            player.pos.y,
+            player.id
+          );
         }),
         `${player.id}_pos_spawnFlag_update`
       );
     });
 
-    console.log(
-      SessionStateClientHelpers.getPlayers(sessionState).map((p) => p.id)
-    );
-
     this.AddObject(
       new LoadingBar(this, this, {
         x: 250,
         y: 150,
-        maxValue: (networkManager.getState()?.countdown || 5000) / 1000,
-        currentValue: (networkManager.getState()?.countdown || 5000) / 1000,
+        maxValue: (GameSessionState.countdown || 5000) / 1000,
+        currentValue: (GameSessionState.countdown || 5000) / 1000,
         width: 500,
         height: 30,
       }),
@@ -206,7 +235,7 @@ export class SpawnSelectionScene extends BaseScene {
     this.AddSceneEvent(
       PacketType.ByServer.SPAWN_POINT_RJCT,
       (data: { message: any }) => {
-        console.log("spawn point request rejected", data);
+        // TODO:console.log("spawn point request rejected", data);
       }
     );
 
@@ -221,12 +250,18 @@ export class SpawnSelectionScene extends BaseScene {
       this.events.removeAllListeners();
     });
   }
+
   update(delta: number) {
-    if (networkManager.getState()?.sessionState !== "SPAWN_SELECTION_STATE") {
+    const GameSessionState = networkManager.getState();
+    if (!GameSessionState) {
+      networkManager.disconnectGameServer();
+      return;
+    }
+    if (GameSessionState.sessionState !== "SPAWN_SELECTION_STATE") {
       return;
     }
     this.GetObject<LoadingBar>("obj_timerBar")?.setValue(
-      (networkManager.getState()?.countdown || 0) / 1000
+      (GameSessionState.countdown || 0) / 1000
     );
     this.controls?.update(delta);
     this.GetObject<LoadingBar>("obj_timerBar")?.draw();
@@ -242,10 +277,16 @@ export class SpawnSelectionScene extends BaseScene {
       //show new choice on map for player
       const clientId = playerId || networkManager.getClientId();
       if (!clientId) return;
-      const sessionState = networkManager.getState();
-      if (!sessionState) return;
+      const GameSessionState = networkManager.getState();
+      if (!GameSessionState) {
+        networkManager.disconnectGameServer();
+        return;
+      }
 
-      let player = SessionStateClientHelpers.getPlayer(sessionState, clientId);
+      let player = SessionStateClientHelpers.getPlayer(
+        GameSessionState,
+        clientId
+      );
       if (!player) return;
 
       // spawn a castle.
@@ -253,7 +294,7 @@ export class SpawnSelectionScene extends BaseScene {
       const spawnFlag = this.GetObject<PlayerCastle>(flagKey);
 
       const playerState = SessionStateClientHelpers.getPlayer(
-        sessionState,
+        GameSessionState,
         clientId
       );
       if (!playerState) {

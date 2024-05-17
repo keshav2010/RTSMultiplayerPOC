@@ -277,10 +277,17 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
     const centerPos = this.currentPosition
       .getVector()
       .add(new SAT.Vector(16, 16));
-    const currentTile = sessionState.tilemap.getTileTypeAt(
-      centerPos.x,
-      centerPos.y
+
+    const tileCoord = new SAT.Vector(
+      Math.floor(centerPos.x / sessionState.tilemap.tilewidth),
+      Math.floor(centerPos.y / sessionState.tilemap.tileheight)
     );
+
+    const tileIndex =
+      tileCoord.x + tileCoord.y * sessionState.tilemap.tilemapWidth;
+
+    const currentTile = sessionState.tilemap.getTileTypeAt(tileIndex);
+
     if (currentTile === "water") {
       this.speed = SoldierTypeConfig[this.type].speed * 0.4;
     } else if (currentTile === "dirt") {

@@ -106,7 +106,12 @@ export class PlayerState extends Schema implements ISceneItem {
   }
 
   public addNewSoldier(type: SoldierType, scene: Scene) {
-    const newSoldier = new SoldierState(this.id, type, this.pos.x, this.pos.y);
+    const newSoldier = new SoldierState(
+      this.id,
+      type,
+      this.pos.x + 16,
+      this.pos.y + 16
+    );
     this.soldiers.set(newSoldier.id, newSoldier);
     scene.addSceneItem(newSoldier);
     return newSoldier.id;
