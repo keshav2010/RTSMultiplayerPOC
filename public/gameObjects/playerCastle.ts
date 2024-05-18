@@ -9,7 +9,7 @@ const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
   stroke: "#000000",
   wordWrap: {
     width: 120,
-  }
+  },
 };
 
 export class PlayerCastle extends Phaser.GameObjects.Sprite {
@@ -42,7 +42,7 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     this.hp = new LoadingBar(scene, this);
     this.DEBUGTEXT = scene.add.text(
       x + this.width,
-      y + this.height*2,
+      y + this.height * 2,
       `${this.player.name} \n
       health:${this.player.castleHealth}`,
       textStyle
@@ -50,14 +50,14 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
 
     this.on("destroy", () => {
       scene.events.off("update", this.update, this);
-      this.hp.destroy();
-      this.DEBUGTEXT.destroy();
-      if (this.circleOfInfluence) this.circleOfInfluence.destroy();
-      if (this.circleAnimation) this.circleAnimation.remove();
+      this.hp.destroy(true);
+      this.DEBUGTEXT.destroy(true);
+      if (this.circleOfInfluence) this.circleOfInfluence.destroy(true);
+      if (this.circleAnimation) this.circleAnimation.destroy();
     });
 
     // Create the circle of influence
-    this.createCircleOfInfluence(scene, x, y, this.height / 2); // Assuming a radius of 100
+    this.createCircleOfInfluence(scene, x, y, this.height); // Assuming a radius of 100
   }
 
   createCircleOfInfluence(
@@ -88,7 +88,11 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     if (this.circleOfInfluence) {
       this.circleOfInfluence.clear();
       this.circleOfInfluence.lineStyle(1, 0xffffff, 1);
-      this.circleOfInfluence.strokeCircle(x + this.width/2, y + this.height/2, this.height / 2); // Assuming a fixed radius
+      this.circleOfInfluence.strokeCircle(
+        x + this.width / 2,
+        y + this.height / 2,
+        this.height / 2
+      ); // Assuming a fixed radius
       this.circleOfInfluence.lineStyle(1, 0x22ffff, 1);
       this.circleOfInfluence.strokeRectShape(
         new Phaser.Geom.Rectangle(x, y, this.width, this.height)
@@ -105,16 +109,15 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     this.hp.currentValue = newHealth;
   }
   update() {
+    this.hp.currentValue = this.health;
     this.hp.draw();
     this.hp.setScale(2, 2);
-    this.hp.setPosition(this.x + (this.width>>1), this.y - this.height);
+    this.hp.setPosition(this.x + (this.width >> 1), this.y - this.height);
 
     this.DEBUGTEXT.setPosition(this.x, this.y + this.height);
     this.DEBUGTEXT.setText(
       `[${this.player.name}]\n
-      ${Math.floor(
-        this.player.castleHealth
-      )}`
+      ${Math.floor(this.player.castleHealth)}`
     );
     this.DEBUGTEXT.depth = 2;
     this.renderCircleOfInfluence(this.x, this.y);

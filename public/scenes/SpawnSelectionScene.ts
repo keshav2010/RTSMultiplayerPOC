@@ -216,7 +216,6 @@ export class SpawnSelectionScene extends BaseScene {
     this.controls = new Phaser.Cameras.Controls.SmoothedKeyControl(
       controlConfig
     );
-
     this.AddInputEvent(
       "wheel",
       (

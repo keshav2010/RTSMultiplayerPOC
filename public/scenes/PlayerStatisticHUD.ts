@@ -4,8 +4,7 @@ import { PacketType } from "../../common/PacketType";
 
 const { SoldierType } = require("../../common/SoldierType");
 import $ from "jquery";
-import { GameScene } from "./GameScene";
-import SessionStateClientHelpers from "../helpers/SessionStateClientHelpers";
+import { DataKey as GameSceneDataKey, GameScene, Textures } from "./GameScene";
 import { NetworkManager } from "../NetworkManager";
 import { PlayerState } from "../../gameserver/schema/PlayerState";
 import { BaseSoldier } from "../soldiers/BaseSoldier";
@@ -15,20 +14,26 @@ const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
   strokeThickness: 4,
   fontSize: 16,
   stroke: "#000000",
-  fontFamily: 'Helvetica',
+  fontFamily: "Helvetica",
 };
 export class PlayerStatisticHUD extends BaseScene {
   constructor() {
     super(CONSTANT.SCENES.HUD_SCORE);
   }
   preload() {
-    this.load.image("playbutton", "../assets/playbutton.png");
-    this.load.image("exitbutton", "../assets/exitbutton.png");
-    this.load.image("spearman", "../assets/spearman.png");
-    this.load.image("knight", "../assets/knight.png");
+    this.load.image(Textures.PLAY_BUTTON, "../assets/playbutton.png");
+    this.load.image(Textures.EXIT_BUTTON, "../assets/exitbutton.png");
+    this.load.image(Textures.SPEARMAN, "../assets/spearman.png");
+    this.load.image(Textures.KNIGHT, "../assets/knight.png");
 
-    this.load.image("soldierButton", "../assets/sprite.png");
-    this.load.image("track", "../assets/track.png");
+    this.load.image(Textures.SOLDIER_BUTTON, "../assets/sprite.png");
+    this.load.image(Textures.TRACK, "../assets/track.png");
+    this.load.image(
+      Textures.CAPTUREFLAG_BUTTON,
+      "../assets/newCaptureFlagButton.png"
+    );
+    this.load.image(Textures.CAPTUREFLAG, "../assets/captureFlag.png");
+
     this.load.spritesheet("bar", "../assets/bar.png", {
       frameWidth: 44,
       frameHeight: 22,
@@ -84,11 +89,58 @@ export class PlayerStatisticHUD extends BaseScene {
       )
     );
 
-    this.AddObject(this.add.image(900, 40, "exitbutton"))
+    const exitButton = this.AddObject(
+      this.add.image(900, 40, Textures.EXIT_BUTTON),
+      "obj_exitbutton"
+    )
       .setInteractive()
-      .on("pointerdown", async () => {
-        await networkManager.disconnectGameServer();
+      .on("pointerover", () => {
+        this.GetObject<Phaser.GameObjects.Image>("obj_exitbutton")!.setScale(
+          1.5
+        );
+      })
+      .on("pointerdown", () => {
+        networkManager.disconnectGameServer();
+      })
+      .on("pointerout", () => {
+        this.GetObject<Phaser.GameObjects.Image>("obj_exitbutton")!.setScale(1);
       });
+
+    const captureFlagButton = this.AddObject(
+      this.add.image(940, 40, Textures.CAPTUREFLAG_BUTTON),
+      "obj_newCaptureFlagButton"
+    )
+      .setInteractive()
+      .on("pointerover", () => {
+        this.GetObject<Phaser.GameObjects.Image>(
+          "obj_newCaptureFlagButton"
+        )!.setScale(1.5);
+      })
+      .on("pointerout", () => {
+        this.GetObject<Phaser.GameObjects.Image>(
+          "obj_newCaptureFlagButton"
+        )!.setScale(1);
+      })
+      .on("pointerdown", (eventType: any) => {
+        const buttonPressed = eventType.button;
+        if (buttonPressed !== 0) {
+          return;
+        }
+        const gameScene = this.scene.get(CONSTANT.SCENES.GAME);
+        const flagPlaceholderData = gameScene.data.get(GameSceneDataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER);
+        gameScene.data.set(GameSceneDataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER, {
+          visibility: !(flagPlaceholderData?.visibility || false),
+        });
+        console.log(`setting flagPlaceholderData to:`, gameScene.data.get(GameSceneDataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER));
+      });
+
+    Phaser.Actions.GridAlign([exitButton, captureFlagButton], {
+      width: 640,
+      cellHeight: 64,
+      cellWidth: 64,
+      x: 900,
+      y: 50,
+    });
 
     // TODO: optimise
     gameScene.AddSceneEvent(
@@ -119,7 +171,7 @@ export class PlayerStatisticHUD extends BaseScene {
         }
 
         const playerSoldiersGameObject = gameScene.data.get(
-          "playerSoldiersGameObject"
+          GameSceneDataKey.SOLDIERS_PHASER_OBJECTS
         ) as Map<string, Map<string, BaseSoldier>>;
         const soldiersPhaserObjectMap = playerSoldiersGameObject.get(
           playerObject.id
@@ -140,7 +192,10 @@ export class PlayerStatisticHUD extends BaseScene {
       this.add.text(50, 110, "Soldiers Queued: 0", textStyle),
       "obj_text_soldiersQueued"
     );
-    this.AddObject(this.add.text(50, 140, "Next Spawn In: 0", textStyle), "obj_spawnETA");
+    this.AddObject(
+      this.add.text(50, 140, "Next Spawn In: 0", textStyle),
+      "obj_spawnETA"
+    );
 
     gameScene.AddSceneEvent(
       PacketType.ByServer.SOLDIER_SPAWN_REQUEST_UPDATED,
@@ -190,9 +245,9 @@ export class PlayerStatisticHUD extends BaseScene {
     gameScene.AddSceneEvent(
       PacketType.ByServer.SOLDIER_SPAWN_SCHEDULED,
       ({ playerId, queueSize }: { playerId: string; queueSize: number }) => {
-        this.GetObject<Phaser.GameObjects.Text>("obj_text_soldiersQueued")?.setText(
-          `Soldiers Queued: ${queueSize}`
-        );
+        this.GetObject<Phaser.GameObjects.Text>(
+          "obj_text_soldiersQueued"
+        )?.setText(`Soldiers Queued: ${queueSize}`);
       }
     );
 

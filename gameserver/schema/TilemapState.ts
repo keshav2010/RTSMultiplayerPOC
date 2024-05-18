@@ -83,19 +83,22 @@ export class TilemapState extends Schema {
     let minDistance = TilemapState.TILE_INFLUENCE_DISTANCE;
 
     for (const player of players) {
-      const castlePosition = player.pos.getVector();
+      const captureFlagPos = player.captureFlags.map(flag => flag.pos.getVector());
+      const territoryFlagPositions = [player.pos.getVector(), ...captureFlagPos];
 
-      // Convert to tile coordinates
-      castlePosition.x = Math.floor(castlePosition.x / this.tilewidth);
-      castlePosition.y = Math.floor(castlePosition.y / this.tileheight);
+      territoryFlagPositions.forEach((pos) => {
+        // Convert to tile coordinates
+        pos.x = Math.floor(pos.x / this.tilewidth);
+        pos.y = Math.floor(pos.y / this.tileheight);
 
-      const tilePos = this.get2DIndex(tileIndex);
+        const tilePos = this.get2DIndex(tileIndex);
 
-      const distanceFromTile = castlePosition.sub(tilePos).len();
-      if (distanceFromTile >= minDistance) continue;
+        const distanceFromTile = pos.sub(tilePos).len();
+        if (distanceFromTile >= minDistance) return;
 
-      minDistance = distanceFromTile;
-      ownerId = player.id;
+        minDistance = distanceFromTile;
+        ownerId = player.id;
+      });
     }
     return ownerId;
   }
