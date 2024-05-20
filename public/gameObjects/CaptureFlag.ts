@@ -1,3 +1,7 @@
+import {
+  CaptureFlagState,
+  CaptureFlagStatus,
+} from "../../gameserver/schema/CaptureFlagState";
 import { PlayerState } from "../../gameserver/schema/PlayerState";
 import LoadingBar from "./LoadingBar";
 import Phaser from "phaser";
@@ -12,49 +16,56 @@ const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
   },
 };
 
-export class PlayerCastle extends Phaser.GameObjects.Sprite {
-  name: string;
-  hp: LoadingBar;
-  DEBUGTEXT: Phaser.GameObjects.Text;
+export class CaptureFlag extends Phaser.GameObjects.Sprite {
+  player: PlayerState;
+  hp?: LoadingBar;
+  DEBUGTEXT?: Phaser.GameObjects.Text;
   health: number;
+  id!: string;
+  flagState: CaptureFlagStatus;
   circleOfInfluence: Phaser.GameObjects.Graphics | undefined;
   circleAnimation: Phaser.Tweens.Tween | undefined;
 
+  isPlaceholder: boolean = true;
   constructor(
     scene: Phaser.Scene,
     x: number,
     y: number,
+    id: string,
     texture: string | Phaser.Textures.Texture,
     frame: number,
     player: PlayerState,
+    flag?: CaptureFlagState | null
   ) {
     super(scene, x, y, texture, frame);
-    this.health = player?.castleHealth || 100;
+
+    this.isPlaceholder = flag == undefined ? true : false;
+    this.flagState = flag?.flagState || CaptureFlagStatus.IN_PROGRESS;
+    this.id = id;
+    this.player = player;
+    this.health = flag?.health || 100;
+    this.setOrigin(0.5);
     scene.add.existing(this);
-    this.setOrigin(0);
     scene.events.on("update", this.update, this);
     this.setPosition(x, y);
-    this.scale = 1;
-    this.hp = new LoadingBar(scene, this);
-    this.name = player.name;
-    this.DEBUGTEXT = scene.add.text(
-      x + this.width,
-      y + this.height * 2,
-      `${player.name} \n
-      health:${player.castleHealth}`,
-      textStyle
-    );
+
+    if (!this.isPlaceholder) {
+      this.hp = new LoadingBar(scene, this);
+      this.DEBUGTEXT = scene.add.text(
+        x + this.width,
+        y + this.height * 2,
+        `${this.player.name}`,
+        textStyle
+      );
+    }
 
     this.on("destroy", () => {
       scene.events.off("update", this.update, this);
-      this.hp.destroy(true);
-      this.DEBUGTEXT.destroy(true);
-      if (this.circleOfInfluence) this.circleOfInfluence.destroy(true);
-      if (this.circleAnimation) this.circleAnimation.destroy();
+      this.hp?.destroy(true);
+      this.DEBUGTEXT?.destroy(true);
+      this.circleOfInfluence?.destroy(true);
+      this.circleAnimation?.destroy();
     });
-
-    // Create the circle of influence
-    this.createCircleOfInfluence(scene, x, y, this.height); // Assuming a radius of 100
   }
 
   createCircleOfInfluence(
@@ -64,17 +75,16 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     radius: number
   ) {
     this.circleOfInfluence = scene.add.graphics();
-    this.circleOfInfluence.lineStyle(3, 0xffffff); // Thickness, color, alpha
+    this.circleOfInfluence.lineStyle(3, 0xffffff);
     this.circleOfInfluence.strokeCircle(
       x + this.width / 2,
       y + this.height / 2,
       radius
     );
 
-    // Animate the circle
     this.circleAnimation = scene.tweens.add({
       targets: this.circleOfInfluence,
-      alpha: 0.5, // Change the alpha to animate the circle
+      alpha: 0.5,
       duration: 1000,
       yoyo: true,
       repeat: -1,
@@ -89,7 +99,7 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
         x + this.width / 2,
         y + this.height / 2,
         this.height / 2
-      ); // Assuming a fixed radius
+      );
       this.circleOfInfluence.lineStyle(1, 0x22ffff, 1);
       this.circleOfInfluence.strokeRectShape(
         new Phaser.Geom.Rectangle(x, y, this.width, this.height)
@@ -103,19 +113,15 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
   }
   setHealth(newHealth: number) {
     this.health = newHealth;
-    this.hp.setValue(newHealth);
+    this.hp?.setValue(newHealth);
   }
   update() {
-    this.hp.draw();
-    this.hp.setScale(2, 2);
-    this.hp.setPosition(this.x + (this.width >> 1), this.y - this.height);
+    this.hp?.draw();
+    this.hp?.setScale(2, 2);
+    this.hp?.setPosition(this.x + (this.width >> 1), this.y - this.height);
 
-    this.DEBUGTEXT.setPosition(this.x, this.y + this.height);
-    this.DEBUGTEXT.setText(
-      `[${this.name}]\n
-      ${Math.floor(this.hp.currentValue)}`
-    );
-    this.DEBUGTEXT.depth = 2;
+    this.DEBUGTEXT?.setPosition(this.x, this.y + this.height);
+    this.DEBUGTEXT?.setDepth(2);
     this.renderCircleOfInfluence(this.x, this.y);
   }
 }

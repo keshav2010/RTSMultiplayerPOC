@@ -319,10 +319,7 @@ export class SpawnSelectionScene extends BaseScene {
         spawnFlag.setPosition(x, y);
         spawnFlag.setHealth(2);
       } else {
-        const castle = new PlayerCastle(this, x, y, "castle", null, {
-          health: playerState.castleHealth,
-          player: playerState,
-        });
+        const castle = new PlayerCastle(this, x, y, "castle", 0, playerState);
         this.AddObject(castle, flagKey);
       }
     } catch (error) {

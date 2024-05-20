@@ -88,12 +88,32 @@ export class PlayerState extends Schema implements ISceneItem {
     if (this.captureFlags.length >= 4) {
       return;
     }
+
+    if (this.resources - CaptureFlagState.cost < 0) {
+      return;
+    }
+
+    const tilePos = new SAT.Vector(
+      x / sessionState.tilemap.tileheight,
+      y / sessionState.tilemap.tilewidth
+    );
+    const tileIndex1D = Math.floor(tilePos.y) * sessionState.tilemap.tilemapWidth + Math.floor(tilePos.x);
+    
+    const tileOwner = (sessionState.tilemap.ownershipTilemap1D.at(tileIndex1D));
+
+    // flag can only be placed at uncaptured area
+    if(tileOwner !== 'NONE')
+        return;
+
+    this.resources = this.resources - CaptureFlagState.cost;
     const captureFlag = new CaptureFlagState(x, y);
     this.captureFlags.push(captureFlag);
+    this.resourceGrowthRateHz = this.resourceGrowthRateHz * (1 + 0.2 * this.captureFlags.length);
     sessionState.tilemap.updateOwnershipMap(sessionState.getPlayers());
   }
 
   removeCaptureFlag(flagId: string, sessionState: SessionState) {
+    
     const flagObj = this.captureFlags.findIndex(
       (flag) => flag.flagId === flagId
     );
@@ -101,6 +121,7 @@ export class PlayerState extends Schema implements ISceneItem {
       return;
     }
     this.captureFlags.deleteAt(flagObj);
+    this.resourceGrowthRateHz = this.resourceGrowthRateHz * (1 + 0.2 * this.captureFlags.length);
     sessionState.tilemap.updateOwnershipMap(sessionState.getPlayers());
   }
 
@@ -155,8 +176,10 @@ export class PlayerState extends Schema implements ISceneItem {
       soldier.tick(deltaTime, gameStateManager, sessionState);
     });
 
-    this.resourceGrowthRateHz = this.resourceGrowthRateHz - 0.1 * deltaTime;
-    if (this.resourceGrowthRateHz < 0) this.resourceGrowthRateHz = 0.2;
+    this.resourceGrowthRateHz = Math.max(
+      this.resourceGrowthRateHz - 0.1 * deltaTime,
+      0.2 * this.captureFlags.length
+    );
   }
 
   public updatePosition(x: number, y: number) {

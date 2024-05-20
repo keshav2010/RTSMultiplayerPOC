@@ -8,6 +8,7 @@ export enum CaptureFlagStatus {
 }
 export class CaptureFlagState extends Schema {
   // Key : sessionId
+  static cost : number = 30;
   @type("string") flagId = nanoid();
   @type("number") health: number = 100;
   @type(VectorState) pos = new VectorState();

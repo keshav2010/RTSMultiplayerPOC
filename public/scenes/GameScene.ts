@@ -11,6 +11,7 @@ import { Spearman } from "../soldiers/Spearman";
 import { BaseScene } from "./BaseScene";
 import SpinnerPlugin from "phaser3-rex-plugins/templates/spinner/spinner-plugin.js";
 import $ from "jquery";
+import { CaptureFlag } from "../gameObjects/CaptureFlag";
 
 var selectorColor = 0xffff00;
 var selectorThickness = 2;
@@ -551,16 +552,12 @@ export class GameScene extends BaseScene {
       }
     );
 
-    this.AddObject<Phaser.GameObjects.Sprite>(
-      this.add.sprite(0, 0, Textures.CAPTUREFLAG).setVisible(false),
-      "obj_captureFlagPlaceholder"
-    );
     
     this.data.events.on(`setdata-${DataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER}`,
       (_parent: any, value: { visibility: boolean }) => {
         this.GetObject<Phaser.GameObjects.Sprite>(
           "obj_captureFlagPlaceholder"
-        )?.setVisible(value.visibility);
+        )?.setVisible(value.visibility || false);
       }
     );
     this.data.events.on(`changedata-${DataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER}`,
@@ -572,7 +569,7 @@ export class GameScene extends BaseScene {
 
         this.GetObject<Phaser.GameObjects.Sprite>(
           "obj_captureFlagPlaceholder"
-        )?.setVisible(value.visibility);
+        )?.setVisible(value.visibility || false);
       }
     );
 
@@ -589,6 +586,17 @@ export class GameScene extends BaseScene {
       return;
     }
 
+    const flagPlaceholder = new CaptureFlag(
+      this,
+      0,
+      0,
+      "placeholder",
+      Textures.CAPTUREFLAG,
+      0,
+      player
+    );
+    flagPlaceholder.setVisible(false);
+    this.AddObject<Phaser.GameObjects.Sprite>(flagPlaceholder,"obj_captureFlagPlaceholder");
     this.AddStateChangeListener(
       player!.spawnRequestQueue.onChange((item, key) => {
         this.events.emit(PacketType.ByServer.SOLDIER_SPAWN_SCHEDULED, {
@@ -600,12 +608,19 @@ export class GameScene extends BaseScene {
 
     this.AddStateChangeListener(
       player!.captureFlags.onAdd((newFlag) => {
-        this.AddObject(
-          this.add.sprite(newFlag.pos.x, newFlag.pos.y, Textures.CAPTUREFLAG),
-          `obj_captureFlag_${player.id}`
+        const flag = new CaptureFlag(
+          this,
+          newFlag.pos.x,
+          newFlag.pos.y,
+          newFlag.flagId,
+          Textures.CAPTUREFLAG,
+          0,
+          player,
+          newFlag
         );
+        this.AddObject(flag, `obj_captureFlag_${player.id}`);
       })
-    )
+    );
 
     // register soldier creation/removal listeners for eaech player.
     state.players.forEach((player) => {
@@ -724,11 +739,8 @@ export class GameScene extends BaseScene {
           player.pos.x,
           player.pos.y,
           Textures.CASTLE,
-          null,
-          {
-            health: 500,
-            player: player,
-          }
+          0,
+          player
         ),
         objKey
       );
