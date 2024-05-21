@@ -19,8 +19,7 @@ const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
 export class CaptureFlag extends Phaser.GameObjects.Sprite {
   player: PlayerState;
   hp?: LoadingBar;
-  DEBUGTEXT?: Phaser.GameObjects.Text;
-  health: number;
+  debugText?: Phaser.GameObjects.Text;
   id!: string;
   flagState: CaptureFlagStatus;
   circleOfInfluence: Phaser.GameObjects.Graphics | undefined;
@@ -43,15 +42,17 @@ export class CaptureFlag extends Phaser.GameObjects.Sprite {
     this.flagState = flag?.flagState || CaptureFlagStatus.IN_PROGRESS;
     this.id = id;
     this.player = player;
-    this.health = flag?.health || 100;
     this.setOrigin(0.5);
     scene.add.existing(this);
     scene.events.on("update", this.update, this);
     this.setPosition(x, y);
 
     if (!this.isPlaceholder) {
-      this.hp = new LoadingBar(scene, this);
-      this.DEBUGTEXT = scene.add.text(
+      this.hp = new LoadingBar(scene, this, {
+        maxValue: 100,
+        currentValue: flag?.health || 100,
+      });
+      this.debugText = scene.add.text(
         x + this.width,
         y + this.height * 2,
         `${this.player.name}`,
@@ -62,7 +63,7 @@ export class CaptureFlag extends Phaser.GameObjects.Sprite {
     this.on("destroy", () => {
       scene.events.off("update", this.update, this);
       this.hp?.destroy(true);
-      this.DEBUGTEXT?.destroy(true);
+      this.debugText?.destroy(true);
       this.circleOfInfluence?.destroy(true);
       this.circleAnimation?.destroy();
     });
@@ -112,16 +113,13 @@ export class CaptureFlag extends Phaser.GameObjects.Sprite {
     this.renderCircleOfInfluence(x, y);
   }
   setHealth(newHealth: number) {
-    this.health = newHealth;
     this.hp?.setValue(newHealth);
   }
   update() {
     this.hp?.draw();
     this.hp?.setScale(2, 2);
-    this.hp?.setPosition(this.x + (this.width >> 1), this.y - this.height);
 
-    this.DEBUGTEXT?.setPosition(this.x, this.y + this.height);
-    this.DEBUGTEXT?.setDepth(2);
+    this.debugText?.setDepth(2);
     this.renderCircleOfInfluence(this.x, this.y);
   }
 }

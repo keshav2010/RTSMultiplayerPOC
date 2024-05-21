@@ -113,7 +113,7 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     this.DEBUGTEXT.setPosition(this.x, this.y + this.height);
     this.DEBUGTEXT.setText(
       `[${this.name}]\n
-      ${Math.floor(this.hp.currentValue)}`
+      ${Math.floor(this.hp.getValue())}`
     );
     this.DEBUGTEXT.depth = 2;
     this.renderCircleOfInfluence(this.x, this.y);

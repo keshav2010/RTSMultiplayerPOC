@@ -55,7 +55,6 @@ $(() => {
 type soldierIdToPhaserMap = Map<string, BaseSoldier>;
 type PlayerId = string;
 
-
 export const Textures = {
   PLAY_BUTTON: "playbutton",
   EXIT_BUTTON: "exitbutton",
@@ -66,15 +65,15 @@ export const Textures = {
   CASTLE: "castle",
   GROUNDTILES: "groundtiles",
   CAPTUREFLAG: "captureFlag",
-  CAPTUREFLAG_BUTTON: "img_captureFlagButton"
+  CAPTUREFLAG_BUTTON: "img_captureFlagButton",
 } as const;
 
 export const DataKey = {
-  SELECTED_SOLDIERS_MAP: 'selectedSoldiersMap',
-  SOLDIERS_PHASER_OBJECTS: 'playerSoldiersGameObject',
-  TILEMAP: 'map1',
-  SHOW_CAPTURE_FLAG_PLACEHOLDER: 'showCaptureFlagPlaceholder'
-}
+  SELECTED_SOLDIERS_MAP: "selectedSoldiersMap",
+  SOLDIERS_PHASER_OBJECTS: "playerSoldiersGameObject",
+  TILEMAP: "map1",
+  SHOW_CAPTURE_FLAG_PLACEHOLDER: "showCaptureFlagPlaceholder",
+};
 
 enum PointerMode {
   DEFAULT = "default",
@@ -83,11 +82,8 @@ enum PointerMode {
 
 interface IPointerModeAction {
   [key: string]: {
-    [key: string]: (
-      scene: GameScene,
-      pointer: Phaser.Input.Pointer
-    ) => void
-  }
+    [key: string]: (scene: GameScene, pointer: Phaser.Input.Pointer) => void;
+  };
 }
 
 const PointerModeAction: IPointerModeAction = {
@@ -287,14 +283,13 @@ const PointerModeAction: IPointerModeAction = {
   },
 };
 
-
 export class GameScene extends BaseScene {
   canvasWidth: number;
   canvasHeight: number;
   controls?: Phaser.Cameras.Controls.SmoothedKeyControl;
   rexSpinner: SpinnerPlugin.Spinner | undefined;
-  
-  pointerMode : PointerMode = PointerMode.DEFAULT;
+
+  pointerMode: PointerMode = PointerMode.DEFAULT;
   constructor() {
     super(CONSTANT.SCENES.GAME);
     this.canvasWidth = 1962;
@@ -302,7 +297,10 @@ export class GameScene extends BaseScene {
   }
 
   preload() {
-    this.data.set(DataKey.SELECTED_SOLDIERS_MAP, new Map<string, BaseSoldier>());
+    this.data.set(
+      DataKey.SELECTED_SOLDIERS_MAP,
+      new Map<string, BaseSoldier>()
+    );
     this.data.set(
       DataKey.SOLDIERS_PHASER_OBJECTS,
       new Map<PlayerId, soldierIdToPhaserMap>()
@@ -348,10 +346,9 @@ export class GameScene extends BaseScene {
   onSoldierRemoved(soldierId: string, playerId: string) {
     try {
       this.DestroyStateChangeListener(soldierId);
-      const selectedSoldiersMap = this.data.get(DataKey.SELECTED_SOLDIERS_MAP) as Map<
-        string,
-        BaseSoldier
-      >;
+      const selectedSoldiersMap = this.data.get(
+        DataKey.SELECTED_SOLDIERS_MAP
+      ) as Map<string, BaseSoldier>;
       const playerSoldiersGameObject = this.data.get(
         DataKey.SOLDIERS_PHASER_OBJECTS
       ) as Map<PlayerId, soldierIdToPhaserMap>;
@@ -505,15 +502,15 @@ export class GameScene extends BaseScene {
     });
 
     this.AddInputEvent("pointerdown", (pointer: Phaser.Input.Pointer) => {
-      PointerModeAction[this.pointerMode]['pointerdown'](this, pointer);
+      PointerModeAction[this.pointerMode]["pointerdown"](this, pointer);
     });
 
     this.AddInputEvent("pointerup", (pointer: Phaser.Input.Pointer) => {
-      PointerModeAction[this.pointerMode]['pointerup'](this, pointer);
+      PointerModeAction[this.pointerMode]["pointerup"](this, pointer);
     });
 
     this.AddInputEvent("pointermove", (pointer: any) => {
-      PointerModeAction[this.pointerMode]['pointermove'](this, pointer);
+      PointerModeAction[this.pointerMode]["pointermove"](this, pointer);
     });
 
     this.scene.launch(CONSTANT.SCENES.HUD_SCORE);
@@ -552,17 +549,17 @@ export class GameScene extends BaseScene {
       }
     );
 
-    
-    this.data.events.on(`setdata-${DataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER}`,
+    this.data.events.on(
+      `setdata-${DataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER}`,
       (_parent: any, value: { visibility: boolean }) => {
         this.GetObject<Phaser.GameObjects.Sprite>(
           "obj_captureFlagPlaceholder"
         )?.setVisible(value.visibility || false);
       }
     );
-    this.data.events.on(`changedata-${DataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER}`,
+    this.data.events.on(
+      `changedata-${DataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER}`,
       (_: any, value: any) => {
-
         if (value.visibility === true)
           this.pointerMode = PointerMode.FLAG_PLACEMENT;
         else this.pointerMode = PointerMode.DEFAULT;
@@ -580,7 +577,8 @@ export class GameScene extends BaseScene {
       state,
       networkManager.getClientId()!
     );
-    if (!player || !networkManager.room) {
+    const players = SessionStateClientHelpers.getPlayers(state);
+    if (!player || !networkManager.room || !players || players.length === 0) {
       console.error(`Client not connected to server anymore`);
       this.scene.start(CONSTANT.SCENES.MENU);
       return;
@@ -596,7 +594,10 @@ export class GameScene extends BaseScene {
       player
     );
     flagPlaceholder.setVisible(false);
-    this.AddObject<Phaser.GameObjects.Sprite>(flagPlaceholder,"obj_captureFlagPlaceholder");
+    this.AddObject<Phaser.GameObjects.Sprite>(
+      flagPlaceholder,
+      "obj_captureFlagPlaceholder"
+    );
     this.AddStateChangeListener(
       player!.spawnRequestQueue.onChange((item, key) => {
         this.events.emit(PacketType.ByServer.SOLDIER_SPAWN_SCHEDULED, {
@@ -607,23 +608,23 @@ export class GameScene extends BaseScene {
     );
 
     this.AddStateChangeListener(
-      player!.captureFlags.onAdd((newFlag) => {
+      player?.captureFlags.onAdd((newFlag) => {
         const flag = new CaptureFlag(
           this,
           newFlag.pos.x,
           newFlag.pos.y,
-          newFlag.flagId,
+          newFlag.id,
           Textures.CAPTUREFLAG,
           0,
           player,
           newFlag
         );
-        this.AddObject(flag, `obj_captureFlag_${player.id}`);
+        this.AddObject(flag, `obj_captureFlag_${player.id}_${newFlag.id}`);
       })
     );
 
     // register soldier creation/removal listeners for eaech player.
-    state.players.forEach((player) => {
+    players.forEach((player) => {
       this.AddStateChangeListener(
         player.soldiers.onAdd((soldier, key) => {
           this.onSoldierAdded(soldier, player);
@@ -653,6 +654,46 @@ export class GameScene extends BaseScene {
           this.DestroyStateChangeListener(`currentPos-${soldierId}`);
 
           this.onSoldierRemoved(soldierId, player.id);
+        })
+      );
+
+      // new capture flag added
+      this.AddStateChangeListener(
+        player.captureFlags.onAdd((newFlag) => {
+          // register listener for health change
+          const cleanupMethod = newFlag.onChange(() => {
+            const healthValue = newFlag.health;
+            const flagObjectKey = `obj_captureFlag_${player.id}_${newFlag.id}`;
+            const flagObject = this.GetObject<CaptureFlag>(flagObjectKey);
+            flagObject?.setHealth(healthValue);
+          });
+          this.AddStateChangeListener(cleanupMethod, `statechange_captureFlag_${player.id}_${newFlag.id}`);
+
+          const flag = new CaptureFlag(
+            this,
+            newFlag.pos.x,
+            newFlag.pos.y,
+            newFlag.id,
+            Textures.CAPTUREFLAG,
+            0,
+            player,
+            newFlag
+          );
+          this.AddObject(flag, `obj_captureFlag_${player.id}_${newFlag.id}`);
+        })
+      );
+
+      // capture flag removed/destroyed
+      this.AddStateChangeListener(
+        player.captureFlags.onRemove((newFlag) => {
+          const flag = this.GetObject<CaptureFlag>(
+            `obj_captureFlag_${player.id}_${newFlag.id}`
+          );
+          if (!flag) return;
+          this.DestroyObject(flag);
+          this.DestroyStateChangeListener(
+            `statechange_captureFlag_${player.id}_${newFlag.id}`
+          );
         })
       );
     });

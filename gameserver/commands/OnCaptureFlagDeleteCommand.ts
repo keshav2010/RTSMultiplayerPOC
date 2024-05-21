@@ -20,7 +20,7 @@ export class OnCaptureFlagDeleteCommand extends Command<
       const sessionState = this.state;
       gameManager
         ?.getPlayer(client.id)
-        ?.removeCaptureFlag(message.flagId, sessionState);
+        ?.removeCaptureFlag(message.flagId, sessionState, gameManager);
     } catch (error) {
       console.error(error);
     }

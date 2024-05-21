@@ -97,31 +97,36 @@ export class PlayerState extends Schema implements ISceneItem {
       x / sessionState.tilemap.tileheight,
       y / sessionState.tilemap.tilewidth
     );
-    const tileIndex1D = Math.floor(tilePos.y) * sessionState.tilemap.tilemapWidth + Math.floor(tilePos.x);
-    
-    const tileOwner = (sessionState.tilemap.ownershipTilemap1D.at(tileIndex1D));
+    const tileIndex1D =
+      Math.floor(tilePos.y) * sessionState.tilemap.tilemapWidth +
+      Math.floor(tilePos.x);
+
+    const tileOwner = sessionState.tilemap.ownershipTilemap1D.at(tileIndex1D);
 
     // flag can only be placed at uncaptured area
-    if(tileOwner !== 'NONE')
-        return;
+    if (tileOwner !== "NONE") return;
 
     this.resources = this.resources - CaptureFlagState.cost;
     const captureFlag = new CaptureFlagState(x, y);
     this.captureFlags.push(captureFlag);
-    this.resourceGrowthRateHz = this.resourceGrowthRateHz * (1 + 0.2 * this.captureFlags.length);
+    this.resourceGrowthRateHz =
+      this.resourceGrowthRateHz * (1 + 0.2 * this.captureFlags.length);
     sessionState.tilemap.updateOwnershipMap(sessionState.getPlayers());
   }
 
-  removeCaptureFlag(flagId: string, sessionState: SessionState) {
-    
-    const flagObj = this.captureFlags.findIndex(
-      (flag) => flag.flagId === flagId
-    );
+  removeCaptureFlag(
+    flagId: string,
+    sessionState: SessionState,
+    gameManager: GameStateManagerType
+  ) {
+    const flagObj = this.captureFlags.findIndex((flag) => flag.id === flagId);
     if (flagObj < 0) {
       return;
     }
+    gameManager.scene.removeSceneItem(flagId);
     this.captureFlags.deleteAt(flagObj);
-    this.resourceGrowthRateHz = this.resourceGrowthRateHz * (1 + 0.2 * this.captureFlags.length);
+    this.resourceGrowthRateHz =
+      this.resourceGrowthRateHz * (1 + 0.2 * this.captureFlags.length);
     sessionState.tilemap.updateOwnershipMap(sessionState.getPlayers());
   }
 
@@ -169,7 +174,9 @@ export class PlayerState extends Schema implements ISceneItem {
     this.resources += this.resourceGrowthRateHz * deltaTime;
     this.processSpawnRequest(deltaTime, gameStateManager.scene);
 
-    this.captureFlags.forEach((flagState) => flagState.tick(deltaTime));
+    this.captureFlags.forEach((flagState) =>
+      flagState.tick(deltaTime, sessionState)
+    );
 
     //TODO: tick each soldier
     this.soldiers.forEach((soldier) => {

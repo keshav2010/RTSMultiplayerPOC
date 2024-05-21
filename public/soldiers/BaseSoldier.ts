@@ -76,7 +76,7 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     });
   }
   setHealth(newHealth: number) {
-    this.hp.currentValue = newHealth;
+    this.hp?.setValue(newHealth);
   }
   setServerPosition(x: number, y: number) {
     this.setData("serverPosition", { x, y });
@@ -113,7 +113,7 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     this.DEBUGTEXT.setPosition(this.x, this.y + 40);
     this.DEBUGTEXT.setText(
       `${soldierState?.currentState}
-      health:${this.hp.currentValue}`
+      health:${this.hp.getValue()}`
     );
 
     // render soldier's circular hitbox on server

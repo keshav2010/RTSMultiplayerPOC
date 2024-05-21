@@ -25,18 +25,15 @@ export class SessionState extends Schema {
     x: number,
     y: number
   ) {
-    this.players.set(
-      sessionId,
-      new PlayerState(`Player_${name}`, x, y, sessionId)
-    );
+    this.players.set(sessionId, new PlayerState(`${name}`, x, y, sessionId));
     return this.players.get(sessionId);
   }
   public getPlayer(sessionId: string) {
     return this.players.get(sessionId);
   }
   public getPlayers() {
-    let playersArr= [];
-    for(let player of this.players.entries()) {
+    let playersArr = [];
+    for (let player of this.players.entries()) {
       playersArr.push(player[1]);
     }
     return playersArr;
@@ -48,6 +45,11 @@ export class SessionState extends Schema {
     }
 
     player.removeAllSoldiers(gameManager);
+    player.captureFlags.forEach((flag) => {
+      player.removeCaptureFlag(flag.id, this, gameManager);
+    });
+    player.captureFlags.clear();
+
     this.players.delete(sessionId);
   }
   public countReadyPlayers() {
