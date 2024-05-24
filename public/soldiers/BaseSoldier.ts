@@ -4,9 +4,13 @@ import LoadingBar from "../gameObjects/LoadingBar";
 import SAT from "sat";
 import { NetworkManager } from "../NetworkManager";
 import { BackgroundHighlight } from "../gameObjects/BackgroundHighlight";
+import { SelectableSceneEntity } from "../scenes/BaseScene";
 const GAMEEVENTS = CONSTANTS.GAMEEVENTS;
 
-export class BaseSoldier extends Phaser.GameObjects.Sprite {
+export class BaseSoldier
+  extends Phaser.GameObjects.Sprite
+  implements SelectableSceneEntity
+{
   readonly id: string;
   initialParam: any;
   color: Phaser.Math.Vector3;
@@ -169,7 +173,6 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
   }
   markSelected() {
     this.alpha = 0.5;
-
     //emit scene wide event
     this.scene.events.emit(GAMEEVENTS.SOLDIER_SELECTED, this);
   }

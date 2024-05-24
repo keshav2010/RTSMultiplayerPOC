@@ -30,7 +30,6 @@ export class Scene extends Quadtree<TypeQuadtreeItem> {
 
   removeSceneItem(itemId: string) {
     if (!this.sceneItemMap.has(itemId)) {
-      console.log(`item ${itemId} not found in scene`);
       return;
     }
     const item = this.sceneItemMap.get(itemId)!;

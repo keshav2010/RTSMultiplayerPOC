@@ -137,10 +137,7 @@ export class SessionLobbyScene extends BaseScene {
 
     this.AddStateChangeListener(
       state?.players.onRemove((player) => {
-        const text = this.GetObject<Phaser.GameObjects.Text>(
-          `obj_text_player_joined_${player.id}`
-        );
-        this.DestroyObject(text!);
+        this.DestroyObjectById(`obj_text_player_joined_${player.id}`);
       })!
     );
 
@@ -150,7 +147,7 @@ export class SessionLobbyScene extends BaseScene {
         this.GetObject<Phaser.GameObjects.Text>("obj_mapLoadStatus")?.setText(
           `Generated Tilemap.`
         );
-        this.DestroyObject(this.GetObject('obj_tilemapLoadingSpinner') as Spinner);
+        this.DestroyObjectById(`obj_tilemapLoadingSpinner`);
         networkManager.sendEventToServer(
           PacketType.ByClient.CLIENT_MAP_LOADED,
           {

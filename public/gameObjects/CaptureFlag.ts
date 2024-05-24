@@ -3,8 +3,10 @@ import {
   CaptureFlagStatus,
 } from "../../gameserver/schema/CaptureFlagState";
 import { PlayerState } from "../../gameserver/schema/PlayerState";
+import { SelectableSceneEntity } from "../scenes/BaseScene";
 import LoadingBar from "./LoadingBar";
 import Phaser from "phaser";
+import CONSTANTS from "../constant";
 
 const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
   color: "#fff",
@@ -16,7 +18,10 @@ const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
   },
 };
 
-export class CaptureFlag extends Phaser.GameObjects.Sprite {
+export class CaptureFlag
+  extends Phaser.GameObjects.Sprite
+  implements SelectableSceneEntity
+{
   player: PlayerState;
   hp?: LoadingBar;
   debugText?: Phaser.GameObjects.Text;
@@ -53,8 +58,8 @@ export class CaptureFlag extends Phaser.GameObjects.Sprite {
         currentValue: flag?.health || 100,
       });
       this.debugText = scene.add.text(
-        x + this.width,
-        y + this.height * 2,
+        x,
+        y + this.height + 5,
         `${this.player.name}`,
         textStyle
       );
@@ -67,6 +72,18 @@ export class CaptureFlag extends Phaser.GameObjects.Sprite {
       this.circleOfInfluence?.destroy(true);
       this.circleAnimation?.destroy();
     });
+  }
+
+  markSelected() {
+    this.setScale(0.5);
+    this.scene?.events?.emit(CONSTANTS.GAMEEVENTS.CAPTURE_FLAG_SELECTED, this);
+  }
+  markUnselected() {
+    this.setAlpha(1);
+    this.scene?.events?.emit(
+      CONSTANTS.GAMEEVENTS.CAPTURE_FLAG_UNSELECTED,
+      this
+    );
   }
 
   createCircleOfInfluence(

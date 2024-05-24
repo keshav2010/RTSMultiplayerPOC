@@ -7,7 +7,7 @@ import $ from "jquery";
 import { DataKey as GameSceneDataKey, GameScene, Textures } from "./GameScene";
 import { NetworkManager } from "../NetworkManager";
 import { PlayerState } from "../../gameserver/schema/PlayerState";
-import { BaseSoldier } from "../soldiers/BaseSoldier";
+import { Spearman } from "../soldiers/Spearman";
 
 const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
   color: "#fff",
@@ -170,15 +170,13 @@ export class PlayerStatisticHUD extends BaseScene {
           return;
         }
 
-        const playerSoldiersGameObject = gameScene.data.get(
-          GameSceneDataKey.SOLDIERS_PHASER_OBJECTS
-        ) as Map<string, Map<string, BaseSoldier>>;
-        const soldiersPhaserObjectMap = playerSoldiersGameObject.get(
-          playerObject.id
+        const soldiers = gameScene.GetObjectsWithKeyPrefix<Spearman>(
+          `obj_spearman_${playerObject.id}_`
         );
-        soldiersPhaserObjectMap?.forEach((soldier, soldierId) => {
+        soldiers.forEach((soldier) => {
           gameScene.onSoldierRemoved(soldier.id, playerObject.id);
         });
+
         soldierCount.setText(
           `Total Soldiers: ${[...state.players.values()].reduce((acc, curr) => {
             acc = acc + curr.soldiers.size;

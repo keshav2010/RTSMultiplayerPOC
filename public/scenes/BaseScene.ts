@@ -8,10 +8,13 @@ import { ETileType, getTileType } from "../../gameserver/schema/TilemapState";
 interface Destroyable {
   destroy: Function;
 }
-type ManagedTypes = Destroyable;
+export interface SelectableSceneEntity {
+  markSelected: () => void;
+  markUnselected: () => void;
+}
 
 export class BaseScene extends Phaser.Scene {
-  objectSet: Map<string, ManagedTypes>;
+  objectMap: Map<string, Destroyable>;
   registeredInputEvents: Set<string>;
   registeredSceneEvents: Set<string>;
 
@@ -26,7 +29,7 @@ export class BaseScene extends Phaser.Scene {
   mapGraphics: Phaser.GameObjects.Graphics | undefined;
   constructor(key: string) {
     super({ key });
-    this.objectSet = new Map();
+    this.objectMap = new Map();
 
     this.registeredInputEvents = new Set<string>();
     this.registeredSceneEvents = new Set<string>();
@@ -95,14 +98,23 @@ export class BaseScene extends Phaser.Scene {
     }
   }
 
-  AddObject<T extends ManagedTypes>(newObject: T, key?: string): T {
+  AddObject<T extends Destroyable>(newObject: T, key?: string): T {
     let mKey = nanoid();
-    this.objectSet.set(key || mKey, newObject);
+    this.objectMap.set(key || mKey, newObject);
     return newObject;
   }
 
-  GetObject<T extends ManagedTypes>(key: string) {
-    return this.objectSet.get(key) as T | undefined;
+  GetObject<T extends Destroyable>(key: string) {
+    return this.objectMap.get(key) as T | undefined;
+  }
+
+  GetObjectsWithKeyPrefix<T extends Destroyable>(key: string): T[] {
+    const objList = [];
+    for (const [objKey, obj] of this.objectMap) {
+      if (!objKey.startsWith(key)) continue;
+      objList.push(obj);
+    }
+    return objList as T[];
   }
 
   AddInputEvent(
@@ -130,19 +142,29 @@ export class BaseScene extends Phaser.Scene {
   }
 
   // Recursively destroy an object, including any children if it's a group
-  DestroyObject<T extends ManagedTypes>(obj: T) {
+  private DestroyObject<T extends Destroyable>(obj?: T) {
     if (!obj) return;
     if ((obj as any)?.type === "Group") obj.destroy(true);
     else obj.destroy();
   }
 
+  DestroyObjectById(id: string) {
+    const exists = this.objectMap.has(id);
+    if (!exists) return exists;
+    const obj = this.objectMap.get(id);
+    if (!obj) return;
+    if ((obj as any)?.type === "Group") obj.destroy(true);
+    else obj.destroy();
+    this.objectMap.delete(id);
+  }
+
   DestroyObjects() {
-    this.objectSet.forEach((obj, key) => {
+    this.objectMap.forEach((obj, key) => {
       console.log(`[Destroy] ${key}`);
       this.DestroyObject(obj);
     });
-    this.objectSet.clear();
-    this.objectSet = new Map();
+    this.objectMap.clear();
+    this.objectMap = new Map();
   }
 
   DestroySceneEvents() {
