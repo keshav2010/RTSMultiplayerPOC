@@ -16,6 +16,17 @@ const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
   stroke: "#000000",
   fontFamily: "Helvetica",
 };
+
+const tooltipTextStyle : Phaser.Types.GameObjects.Text.TextStyle = {
+  color: "#ff0",
+  strokeThickness: 3,
+  fontSize: 14,
+  stroke: "#000000",
+  wordWrap: {
+    width: 250
+  }
+}
+
 export class PlayerStatisticHUD extends BaseScene {
   constructor() {
     super(CONSTANT.SCENES.HUD_SCORE);
@@ -23,9 +34,9 @@ export class PlayerStatisticHUD extends BaseScene {
   preload() {
     this.load.image(Textures.PLAY_BUTTON, "../assets/playbutton.png");
     this.load.image(Textures.EXIT_BUTTON, "../assets/exitbutton.png");
+    this.load.image(Textures.DELETE_BUTTON, "../assets/deletebutton.png");
     this.load.image(Textures.SPEARMAN, "../assets/spearman.png");
     this.load.image(Textures.KNIGHT, "../assets/knight.png");
-
     this.load.image(Textures.SOLDIER_BUTTON, "../assets/sprite.png");
     this.load.image(Textures.TRACK, "../assets/track.png");
     this.load.image(
@@ -89,57 +100,63 @@ export class PlayerStatisticHUD extends BaseScene {
       )
     );
 
-    const exitButton = this.AddObject(
-      this.add.image(900, 40, Textures.EXIT_BUTTON),
-      "obj_exitbutton"
-    )
-      .setInteractive()
-      .on("pointerover", () => {
-        this.GetObject<Phaser.GameObjects.Image>("obj_exitbutton")!.setScale(
-          1.5
-        );
-      })
-      .on("pointerdown", () => {
-        networkManager.disconnectGameServer();
-      })
-      .on("pointerout", () => {
-        this.GetObject<Phaser.GameObjects.Image>("obj_exitbutton")!.setScale(1);
-      });
+    
+    // Setup Tooltip
+    const tooltip = this.AddObject(
+      this.add.text(0, 0, "", tooltipTextStyle).setVisible(false),
+      "text_tooltip"
+    );
 
-    const captureFlagButton = this.AddObject(
-      this.add.image(940, 40, Textures.CAPTUREFLAG_BUTTON),
-      "obj_newCaptureFlagButton"
-    )
-      .setInteractive()
-      .on("pointerover", () => {
-        this.GetObject<Phaser.GameObjects.Image>(
-          "obj_newCaptureFlagButton"
-        )!.setScale(1.5);
-      })
-      .on("pointerout", () => {
-        this.GetObject<Phaser.GameObjects.Image>(
-          "obj_newCaptureFlagButton"
-        )!.setScale(1);
-      })
-      .on("pointerdown", (eventType: any) => {
+    const exitButton = this.addButton(
+      Textures.EXIT_BUTTON,
+      "obj_exitbutton",
+      () => {
+        networkManager.disconnectGameServer();
+      },
+      "Disconnect from current session"
+    );
+    const deleteButton = this.addButton(
+      Textures.DELETE_BUTTON,
+      "obj_deletebutton",
+      () => {},
+      "Delete selected objects"
+    );
+    const captureFlagButton = this.addButton(
+      Textures.CAPTUREFLAG_BUTTON,
+      "obj_newCaptureFlagButton",
+      (eventType: any) => {
         const buttonPressed = eventType.button;
         if (buttonPressed !== 0) {
           return;
         }
         const gameScene = this.scene.get(CONSTANT.SCENES.GAME);
-        const flagPlaceholderData = gameScene.data.get(GameSceneDataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER);
+        const flagPlaceholderData = gameScene.data.get(
+          GameSceneDataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER
+        );
         gameScene.data.set(GameSceneDataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER, {
           visibility: !(flagPlaceholderData?.visibility || false),
         });
-        console.log(`setting flagPlaceholderData to:`, gameScene.data.get(GameSceneDataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER));
-      });
+        console.log(
+          `setting flagPlaceholderData to:`,
+          gameScene.data.get(GameSceneDataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER)
+        );
+      },
+      "Create Territory Capture Flag"
+    );
 
-    Phaser.Actions.GridAlign([exitButton, captureFlagButton], {
+    Phaser.Actions.GridAlign([exitButton, captureFlagButton, deleteButton], {
       width: 640,
       cellHeight: 64,
       cellWidth: 64,
       x: 900,
       y: 50,
+    });
+    Phaser.Actions.GridAlign([tooltip], {
+      width: 640,
+      cellHeight: 64,
+      cellWidth: 640,
+      x: 840,
+      y: 100,
     });
 
     // TODO: optimise
@@ -257,5 +274,29 @@ export class PlayerStatisticHUD extends BaseScene {
       this.input.removeAllListeners();
       this.events.removeAllListeners();
     });
+  }
+
+  addButton(
+    textureKey: string,
+    objectName: string,
+    onClick: Function,
+    tooltip?: string
+  ) {
+    const btn = this.AddObject(this.add.image(0, 0, textureKey), objectName)
+      .setInteractive()
+      .on("pointerover", () => {
+        this.GetObject<Phaser.GameObjects.Text>('text_tooltip')?.setText(tooltip || '');
+        this.GetObject<Phaser.GameObjects.Text>('text_tooltip')?.setVisible(true);
+        this.GetObject<Phaser.GameObjects.Image>(objectName)!.setScale(1.5);
+      })
+      .on("pointerdown", onClick)
+      .on("pointerout", () => {
+        this.GetObject<Phaser.GameObjects.Text>("text_tooltip")?.setText("");
+        this.GetObject<Phaser.GameObjects.Text>("text_tooltip")?.setVisible(
+          false
+        );
+        this.GetObject<Phaser.GameObjects.Image>(objectName)!.setScale(1);
+      });
+    return btn;
   }
 }

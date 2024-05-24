@@ -63,6 +63,7 @@ export const Textures = {
   GROUNDTILES: "groundtiles",
   CAPTUREFLAG: "captureFlag",
   CAPTUREFLAG_BUTTON: "img_captureFlagButton",
+  DELETE_BUTTON: "img_deleteButton"
 } as const;
 
 export const DataKey = {
