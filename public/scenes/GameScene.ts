@@ -8,7 +8,7 @@ import { PlayerCastle } from "../gameObjects/playerCastle";
 import SessionStateClientHelpers from "../helpers/SessionStateClientHelpers";
 import { BaseSoldier } from "../soldiers/BaseSoldier";
 import { Spearman } from "../soldiers/Spearman";
-import { BaseScene } from "./BaseScene";
+import { BaseScene, SelectableSceneEntity } from "./BaseScene";
 import SpinnerPlugin from "phaser3-rex-plugins/templates/spinner/spinner-plugin.js";
 import $ from "jquery";
 import { CaptureFlag } from "../gameObjects/CaptureFlag";
@@ -51,9 +51,6 @@ $(() => {
     SendChatMessage();
   });
 });
-
-type soldierIdToPhaserMap = Map<string, BaseSoldier>;
-type PlayerId = string;
 
 export const Textures = {
   PLAY_BUTTON: "playbutton",
@@ -118,7 +115,8 @@ const PointerModeAction: IPointerModeAction = {
             soldierType: "SPEARMAN",
           }
         );
-      } else if (pointer.button === 2) {
+      }
+      else if (pointer.button === 2) {
         /* RMB Pressed => Player either attempting to move selected soldiers or commanding them to attack enemy unit */
         if (selectedObjectsMap.size < 1) return;
 
@@ -203,20 +201,28 @@ const PointerModeAction: IPointerModeAction = {
         }
         selectorGraphics.strokeRectShape(rect);
 
-        //for every soldier belonging to this player, check if it overlaps with rect
         const playerId = networkManager.getClientId();
         if (!playerId) {
           return;
         }
+        // get all selectable items for a player
         const soldiers = scene.GetObjectsWithKeyPrefix<Spearman>(
           `obj_spearman_${playerId}_`
         );
-        soldiers.forEach((soldier) => {
-          let bound = soldier.getBounds();
+        const captureFlags = scene.GetObjectsWithKeyPrefix<CaptureFlag>(
+          `obj_captureFlag_${playerId}`
+        );
+        
+        const selectables: (SelectableSceneEntity & Phaser.GameObjects.Sprite)[] = [
+          ...soldiers,
+          ...captureFlags,
+        ];
+        selectables.forEach((selectableSprite) => {
+          let bound = selectableSprite.getBounds();
           if (Phaser.Geom.Intersects.RectangleToRectangle(bound, rect)) {
-            soldier.markSelected();
+            selectableSprite.markSelected();
           } else {
-            soldier.markUnselected();
+            selectableSprite.markUnselected();
           }
         });
       } else if (pointer.button === 2 && pointer.isDown) {
@@ -577,22 +583,6 @@ export class GameScene extends BaseScene {
           playerId: player,
           queueSize: player.spawnRequestQueue.length,
         });
-      })
-    );
-
-    this.AddStateChangeListener(
-      player?.captureFlags.onAdd((newFlag) => {
-        const flag = new CaptureFlag(
-          this,
-          newFlag.pos.x,
-          newFlag.pos.y,
-          newFlag.id,
-          Textures.CAPTUREFLAG,
-          0,
-          player,
-          newFlag
-        );
-        this.AddObject(flag, `obj_captureFlag_${player.id}_${newFlag.id}`);
       })
     );
 

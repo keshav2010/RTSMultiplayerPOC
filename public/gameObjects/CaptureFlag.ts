@@ -10,12 +10,9 @@ import CONSTANTS from "../constant";
 
 const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
   color: "#fff",
-  strokeThickness: 1,
-  fontSize: 18,
+  strokeThickness: 3,
+  fontSize: 28,
   stroke: "#000000",
-  wordWrap: {
-    width: 120,
-  },
 };
 
 export class CaptureFlag
@@ -28,7 +25,6 @@ export class CaptureFlag
   id!: string;
   flagState: CaptureFlagStatus;
   circleOfInfluence: Phaser.GameObjects.Graphics | undefined;
-  circleAnimation: Phaser.Tweens.Tween | undefined;
 
   isPlaceholder: boolean = true;
   constructor(
@@ -47,8 +43,8 @@ export class CaptureFlag
     this.flagState = flag?.flagState || CaptureFlagStatus.IN_PROGRESS;
     this.id = id;
     this.player = player;
-    this.setOrigin(0.5);
     scene.add.existing(this);
+    this.setInteractive();
     scene.events.on("update", this.update, this);
     this.setPosition(x, y);
 
@@ -58,11 +54,12 @@ export class CaptureFlag
         currentValue: flag?.health || 100,
       });
       this.debugText = scene.add.text(
-        x,
-        y + this.height + 5,
+        x - (this.width>>1),
+        y + this.height,
         `${this.player.name}`,
         textStyle
       );
+      this.debugText.setOrigin(0.5, 0);
     }
 
     this.on("destroy", () => {
@@ -70,20 +67,20 @@ export class CaptureFlag
       this.hp?.destroy(true);
       this.debugText?.destroy(true);
       this.circleOfInfluence?.destroy(true);
-      this.circleAnimation?.destroy();
     });
   }
 
   markSelected() {
-    this.setScale(0.5);
+    this.setAlpha(0.5);
+    this.createCircleOfInfluence(this.scene, this.x, this.y, this.width/2); // Adjust the radius as needed
     this.scene?.events?.emit(CONSTANTS.GAMEEVENTS.CAPTURE_FLAG_SELECTED, this);
   }
+  
   markUnselected() {
     this.setAlpha(1);
-    this.scene?.events?.emit(
-      CONSTANTS.GAMEEVENTS.CAPTURE_FLAG_UNSELECTED,
-      this
-    );
+    this.circleOfInfluence?.clear();
+    this.circleOfInfluence?.destroy(true); // Remove the circle when unselected
+    this.scene?.events?.emit(CONSTANTS.GAMEEVENTS.CAPTURE_FLAG_UNSELECTED, this);
   }
 
   createCircleOfInfluence(
@@ -95,18 +92,10 @@ export class CaptureFlag
     this.circleOfInfluence = scene.add.graphics();
     this.circleOfInfluence.lineStyle(3, 0xffffff);
     this.circleOfInfluence.strokeCircle(
-      x + this.width / 2,
-      y + this.height / 2,
+      x,
+      y,
       radius
     );
-
-    this.circleAnimation = scene.tweens.add({
-      targets: this.circleOfInfluence,
-      alpha: 0.5,
-      duration: 1000,
-      yoyo: true,
-      repeat: -1,
-    });
   }
 
   renderCircleOfInfluence(x: number, y: number) {
@@ -114,13 +103,9 @@ export class CaptureFlag
       this.circleOfInfluence.clear();
       this.circleOfInfluence.lineStyle(1, 0xffffff, 1);
       this.circleOfInfluence.strokeCircle(
-        x + this.width / 2,
-        y + this.height / 2,
+        x,
+        y,
         this.height / 2
-      );
-      this.circleOfInfluence.lineStyle(1, 0x22ffff, 1);
-      this.circleOfInfluence.strokeRectShape(
-        new Phaser.Geom.Rectangle(x, y, this.width, this.height)
       );
     }
   }
@@ -135,8 +120,6 @@ export class CaptureFlag
   update() {
     this.hp?.draw();
     this.hp?.setScale(2, 2);
-
     this.debugText?.setDepth(2);
-    this.renderCircleOfInfluence(this.x, this.y);
   }
 }
