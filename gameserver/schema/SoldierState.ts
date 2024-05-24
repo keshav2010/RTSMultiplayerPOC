@@ -362,10 +362,6 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
     enemyTowers.forEach((playerBase) => {
       if (!playerBase) return;
       const enemyTowerCenter = playerBase.getSceneItem().getCircleCenter();
-      console.log(
-        "dist = ",
-        enemyTowerCenter.clone().sub(soldierCenterPosition).len()
-      );
       const flagHealth = playerBase.castleHealth - 0.45 * delta;
       playerBase.castleHealth = Math.max(0, flagHealth);
     });

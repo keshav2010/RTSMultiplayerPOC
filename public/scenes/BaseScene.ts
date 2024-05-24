@@ -91,10 +91,12 @@ export class BaseScene extends Phaser.Scene {
   DestroyStateChangeListener(key: string) {
     try {
       this.networkCallsCleanup.get(key)?.forEach((cb) => cb());
-      this.networkCallsCleanup.delete(key);
-      console.log("Clean State Change Listener.");
+      const isDeleted = this.networkCallsCleanup.delete(key);
+      console.log(
+        `[DestroyStateChangeListener] for key ${key} (isDeleted = ${isDeleted})`
+      );
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   }
 
@@ -150,12 +152,13 @@ export class BaseScene extends Phaser.Scene {
 
   DestroyObjectById(id: string) {
     const exists = this.objectMap.has(id);
-    if (!exists) return exists;
+    if (!exists)
+      return;
     const obj = this.objectMap.get(id);
-    if (!obj) return;
+    if (!obj) return true;
     if ((obj as any)?.type === "Group") obj.destroy(true);
-    else obj.destroy();
-    this.objectMap.delete(id);
+    else obj.destroy(true);
+    return this.objectMap.delete(id);
   }
 
   DestroyObjects() {

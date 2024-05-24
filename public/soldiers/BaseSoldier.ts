@@ -114,6 +114,10 @@ export class BaseSoldier
       playerState,
       this.id
     );
+    if (!soldierState) {
+      console.log("soldier not found, might not be present on server");
+      return;
+    }
     this.DEBUGTEXT.setPosition(this.x, this.y + 40);
     this.DEBUGTEXT.setText(
       `${soldierState?.currentState}

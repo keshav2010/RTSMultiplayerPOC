@@ -314,20 +314,15 @@ export class GameScene extends BaseScene {
 
   onSoldierRemoved(soldierId: string, playerId: string) {
     try {
-      this.DestroyStateChangeListener(soldierId);
-
-      // remove it from list of selected soldiers as well
+      // remove from selected soldier list if is selected
       const selectedObjectsMap = this.data.get(
         DataKey.SELECTED_OBJECTS_MAP
       ) as Map<string, BaseSoldier | CaptureFlag>;
-
-      const soldierPhaserObj = this.GetObject<Spearman>(
-        `obj_spearman_${playerId}_${soldierId}`
-      );
       selectedObjectsMap.delete(soldierId);
-      this.DestroyObjectById(soldierId);
+
+      const isSoldierRemoved = this.DestroyObjectById(`obj_spearman_${playerId}_${soldierId}`);
       console.log(
-        `Removed Soldier from scene : ${soldierId} , for player : ${playerId}`
+        `Removed Soldier from scene : ${soldierId} , for player : ${playerId} : isRemoved = ${isSoldierRemoved}`
       );
     } catch (error) {
       console.log(error);
@@ -391,8 +386,10 @@ export class GameScene extends BaseScene {
       playerState,
       soldierId
     );
-    if (!soldierState) return;
-
+    if (!soldierState) {
+      console.log("Soldier not found in server state");
+      return;
+    }
     if (!phaserSceneObject) {
       console.error(
         `No Phaser Object Found (soldier: ${soldierId})/ playerId: ${playerId}`
@@ -625,6 +622,9 @@ export class GameScene extends BaseScene {
       this.AddStateChangeListener(
         player.soldiers.onRemove((soldier, key) => {
           const soldierId = soldier.id;
+          console.log(
+            `[state change detected - soldier onRemove] player ${player.id} removed soldier ${soldier.id}]`
+          );
           // remove relevant listeners for each soldier.
           this.DestroyStateChangeListener(`health-${soldierId}`);
           this.DestroyStateChangeListener(`currentPos-${soldierId}`);
