@@ -359,11 +359,14 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
       )
       .map((d) => stateManager.getPlayer(d.id));
 
-    enemyTowers.forEach((playerBase) => {
-      if (!playerBase) return;
-      const enemyTowerCenter = playerBase.getSceneItem().getCircleCenter();
-      const flagHealth = playerBase.castleHealth - 0.45 * delta;
-      playerBase.castleHealth = Math.max(0, flagHealth);
+    enemyTowers.forEach((enemyTower) => {
+      if (!enemyTower) return;
+      enemyTower.castleHealth = Math.max(
+        0,
+        enemyTower.castleHealth - 0.5 * delta
+      );
+      if(enemyTower.castleHealth <= 0)
+        sessionState.removePlayer(enemyTower.id, stateManager);
     });
     this.stateMachine.tick({ delta, stateManager, soldier: this });
   }

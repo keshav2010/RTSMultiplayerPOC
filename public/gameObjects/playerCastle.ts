@@ -53,7 +53,7 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     });
 
     // Create the circle of influence
-    this.createCircleOfInfluence(scene, x, y, this.height); // Assuming a radius of 100
+    this.createCircleOfInfluence(scene, x, y, this.height);
   }
 
   createCircleOfInfluence(
@@ -63,7 +63,7 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     radius: number
   ) {
     this.circleOfInfluence = scene.add.graphics();
-    this.circleOfInfluence.lineStyle(3, 0xffffff); // Thickness, color, alpha
+    this.circleOfInfluence.lineStyle(3, 0xffffff);
     this.circleOfInfluence.strokeCircle(
       x + this.width / 2,
       y + this.height / 2,
@@ -73,7 +73,7 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     // Animate the circle
     this.circleAnimation = scene.tweens.add({
       targets: this.circleOfInfluence,
-      alpha: 0.5, // Change the alpha to animate the circle
+      alpha: 0.5,
       duration: 1000,
       yoyo: true,
       repeat: -1,

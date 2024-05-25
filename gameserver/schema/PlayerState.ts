@@ -80,6 +80,10 @@ export class PlayerState extends Schema implements ISceneItem {
     this.spawnRequestDetailMap = new MapSchema<SpawnRequest>();
     this.spawnRequestQueue = new ArraySchema<string>();
   }
+
+  setHealth(health: number) {
+    this.castleHealth = health;
+  }
   getSceneItem() {
     return this.sceneItemRef;
   }

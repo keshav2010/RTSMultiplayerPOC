@@ -51,6 +51,7 @@ export class SessionState extends Schema {
     player.captureFlags.clear();
 
     this.players.delete(sessionId);
+    this.tilemap.updateOwnershipMap(this.getPlayers());
   }
   public countReadyPlayers() {
     return [...this.players.values()].reduce((acc, curr) => {

@@ -620,6 +620,15 @@ export class GameScene extends BaseScene {
 
     // register soldier creation/removal listeners for eaech player.
     players.forEach((player) => {
+
+      this.AddStateChangeListener(
+        player.listen("castleHealth", (value: number) => {
+          const kingdomId = `obj_playerCastle_${player.id}`;
+          const playerCastle = this.GetObject<PlayerCastle>(kingdomId);
+          playerCastle?.setHealth(value);
+        })
+      );
+
       this.AddStateChangeListener(
         player.soldiers.onAdd((soldier, key) => {
           this.onSoldierAdded(soldier, player);
