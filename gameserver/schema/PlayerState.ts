@@ -125,8 +125,27 @@ export class PlayerState extends Schema implements ISceneItem {
     }
     gameManager.scene.removeSceneItem(flagId);
     this.captureFlags.deleteAt(flagObj);
-    this.resourceGrowthRateHz =
-      this.resourceGrowthRateHz * (1 + 0.2 * this.captureFlags.length);
+    this.resourceGrowthRateHz = 2 * (1 + 0.2 * this.captureFlags.length);
+    sessionState.tilemap.updateOwnershipMap(sessionState.getPlayers());
+  }
+  removeBulkCaptureFlag(flagIds: string[], sessionState: SessionState, gameManager: GameStateManagerType) {
+    let flagsRemoved = 0;
+    flagIds.forEach((flagId) => {
+      const flagIndex = this.captureFlags.findIndex(
+        (flag) => flag.id === flagId
+      );
+      if (flagIndex < 0) {
+        return;
+      }
+      gameManager.scene.removeSceneItem(flagId);
+      flagsRemoved += this.captureFlags.deleteAt(flagIndex) ? 1 : 0;
+    });
+
+    this.resourceGrowthRateHz = 2 * (1 + 0.2 * this.captureFlags.length);
+
+    // get back 80% of the flag cost
+    this.resources += flagsRemoved * CaptureFlagState.cost * 0.8;
+
     sessionState.tilemap.updateOwnershipMap(sessionState.getPlayers());
   }
 

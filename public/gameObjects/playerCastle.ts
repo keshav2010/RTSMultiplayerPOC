@@ -4,8 +4,8 @@ import Phaser from "phaser";
 
 const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
   color: "#fff",
-  strokeThickness: 1,
-  fontSize: 18,
+  strokeThickness: 3,
+  fontSize: 25,
   stroke: "#000000",
   wordWrap: {
     width: 120,
@@ -26,7 +26,7 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     y: number,
     texture: string | Phaser.Textures.Texture,
     frame: number,
-    player: PlayerState,
+    player: PlayerState
   ) {
     super(scene, x, y, texture, frame);
     this.health = player?.castleHealth || 100;
@@ -40,8 +40,7 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
     this.DEBUGTEXT = scene.add.text(
       x + this.width,
       y + this.height * 2,
-      `${player.name} \n
-      health:${player.castleHealth}`,
+      `${player.name}`,
       textStyle
     );
 
@@ -89,10 +88,6 @@ export class PlayerCastle extends Phaser.GameObjects.Sprite {
         x + this.width / 2,
         y + this.height / 2,
         this.height / 2
-      ); // Assuming a fixed radius
-      this.circleOfInfluence.lineStyle(1, 0x22ffff, 1);
-      this.circleOfInfluence.strokeRectShape(
-        new Phaser.Geom.Rectangle(x, y, this.width, this.height)
       );
     }
   }

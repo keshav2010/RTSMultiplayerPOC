@@ -4,7 +4,7 @@ import LoadingBar from "../gameObjects/LoadingBar";
 import { NetworkManager } from "../NetworkManager";
 import { BaseScene } from "./BaseScene";
 import { PacketType } from "../../common/PacketType";
-import { PlayerCastle } from "../gameObjects/playerCastle";
+import { PlayerCastle } from "../gameObjects/PlayerCastle";
 import SessionStateClientHelpers from "../helpers/SessionStateClientHelpers";
 import SAT from "sat";
 

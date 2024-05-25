@@ -54,7 +54,7 @@ export class CaptureFlag
         currentValue: flag?.health || 100,
       });
       this.debugText = scene.add.text(
-        x - (this.width>>1),
+        x - (this.width >> 1),
         y + this.height,
         `${this.player.name}`,
         textStyle
@@ -72,15 +72,17 @@ export class CaptureFlag
 
   markSelected() {
     this.setAlpha(0.5);
-    this.createCircleOfInfluence(this.scene, this.x, this.y, this.width/2); // Adjust the radius as needed
+    this.createCircleOfInfluence(this.scene, this.x, this.y, this.width / 2); // Adjust the radius as needed
     this.scene?.events?.emit(CONSTANTS.GAMEEVENTS.CAPTURE_FLAG_SELECTED, this);
   }
-  
+
   markUnselected() {
     this.setAlpha(1);
     this.circleOfInfluence?.clear();
-    this.circleOfInfluence?.destroy(true); // Remove the circle when unselected
-    this.scene?.events?.emit(CONSTANTS.GAMEEVENTS.CAPTURE_FLAG_UNSELECTED, this);
+    this.scene?.events?.emit(
+      CONSTANTS.GAMEEVENTS.CAPTURE_FLAG_UNSELECTED,
+      this
+    );
   }
 
   createCircleOfInfluence(
@@ -91,22 +93,14 @@ export class CaptureFlag
   ) {
     this.circleOfInfluence = scene.add.graphics();
     this.circleOfInfluence.lineStyle(3, 0xffffff);
-    this.circleOfInfluence.strokeCircle(
-      x,
-      y,
-      radius
-    );
+    this.circleOfInfluence.strokeCircle(x, y, radius);
   }
 
   renderCircleOfInfluence(x: number, y: number) {
     if (this.circleOfInfluence) {
       this.circleOfInfluence.clear();
       this.circleOfInfluence.lineStyle(1, 0xffffff, 1);
-      this.circleOfInfluence.strokeCircle(
-        x,
-        y,
-        this.height / 2
-      );
+      this.circleOfInfluence.strokeCircle(x, y, this.height / 2);
     }
   }
 

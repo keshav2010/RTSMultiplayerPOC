@@ -8,6 +8,7 @@ import { DataKey as GameSceneDataKey, GameScene, Textures } from "./GameScene";
 import { NetworkManager } from "../NetworkManager";
 import { PlayerState } from "../../gameserver/schema/PlayerState";
 import { Spearman } from "../soldiers/Spearman";
+import CONSTANTS from "../constant";
 
 const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
   color: "#fff",
@@ -118,7 +119,10 @@ export class PlayerStatisticHUD extends BaseScene {
     const deleteButton = this.addButton(
       Textures.DELETE_BUTTON,
       "obj_deletebutton",
-      () => {},
+      () => {
+        const gameScene = this.scene.get(CONSTANT.SCENES.GAME);
+        gameScene.events.emit(CONSTANTS.GAMEEVENTS.DELETE_SELECTED_OBJECTS);
+      },
       "Delete selected objects"
     );
     const captureFlagButton = this.addButton(

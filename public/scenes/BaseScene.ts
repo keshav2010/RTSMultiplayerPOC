@@ -1,5 +1,4 @@
 import Phaser from "phaser";
-import { PlayerCastle } from "../gameObjects/playerCastle";
 import { NetworkManager } from "../NetworkManager";
 import { ClientStateManager } from "../ClientStateManager";
 import CONSTANT from "../constant";

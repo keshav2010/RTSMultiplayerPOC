@@ -4,7 +4,7 @@ import { SessionRoom } from "../SessionRoom";
 import { CommandPayload } from "./CommandPayloadType";
 
 interface ICaptureFlagDelete {
-  flagId: string;
+  captureFlagIds: string[];
 }
 
 export class OnCaptureFlagDeleteCommand extends Command<
@@ -20,7 +20,11 @@ export class OnCaptureFlagDeleteCommand extends Command<
       const sessionState = this.state;
       gameManager
         ?.getPlayer(client.id)
-        ?.removeCaptureFlag(message.flagId, sessionState, gameManager);
+        ?.removeBulkCaptureFlag(
+          message.captureFlagIds,
+          sessionState,
+          gameManager
+        );
     } catch (error) {
       console.error(error);
     }

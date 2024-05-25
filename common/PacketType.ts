@@ -5,7 +5,7 @@ export enum ClientToServerPacketType {
   PLAYER_UNREADY = "plur",
   SOLDIER_CREATE_REQUESTED = "slcrreq",
   SPAWN_POINT_REQUESTED = "spwnpntreq",
-  SOLDIER_DELETED = "sldel",
+  SOLDIERS_DELETE_REQUESTED = "sldrdelrqstd",
   SOLDIER_MOVE_REQUESTED = "slmovreq",
   PLAYER_JOINED = "pljoin",
   SOLDIER_ATTACK_REQUESTED = "sldierattkreq",

@@ -29,7 +29,7 @@ export class CommandFactory {
       case PacketType.ByClient.SOLDIER_SPAWN_REQUESTED:
         return new OnSpawnSoldierCommand();
 
-      case PacketType.ByClient.SOLDIER_DELETED:
+      case PacketType.ByClient.SOLDIERS_DELETE_REQUESTED:
         return new OnSoldierDeleteCommand();
 
       case PacketType.ByClient.SOLDIER_MOVE_REQUESTED:

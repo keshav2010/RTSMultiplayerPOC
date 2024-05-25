@@ -4,7 +4,6 @@ import { SoldierState } from "../../gameserver/schema/SoldierState";
 import { NetworkManager } from "../NetworkManager";
 import CONSTANT from "../constant";
 const { GAMEEVENTS } = CONSTANT;
-import { PlayerCastle } from "../gameObjects/playerCastle";
 import SessionStateClientHelpers from "../helpers/SessionStateClientHelpers";
 import { BaseSoldier } from "../soldiers/BaseSoldier";
 import { Spearman } from "../soldiers/Spearman";
@@ -12,6 +11,7 @@ import { BaseScene, SelectableSceneEntity } from "./BaseScene";
 import SpinnerPlugin from "phaser3-rex-plugins/templates/spinner/spinner-plugin.js";
 import $ from "jquery";
 import { CaptureFlag } from "../gameObjects/CaptureFlag";
+import { PlayerCastle } from "../gameObjects/PlayerCastle";
 
 var selectorColor = 0xffff00;
 var selectorThickness = 2;
@@ -529,6 +529,37 @@ export class GameScene extends BaseScene {
       }
     );
 
+    this.AddSceneEvent(
+      GAMEEVENTS.DELETE_SELECTED_OBJECTS, () => {
+        console.log('requested to delete seelcted objects');
+        const selectedObjectsMap = this.data.get(
+          DataKey.SELECTED_OBJECTS_MAP
+        ) as Map<string, BaseSoldier | CaptureFlag>;
+        
+        let soldierIds = [];
+        let captureFlagIds = [];
+        for(let selectedObject of selectedObjectsMap.values()) {
+          if(selectedObject instanceof BaseSoldier) {
+            soldierIds.push(selectedObject.id);
+          }
+          else if(selectedObject instanceof CaptureFlag) 
+            captureFlagIds.push(selectedObject.id);
+        }
+        networkManager.sendEventToServer(
+          PacketType.ByClient.SOLDIERS_DELETE_REQUESTED,
+          {
+            soldierIds,
+          }
+        );
+        networkManager.sendEventToServer(
+          PacketType.ByClient.CAPTURE_FLAG_DELETE_REQUESTED,
+          {
+            captureFlagIds,
+          }
+        );
+      }
+    );
+
     this.data.events.on(
       `setdata-${DataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER}`,
       (_parent: any, value: { visibility: boolean }) => {
@@ -638,7 +669,6 @@ export class GameScene extends BaseScene {
             cleanupMethod,
             `statechange_captureFlag_${player.id}_${newFlag.id}`
           );
-
           const flag = new CaptureFlag(
             this,
             newFlag.pos.x,
@@ -649,6 +679,11 @@ export class GameScene extends BaseScene {
             player,
             newFlag
           );
+          
+          if (networkManager.getClientId() === player.id) {
+            flag.setTint(0x00ff00);
+          } else flag.setTint(0xff0000);
+
           this.AddObject(flag, `obj_captureFlag_${player.id}_${newFlag.id}`);
         })
       );
