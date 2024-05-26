@@ -82,7 +82,7 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
     this.attackTarget = null;
     this.targetVector = null;
 
-    const v = new SAT.Vector(x,y);
+    const v = new SAT.Vector(x, y);
     this.currentPosition.setVector(v);
     this.expectedPosition.setVector(v);
     this.targetPosition.setVector(v);
@@ -270,7 +270,11 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
     return this.velocityVector.clone();
   }
 
-  tick(delta: number, stateManager: GameStateManagerType, sessionState: SessionState) {
+  tick(
+    delta: number,
+    stateManager: GameStateManagerType,
+    sessionState: SessionState
+  ) {
     this.currentState = this.stateMachine
       .currentState as keyof typeof SoldierStateMachineJSON.states;
 
@@ -341,7 +345,7 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
     );
     const soldierCenterPosition = this.getSceneItem().getCircleCenter();
 
-    const enemyTowers = stateManager.scene
+    const enemyCastles = stateManager.scene
       .getNearbyUnits(soldierCenterPosition.x, soldierCenterPosition.y, 100, [
         "FIXED",
       ])
@@ -359,15 +363,48 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
       )
       .map((d) => stateManager.getPlayer(d.id));
 
-    enemyTowers.forEach((enemyTower) => {
+    enemyCastles.forEach((enemyTower) => {
       if (!enemyTower) return;
       enemyTower.castleHealth = Math.max(
         0,
         enemyTower.castleHealth - 0.5 * delta
       );
-      if(enemyTower.castleHealth <= 0)
+      if (enemyTower.castleHealth <= 0)
         sessionState.removePlayer(enemyTower.id, stateManager);
     });
+
+    let nearbyCaptureFlags = stateManager.scene.getNearbyUnits(
+      soldierCenterPosition.x,
+      soldierCenterPosition.y,
+      100,
+      ["CAPTURE_FLAG"]
+    );
+
+    const enemyCaptureFlags = nearbyCaptureFlags.filter(
+      (quadtreeItem) =>
+        sessionState.captureFlagIdToParentId.get(quadtreeItem.id) !==
+        this.playerId
+    );
+
+    enemyCaptureFlags.forEach((flagQuatree) => {
+      const flagOwnerId = sessionState.captureFlagIdToParentId.get(
+        flagQuatree.id
+      );
+      if (!flagOwnerId) return;
+      const flag = sessionState
+        .getPlayer(flagOwnerId)
+        ?.captureFlags.toArray()
+        .filter((flag) => flag.id === flagQuatree.id);
+
+      if (flag && flag?.[0]) {
+        flag[0].setHealth(flag[0].health - 0.5 * delta);
+        if(flag[0].health === 0)
+          sessionState
+            .getPlayer(flagOwnerId)
+            ?.removeCaptureFlag(flag[0].id, sessionState, stateManager);
+      }
+    });
+
     this.stateMachine.tick({ delta, stateManager, soldier: this });
   }
 

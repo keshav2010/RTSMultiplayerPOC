@@ -88,7 +88,13 @@ export class PlayerState extends Schema implements ISceneItem {
     return this.sceneItemRef;
   }
 
-  createCaptureFlag(x: number, y: number, sessionState: SessionState) {
+  createCaptureFlag(
+    x: number,
+    y: number,
+    sessionState: SessionState,
+    gameManager: GameStateManagerType
+  ) {
+    const scene = gameManager.scene;
     if (this.captureFlags.length >= 4) {
       return;
     }
@@ -111,10 +117,15 @@ export class PlayerState extends Schema implements ISceneItem {
     if (tileOwner !== "NONE") return;
 
     this.resources = this.resources - CaptureFlagState.cost;
+
     const captureFlag = new CaptureFlagState(x, y);
     this.captureFlags.push(captureFlag);
+    scene.addSceneItem(captureFlag);
+
     this.resourceGrowthRateHz =
       this.resourceGrowthRateHz * (1 + 0.2 * this.captureFlags.length);
+
+    sessionState.onCaptureFlagAdded(captureFlag.id, this.id);
     sessionState.tilemap.updateOwnershipMap(sessionState.getPlayers());
   }
 
@@ -123,16 +134,24 @@ export class PlayerState extends Schema implements ISceneItem {
     sessionState: SessionState,
     gameManager: GameStateManagerType
   ) {
+    const scene = gameManager.scene;
     const flagObj = this.captureFlags.findIndex((flag) => flag.id === flagId);
     if (flagObj < 0) {
       return;
     }
     gameManager.scene.removeSceneItem(flagId);
     this.captureFlags.deleteAt(flagObj);
+    scene.removeSceneItem(flagId);
+
+    sessionState.onCaptureFlagRemoved(flagId);
     this.resourceGrowthRateHz = 2 * (1 + 0.2 * this.captureFlags.length);
     sessionState.tilemap.updateOwnershipMap(sessionState.getPlayers());
   }
-  removeBulkCaptureFlag(flagIds: string[], sessionState: SessionState, gameManager: GameStateManagerType) {
+  removeBulkCaptureFlag(
+    flagIds: string[],
+    sessionState: SessionState,
+    gameManager: GameStateManagerType
+  ) {
     let flagsRemoved = 0;
     flagIds.forEach((flagId) => {
       const flagIndex = this.captureFlags.findIndex(
@@ -142,6 +161,7 @@ export class PlayerState extends Schema implements ISceneItem {
         return;
       }
       gameManager.scene.removeSceneItem(flagId);
+      sessionState.onCaptureFlagRemoved(flagId);
       flagsRemoved += this.captureFlags.deleteAt(flagIndex) ? 1 : 0;
     });
 

@@ -15,6 +15,8 @@ export class SessionState extends Schema {
   @type("number") countdown: number = SERVER_CONFIG.COUNTDOWN_DEFAULT;
   @type("string") mapId: string = "map1";
   @type(TilemapState) tilemap = new TilemapState();
+
+  captureFlagIdToParentId: Map<string, string> = new Map<string, string>();
   constructor() {
     super();
   }
@@ -38,6 +40,14 @@ export class SessionState extends Schema {
     }
     return playersArr;
   }
+
+  onCaptureFlagAdded(flagId: string, parentId: string) {
+    this.captureFlagIdToParentId.set(flagId, parentId);
+  }
+  onCaptureFlagRemoved(flagId: string) {
+    this.captureFlagIdToParentId.delete(flagId);
+  }
+
   public removePlayer(sessionId: string, gameManager: GameStateManagerType) {
     const player = this.players.get(sessionId);
     if (!player) {

@@ -22,7 +22,10 @@ export class CaptureFlagState extends Schema implements ISceneItem {
   constructor(x: number, y: number) {
     super();
     this.pos = new VectorState(x, y);
-    this.sceneItemRef = new SceneObject(this.id, x, y, 64, "FIXED", false);
+    this.sceneItemRef = new SceneObject(this.id, x, y, 64, "CAPTURE_FLAG", false);
+  }
+  setHealth(health: number) {
+    this.health = Math.max(0,health);
   }
   getSceneItem() {
     return this.sceneItemRef;

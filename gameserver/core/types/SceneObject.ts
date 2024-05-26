@@ -3,7 +3,7 @@ import SAT from "sat";
  * @class SceneObject
  * @classdesc Any object that is meant to be part of the Scene should extend this class.
  */
-export type SceneObjectType = "FIXED" | "MOVABLE";
+export type SceneObjectType = "FIXED" | "MOVABLE" | "CAPTURE_FLAG";
 
 export class SceneObject extends SAT.Box {
   readonly id: string;
@@ -24,7 +24,7 @@ export class SceneObject extends SAT.Box {
     y: number,
     size = 32,
     type: SceneObjectType,
-    collidable: boolean = true
+    collidable: boolean = true,
   ) {
     super(new SAT.Vector(x, y), size, size);
     this.width = size;

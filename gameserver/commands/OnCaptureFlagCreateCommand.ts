@@ -21,7 +21,7 @@ export class OnCaptureFlagCreateCommand extends Command<
       const sessionState = this.state;
       gameManager
         ?.getPlayer(client.id)
-        ?.createCaptureFlag(message.x, message.y, sessionState);
+        ?.createCaptureFlag(message.x, message.y, sessionState, gameManager);
     } catch (error) {
       console.error(error);
     }
