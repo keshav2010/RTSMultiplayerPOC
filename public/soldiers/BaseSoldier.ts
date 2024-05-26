@@ -1,58 +1,16 @@
 import CONSTANTS from "../constant";
 import SessionStateClientHelpers from "../helpers/SessionStateClientHelpers";
-import LoadingBar from "../LoadingBar";
+import LoadingBar from "../gameObjects/LoadingBar";
 import SAT from "sat";
 import { NetworkManager } from "../NetworkManager";
+import { BackgroundHighlight } from "../gameObjects/BackgroundHighlight";
+import { SelectableSceneEntity } from "../scenes/BaseScene";
 const GAMEEVENTS = CONSTANTS.GAMEEVENTS;
 
-function rgbToHex(r: number, g: number, b: number) {
-  let componentToHex = function (c: number) {
-    c = Math.floor(c);
-    var hex = c.toString(16);
-    return hex.length == 1 ? `0${hex}` : hex;
-  };
-  return parseInt(
-    `0x${componentToHex(r)}${componentToHex(g)}${componentToHex(b)}`
-  );
-}
-class BackgroundHighlight extends Phaser.GameObjects.Graphics {
-  parent: Phaser.GameObjects.Sprite;
-  parentDimension: SAT.Box;
-  color: Phaser.Math.Vector3;
-  constructor(
-    scene: Phaser.Scene,
-    parent: Phaser.GameObjects.Sprite,
-    color: Phaser.Math.Vector3
-  ) {
-    super(scene, {
-      x: parent.x,
-      y: parent.y,
-    });
-    this.parentDimension = new SAT.Box(
-      new SAT.Vector(parent.x, parent.y),
-      parent.width,
-      parent.height
-    );
-    scene.add.existing(this);
-    this.parent = parent;
-    this.depth = 1;
-    this.color = new Phaser.Math.Vector3().copy(color);
-    this.alpha = 0.5;
-  }
-
-  draw() {
-    this.clear();
-    this.copyPosition(this.parent);
-    var thickness = 1;
-    this.setAlpha(0.4);
-    const color = rgbToHex(this.color.x, this.color.y, this.color.z);
-    const radius = this.parentDimension.w/2;
-    this.lineStyle(thickness, color);
-    this.fillStyle(color, 1);
-    this.fillCircle(radius, radius, radius);
-  }
-}
-export class BaseSoldier extends Phaser.GameObjects.Sprite {
+export class BaseSoldier
+  extends Phaser.GameObjects.Sprite
+  implements SelectableSceneEntity
+{
   readonly id: string;
   initialParam: any;
   color: Phaser.Math.Vector3;
@@ -122,7 +80,7 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     });
   }
   setHealth(newHealth: number) {
-    this.hp.currentValue = newHealth;
+    this.hp?.setValue(newHealth);
   }
   setServerPosition(x: number, y: number) {
     this.setData("serverPosition", { x, y });
@@ -156,18 +114,22 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
       playerState,
       this.id
     );
+    if (!soldierState) {
+      console.log("soldier not found, might not be present on server");
+      return;
+    }
     this.DEBUGTEXT.setPosition(this.x, this.y + 40);
     this.DEBUGTEXT.setText(
       `${soldierState?.currentState}
-      health:${this.hp.currentValue}`
+      health:${this.hp.getValue()}`
     );
 
     // render soldier's circular hitbox on server
     this.debugBrush.lineStyle(1, 0xff00ff, 1);
     const serverPos = this.getServerPosition();
     this.debugBrush.strokeCircle(
-      serverPos.x + this.height/2,
-      serverPos.y + this.height/2,
+      serverPos.x + this.height / 2,
+      serverPos.y + this.height / 2,
       this.height / 2
     );
     this.debugBrush.strokeRectShape(
@@ -183,8 +145,8 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     this.debugBrush.setDepth(1);
     this.debugBrush.fillStyle(0xffffff, 0.3);
     this.debugBrush.fillCircle(
-      soldierState?.expectedPosition.x! + this.width/2,
-      soldierState?.expectedPosition.y! + this.width/2,
+      soldierState?.expectedPosition.x! + this.width / 2,
+      soldierState?.expectedPosition.y! + this.width / 2,
       this.height / 4
     );
 
@@ -192,17 +154,19 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
     this.debugBrush.lineStyle(1, 0xffffff, 0.6);
     this.debugBrush.strokeLineShape(
       new Phaser.Geom.Line(
-        this.x + this.width/2,
-        this.y + this.width/2,
-        soldierState!.expectedPosition.x + this.width/2,
-        soldierState!.expectedPosition.y + this.width/2
+        this.x + this.width / 2,
+        this.y + this.width / 2,
+        soldierState!.expectedPosition.x + this.width / 2,
+        soldierState!.expectedPosition.y + this.width / 2
       )
     );
 
     // render soldier's search radius of size 100
     this.debugBrush.lineStyle(2, 0x883322, 0.1);
     this.debugBrush.strokeCircle(this.x, this.y, 100);
-    this.debugBrush.strokeRectShape(new Phaser.Geom.Rectangle(this.x, this.y, 100, 100));
+    this.debugBrush.strokeRectShape(
+      new Phaser.Geom.Rectangle(this.x, this.y, 100, 100)
+    );
   }
 
   update(deltaTime: number) {
@@ -213,7 +177,6 @@ export class BaseSoldier extends Phaser.GameObjects.Sprite {
   }
   markSelected() {
     this.alpha = 0.5;
-
     //emit scene wide event
     this.scene.events.emit(GAMEEVENTS.SOLDIER_SELECTED, this);
   }

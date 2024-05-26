@@ -9,6 +9,7 @@ import SAT from "sat";
 import { ISceneItem } from "../core/types/ISceneItem";
 import { VectorState } from "./VectorState";
 import { SessionState } from "./SessionState";
+import { CaptureFlagState } from "./CaptureFlagState";
 export type GameStateManagerType = GameStateManager<PlayerState>;
 
 export class SpawnRequest extends Schema {
@@ -58,8 +59,10 @@ export class PlayerState extends Schema implements ISceneItem {
   @type(["string"]) spawnRequestQueue: ArraySchema<string> =
     new ArraySchema<string>();
 
+  @type([CaptureFlagState]) captureFlags = new ArraySchema<CaptureFlagState>();
+
   // non-synced info
-  resourceGrowthRateHz = 2;
+  @type("number") resourceGrowthRateHz = 2;
   maxResources = 200;
 
   sceneItemRef!: SceneObject;
@@ -77,8 +80,97 @@ export class PlayerState extends Schema implements ISceneItem {
     this.spawnRequestDetailMap = new MapSchema<SpawnRequest>();
     this.spawnRequestQueue = new ArraySchema<string>();
   }
+
+  setHealth(health: number) {
+    this.castleHealth = health;
+  }
   getSceneItem() {
     return this.sceneItemRef;
+  }
+
+  createCaptureFlag(
+    x: number,
+    y: number,
+    sessionState: SessionState,
+    gameManager: GameStateManagerType
+  ) {
+    const scene = gameManager.scene;
+    if (this.captureFlags.length >= 4) {
+      return;
+    }
+
+    if (this.resources - CaptureFlagState.cost < 0) {
+      return;
+    }
+
+    const tilePos = new SAT.Vector(
+      x / sessionState.tilemap.tileheight,
+      y / sessionState.tilemap.tilewidth
+    );
+    const tileIndex1D =
+      Math.floor(tilePos.y) * sessionState.tilemap.tilemapWidth +
+      Math.floor(tilePos.x);
+
+    const tileOwner = sessionState.tilemap.ownershipTilemap1D.at(tileIndex1D);
+
+    // flag can only be placed at uncaptured area
+    if (tileOwner !== "NONE") return;
+
+    this.resources = this.resources - CaptureFlagState.cost;
+
+    const captureFlag = new CaptureFlagState(x, y);
+    this.captureFlags.push(captureFlag);
+    scene.addSceneItem(captureFlag);
+
+    this.resourceGrowthRateHz =
+      this.resourceGrowthRateHz * (1 + 0.2 * this.captureFlags.length);
+
+    sessionState.onCaptureFlagAdded(captureFlag.id, this.id);
+    sessionState.tilemap.updateOwnershipMap(sessionState.getPlayers());
+  }
+
+  removeCaptureFlag(
+    flagId: string,
+    sessionState: SessionState,
+    gameManager: GameStateManagerType
+  ) {
+    const scene = gameManager.scene;
+    const flagObj = this.captureFlags.findIndex((flag) => flag.id === flagId);
+    if (flagObj < 0) {
+      return;
+    }
+    gameManager.scene.removeSceneItem(flagId);
+    this.captureFlags.deleteAt(flagObj);
+    scene.removeSceneItem(flagId);
+
+    sessionState.onCaptureFlagRemoved(flagId);
+    this.resourceGrowthRateHz = 2 * (1 + 0.2 * this.captureFlags.length);
+    sessionState.tilemap.updateOwnershipMap(sessionState.getPlayers());
+  }
+  removeBulkCaptureFlag(
+    flagIds: string[],
+    sessionState: SessionState,
+    gameManager: GameStateManagerType
+  ) {
+    let flagsRemoved = 0;
+    flagIds.forEach((flagId) => {
+      const flagIndex = this.captureFlags.findIndex(
+        (flag) => flag.id === flagId
+      );
+      if (flagIndex < 0) {
+        return;
+      }
+      gameManager.scene.removeSceneItem(flagId);
+      sessionState.onCaptureFlagRemoved(flagId);
+      flagsRemoved += this.captureFlags.deleteAt(flagIndex) ? 1 : 0;
+    });
+
+    this.resourceGrowthRateHz = 2 * (1 + 0.2 * this.captureFlags.length);
+
+    // get back 80% of the flag cost
+    this.resources += flagsRemoved * CaptureFlagState.cost * 0.8;
+
+    sessionState.tilemap.updateOwnershipMap(sessionState.getPlayers());
   }
 
   private processSpawnRequest(deltaTime: number, scene: Scene) {
@@ -125,13 +217,19 @@ export class PlayerState extends Schema implements ISceneItem {
     this.resources += this.resourceGrowthRateHz * deltaTime;
     this.processSpawnRequest(deltaTime, gameStateManager.scene);
 
+    this.captureFlags.forEach((flagState) =>
+      flagState.tick(deltaTime, sessionState)
+    );
+
     //TODO: tick each soldier
     this.soldiers.forEach((soldier) => {
       soldier.tick(deltaTime, gameStateManager, sessionState);
     });
 
-    this.resourceGrowthRateHz = this.resourceGrowthRateHz - 0.1 * deltaTime;
-    if (this.resourceGrowthRateHz < 0) this.resourceGrowthRateHz = 0.2;
+    this.resourceGrowthRateHz = Math.max(
+      this.resourceGrowthRateHz - 0.1 * deltaTime,
+      0.2 * this.captureFlags.length
+    );
   }
 
   public updatePosition(x: number, y: number) {

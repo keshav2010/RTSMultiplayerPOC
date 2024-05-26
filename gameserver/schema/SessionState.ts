@@ -15,6 +15,8 @@ export class SessionState extends Schema {
   @type("number") countdown: number = SERVER_CONFIG.COUNTDOWN_DEFAULT;
   @type("string") mapId: string = "map1";
   @type(TilemapState) tilemap = new TilemapState();
+
+  captureFlagIdToParentId: Map<string, string> = new Map<string, string>();
   constructor() {
     super();
   }
@@ -25,22 +27,27 @@ export class SessionState extends Schema {
     x: number,
     y: number
   ) {
-    this.players.set(
-      sessionId,
-      new PlayerState(`Player_${name}`, x, y, sessionId)
-    );
+    this.players.set(sessionId, new PlayerState(`${name}`, x, y, sessionId));
     return this.players.get(sessionId);
   }
   public getPlayer(sessionId: string) {
     return this.players.get(sessionId);
   }
   public getPlayers() {
-    let playersArr= [];
-    for(let player of this.players.entries()) {
+    let playersArr = [];
+    for (let player of this.players.entries()) {
       playersArr.push(player[1]);
     }
     return playersArr;
   }
+
+  onCaptureFlagAdded(flagId: string, parentId: string) {
+    this.captureFlagIdToParentId.set(flagId, parentId);
+  }
+  onCaptureFlagRemoved(flagId: string) {
+    this.captureFlagIdToParentId.delete(flagId);
+  }
+
   public removePlayer(sessionId: string, gameManager: GameStateManagerType) {
     const player = this.players.get(sessionId);
     if (!player) {
@@ -48,7 +55,13 @@ export class SessionState extends Schema {
     }
 
     player.removeAllSoldiers(gameManager);
+    player.captureFlags.forEach((flag) => {
+      player.removeCaptureFlag(flag.id, this, gameManager);
+    });
+    player.captureFlags.clear();
+
     this.players.delete(sessionId);
+    this.tilemap.updateOwnershipMap(this.getPlayers());
   }
   public countReadyPlayers() {
     return [...this.players.values()].reduce((acc, curr) => {

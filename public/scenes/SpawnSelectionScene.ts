@@ -1,10 +1,10 @@
 import CONSTANT from "../constant";
 import $ from "jquery";
-import LoadingBar from "../LoadingBar";
+import LoadingBar from "../gameObjects/LoadingBar";
 import { NetworkManager } from "../NetworkManager";
 import { BaseScene } from "./BaseScene";
 import { PacketType } from "../../common/PacketType";
-import { PlayerCastle } from "../gameObjects/playerCastle";
+import { PlayerCastle } from "../gameObjects/PlayerCastle";
 import SessionStateClientHelpers from "../helpers/SessionStateClientHelpers";
 import SAT from "sat";
 
@@ -216,7 +216,6 @@ export class SpawnSelectionScene extends BaseScene {
     this.controls = new Phaser.Cameras.Controls.SmoothedKeyControl(
       controlConfig
     );
-
     this.AddInputEvent(
       "wheel",
       (
@@ -320,10 +319,7 @@ export class SpawnSelectionScene extends BaseScene {
         spawnFlag.setPosition(x, y);
         spawnFlag.setHealth(2);
       } else {
-        const castle = new PlayerCastle(this, x, y, "castle", null, {
-          health: playerState.castleHealth,
-          player: playerState,
-        });
+        const castle = new PlayerCastle(this, x, y, "castle", 0, playerState);
         this.AddObject(castle, flagKey);
       }
     } catch (error) {

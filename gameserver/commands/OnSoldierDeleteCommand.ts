@@ -7,5 +7,16 @@ export class OnSoldierDeleteCommand extends Command<
   SessionRoom,
   CommandPayload
 > {
-  execute({ client, message, gameManager }: CommandPayload) {}
+  execute({
+    client,
+    message,
+    gameManager,
+  }: CommandPayload<{
+    soldierIds: string[];
+  }>) {
+    const sessionId = client.sessionId;
+    message.soldierIds.forEach((id) =>
+      this.state.getPlayer(sessionId)?.removeSoldier(id, gameManager!)
+    );
+  }
 }

@@ -161,7 +161,7 @@ export class NetworkManager {
     try {
       console.log(`[hostSession] : room(${roomName}) host requested.`);
       await this.disconnectGameServer().catch((err) => {
-        console.log(err);
+        console.error(err);
       });
 
       console.log(

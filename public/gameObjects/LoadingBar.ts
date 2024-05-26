@@ -1,26 +1,27 @@
 import Phaser from "phaser";
 export default class LoadingBar extends Phaser.GameObjects.Graphics {
-  width: number;
-  height: number;
+  private width: number;
+  private height: number;
   parent: any;
-  maxValue: number;
-  currentValue: number;
+  private maxValue: number = 100;
+  private currentValue: number = 0;
+  
   constructor(
     scene: Phaser.Scene,
     parent: any,
     args?: {
       maxValue: number;
       currentValue: number;
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-      depth ?: number;
+      x?: number;
+      y?: number;
+      width?: number;
+      height?: number;
+      depth?: number;
     }
   ) {
     super(scene, {
-      x: args?.x || parent.x,
-      y: args?.y || parent.y,
+      x: args?.x || parent?.x,
+      y: args?.y || parent?.y,
     });
     this.width = args?.width || 25;
     this.height = args?.height || 4;
@@ -33,11 +34,15 @@ export default class LoadingBar extends Phaser.GameObjects.Graphics {
     this.draw();
   }
   setValue(value: number) {
-    this.currentValue = Math.min(value, this.maxValue);
+    this.currentValue = value > this.maxValue ? this.maxValue : value;
+  }
+  getValue() {
+    return this.currentValue;
   }
   draw() {
     this.clear();
     this.copyPosition(this.parent);
+
     //  BG
     this.fillStyle(0x000000);
     this.fillRect(-10, 20, this.width, this.height);

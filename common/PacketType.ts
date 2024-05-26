@@ -5,13 +5,15 @@ export enum ClientToServerPacketType {
   PLAYER_UNREADY = "plur",
   SOLDIER_CREATE_REQUESTED = "slcrreq",
   SPAWN_POINT_REQUESTED = "spwnpntreq",
-  SOLDIER_DELETED = "sldel",
+  SOLDIERS_DELETE_REQUESTED = "sldrdelrqstd",
   SOLDIER_MOVE_REQUESTED = "slmovreq",
   PLAYER_JOINED = "pljoin",
   SOLDIER_ATTACK_REQUESTED = "sldierattkreq",
   CLIENT_SENT_CHAT = "clientchat",
   SPAWN_POINT_SELECTED = "spwnpntslct",
   SOLDIER_SPAWN_REQUESTED = "unitspwnreq",
+  CAPTURE_FLAG_CREATE_REQUESTED = "cptrflgrqst",
+  CAPTURE_FLAG_DELETE_REQUESTED = "cptrflgdltrqst",
 }
 export enum ServerToClientPacketType {
   NEW_CHAT_MESSAGE = "newcm",
