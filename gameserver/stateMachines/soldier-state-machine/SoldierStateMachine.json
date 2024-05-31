@@ -31,10 +31,6 @@
         "Attack": {
           "target": "Attack",
           "description": "Triggered when Soldier.attackUnit() function is invoked in stateManager."
-        },
-        "PlayerAttacked": {
-          "target": "Defend",
-          "description": "Called when attacker invokes defender's attackMe() method. We can be sure that whenever this event is fired, both attacker and defender has their target unit set."
         }
       }
     },
