@@ -9,6 +9,7 @@ import { NetworkManager } from "../NetworkManager";
 import { PlayerState } from "../../gameserver/schema/PlayerState";
 import { Spearman } from "../soldiers/Spearman";
 import CONSTANTS from "../constant";
+import { CaptureFlag } from "../gameObjects/CaptureFlag";
 
 const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
   color: "#fff",
@@ -197,6 +198,11 @@ export class PlayerStatisticHUD extends BaseScene {
         soldiers.forEach((soldier) => {
           gameScene.onSoldierRemoved(soldier.id, playerObject.id);
         });
+
+        const captureFlags = gameScene.GetObjectsWithKeyPrefix<CaptureFlag>(
+          `obj_captureFlag_${playerObject.id}`
+        );
+        captureFlags.forEach((flag) => flag.destroy(true));
 
         soldierCount.setText(
           `Total Soldiers: ${[...state.players.values()].reduce((acc, curr) => {

@@ -91,7 +91,8 @@ export class CaptureFlag
     y: number,
     radius: number
   ) {
-    this.circleOfInfluence = scene.add.graphics();
+    if(!this.circleOfInfluence)
+      this.circleOfInfluence = scene.add.graphics();
     this.circleOfInfluence.lineStyle(3, 0xffffff);
     this.circleOfInfluence.strokeCircle(x, y, radius);
   }

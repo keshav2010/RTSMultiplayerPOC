@@ -7,6 +7,5 @@ export class OnLeaveCommand extends Command<SessionRoom, CommandPayload> {
   execute({ client, message, gameManager }: CommandPayload) {
     const sessionId = client.sessionId;
     this.state.removePlayer(sessionId, gameManager!);
-    this.state.tilemap.updateOwnershipMap(this.state.getPlayers());
   }
 }

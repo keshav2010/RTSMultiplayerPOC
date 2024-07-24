@@ -34,11 +34,7 @@ export class SessionState extends Schema {
     return this.players.get(sessionId);
   }
   public getPlayers() {
-    let playersArr = [];
-    for (let player of this.players.entries()) {
-      playersArr.push(player[1]);
-    }
-    return playersArr;
+    return this.players;
   }
 
   onCaptureFlagAdded(flagId: string, parentId: string) {
