@@ -459,8 +459,8 @@ export class GameScene extends BaseScene {
     // update tilemap for every tile update received.
     this.AddStateChangeListener(
       GameSessionState.tilemap.ownershipTilemap1D.onChange(
-        (owner, tileIndex) => {
-          this.updateTilemap(networkManager, owner, tileIndex);
+        (owner, tile1DIndex) => {
+          this.updateTilemap(networkManager, owner, tile1DIndex);
         }
       )
     );
@@ -531,7 +531,6 @@ export class GameScene extends BaseScene {
 
     this.AddSceneEvent(
       GAMEEVENTS.DELETE_SELECTED_OBJECTS, () => {
-        console.log('requested to delete seelcted objects');
         const selectedObjectsMap = this.data.get(
           DataKey.SELECTED_OBJECTS_MAP
         ) as Map<string, BaseSoldier | CaptureFlag>;

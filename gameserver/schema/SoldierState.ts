@@ -391,18 +391,21 @@ export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
         flagQuatree.id
       );
       if (!flagOwnerId) return;
-      const flag = sessionState
-        .getPlayer(flagOwnerId)
-        ?.captureFlags.toArray()
+
+      const flagOwner = sessionState.getPlayer(flagOwnerId);
+      if (!flagOwner) return;
+
+      const [flag] = sessionState
+        .getPlayer(flagOwnerId)!
+        .captureFlags.toArray()
         .filter((flag) => flag.id === flagQuatree.id);
 
-      if (flag && flag?.[0]) {
-        flag[0].setHealth(flag[0].health - 0.5 * delta);
-        if(flag[0].health === 0)
-          sessionState
-            .getPlayer(flagOwnerId)
-            ?.removeCaptureFlag(flag[0].id, sessionState, stateManager);
-      }
+      if (!flag) return;
+
+      flag.setHealth(flag.health - 0.5 * delta);
+      if (flag.health > 0) return;
+      flagOwner.removeCaptureFlag(flag.id, sessionState, stateManager);
+      sessionState.tilemap.updateOwnershipMap(sessionState.getPlayers());
     });
 
     this.stateMachine.tick({ delta, stateManager, soldier: this });

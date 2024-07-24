@@ -1,8 +1,7 @@
-import { Schema, type, ArraySchema } from "@colyseus/schema";
+import { Schema, type, MapSchema, ArraySchema } from "@colyseus/schema";
 import { createNoise2D } from "simplex-noise";
 import { PlayerState } from "./PlayerState";
 import SAT from "sat";
-
 export enum ETileType {
   DIRT = "dirt",
   GRASS = "grass",
@@ -50,62 +49,87 @@ export class TilemapState extends Schema {
     return new SAT.Vector(col, row);
   }
 
-  getTileTypeAt(index: number) {
+  getTileTypeAt(index: number) : ETileType {
     const tileId = this.tilemap1D.at(index);
     return TilesTypeById[tileId];
   }
 
-  updateOwnershipMap(players: PlayerState[]) {
+  updateOwnershipMap(players: MapSchema<PlayerState, string>) {
     for (
       let tileIndex1D = 0;
       tileIndex1D < this.ownershipTilemap1D.length;
       tileIndex1D++
     ) {
       const tileType = this.getTileTypeAt(tileIndex1D);
-      if (tileType === "water") continue;
+      if (tileType === ETileType.WATER) continue;
 
-      const currentOwner = this.ownershipTilemap1D.at(tileIndex1D);
-      const newOwner = this.selectTileOwner(tileIndex1D, players);
-
-      if (newOwner !== "NONE" && currentOwner !== "NONE") {
-        continue;
-      }
-      if (newOwner === currentOwner) continue;
-      this.ownershipTilemap1D[tileIndex1D] = newOwner;
+      this.ownershipTilemap1D[tileIndex1D] = this.getTileOwner(
+        tileIndex1D,
+        players
+      );
     }
   }
 
-  private selectTileOwner(
-    tileIndex: number,
-    players: PlayerState[]
+  private isTileWithinPlayerReach(
+    player: PlayerState | undefined,
+    tile1DIndex: number
+  ): boolean {
+    if (!player) return false;
+    const minDistance = TilemapState.TILE_INFLUENCE_DISTANCE;
+    let isValidOwner = false;
+    const castleAndCaptureFlagPos = player.captureFlags.map((flag) =>
+      flag.pos.getVector()
+    );
+    castleAndCaptureFlagPos.push(player.pos.getVector());
+
+    const tilePos = this.get2DIndex(tile1DIndex);
+    for (const pos of castleAndCaptureFlagPos) {
+      pos.x = Math.floor(pos.x / this.tilewidth);
+      pos.y = Math.floor(pos.y / this.tileheight);
+      const distanceFromTile = pos.sub(tilePos).len();
+      if (distanceFromTile >= minDistance) continue;
+      isValidOwner = true;
+      break;
+    }
+
+    return isValidOwner;
+  }
+  private getTileOwner(
+    tile1DIndex: number,
+    players: MapSchema<PlayerState, string>
   ): string | "NONE" {
-    let ownerId = "NONE";
+    const currentOwner = this.ownershipTilemap1D.at(tile1DIndex);
+    let ownerId = players.has(currentOwner) ? currentOwner : "NONE";
+    let isTileWithinCurrentOwnerReach = this.isTileWithinPlayerReach(
+      players.get(ownerId),
+      tile1DIndex
+    );
+
+    // if tile currently has an active owner that satisfies the ownership creteria
+    if (isTileWithinCurrentOwnerReach) return ownerId;
+
+    ownerId = 'NONE';
     let minDistance = TilemapState.TILE_INFLUENCE_DISTANCE;
 
-    for (const player of players) {
-      const captureFlagPos = player.captureFlags.map((flag) =>
+    let hasOwner: boolean = false;
+    for (const [_, player] of players) {
+      const castleAndCaptureFlagPos = player.captureFlags.map((flag) =>
         flag.pos.getVector()
       );
-      const territoryFlagPositions = [
-        player.pos.getVector(),
-        ...captureFlagPos,
-      ];
+      castleAndCaptureFlagPos.push(player.pos.getVector());
 
-      territoryFlagPositions.forEach((pos) => {
-        // Convert to tile coordinates
+      const tilePos = this.get2DIndex(tile1DIndex);
+      for (const pos of castleAndCaptureFlagPos) {
         pos.x = Math.floor(pos.x / this.tilewidth);
         pos.y = Math.floor(pos.y / this.tileheight);
-
-        const tilePos = this.get2DIndex(tileIndex);
-
         const distanceFromTile = pos.sub(tilePos).len();
-        if (distanceFromTile >= minDistance) return;
-
+        if (distanceFromTile >= minDistance) continue;
+        hasOwner = true;
         minDistance = distanceFromTile;
         ownerId = player.id;
-      });
+      }
     }
-    return ownerId;
+    return hasOwner ? ownerId : "NONE";
   }
 
   async generateTilemap() {

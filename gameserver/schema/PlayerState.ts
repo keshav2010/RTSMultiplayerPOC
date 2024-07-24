@@ -145,7 +145,6 @@ export class PlayerState extends Schema implements ISceneItem {
 
     sessionState.onCaptureFlagRemoved(flagId);
     this.resourceGrowthRateHz = 2 * (1 + 0.2 * this.captureFlags.length);
-    sessionState.tilemap.updateOwnershipMap(sessionState.getPlayers());
   }
   removeBulkCaptureFlag(
     flagIds: string[],

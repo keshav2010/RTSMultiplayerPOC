@@ -42,7 +42,8 @@ export class OnSpawnPointSelectCommand extends Command<
       return;
     }
     const player = this.state.getPlayer(client.id);
-    player?.updatePosition(requestedPoint.x, requestedPoint.y);
+    if(!player) return;
+    player.updatePosition(requestedPoint.x, requestedPoint.y);
     this.state.tilemap.updateOwnershipMap(this.state.getPlayers());
   }
 }
