@@ -703,9 +703,9 @@ export class GameScene extends BaseScene {
             `obj_captureFlag_${player.id}_${newFlag.id}`
           );
           if (!flag) return;
-          this.DestroyObjectById(`obj_captureFlag_${player.id}_${newFlag.id}`);
+          this.DestroyObjectById(`obj_captureFlag_${player.id}_${flag.id}`);
           this.DestroyStateChangeListener(
-            `statechange_captureFlag_${player.id}_${newFlag.id}`
+            `statechange_captureFlag_${player.id}_${flag.id}`
           );
         })
       );
@@ -714,10 +714,10 @@ export class GameScene extends BaseScene {
     this.AddStateChangeListener(
       state.players.onRemove((player) => {
         const kingdomId = `obj_playerCastle_${player.id}`;
+        this.DestroyObjectById(kingdomId);
         this.events.emit(PacketType.ByServer.PLAYER_LEFT, {
           playerState: player,
         });
-        this.DestroyObjectById(kingdomId);
       })
     );
 
