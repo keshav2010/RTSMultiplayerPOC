@@ -4,9 +4,9 @@ import LoadingBar from "../gameObjects/LoadingBar";
 import { NetworkManager } from "../NetworkManager";
 import { BaseScene } from "./BaseScene";
 import { PacketType } from "../../common/PacketType";
-import { PlayerCastle } from "../gameObjects/PlayerCastle";
 import SessionStateClientHelpers from "../helpers/SessionStateClientHelpers";
 import SAT from "sat";
+import { PlayerCastle } from "../gameObjects/PlayerCastle";
 
 var networkManager: NetworkManager;
 var selectorGraphics: Phaser.GameObjects.Graphics;
