@@ -2,7 +2,6 @@ import CONSTANT from "../constant";
 import { BaseScene } from "./BaseScene";
 import { NetworkManager } from "../NetworkManager";
 import { addBackgroundImage } from "../helpers/addBackgroundImage";
-import { RoomAvailable } from "colyseus.js";
 
 function removeServerList(sessionBrowserDOM: Phaser.GameObjects.DOMElement) {
   // Assuming sessionBrowserDOM is a Phaser.GameObjects.E
@@ -88,13 +87,10 @@ export class SessionBrowserScene extends BaseScene {
     this.AddObject(this.add.text(100, 20, "War.IO"), "obj_introText");
     addBackgroundImage(this, "background");
 
-    this.AddObject(
+    const sessionBrowserDOM = this.AddObject(
       this.add.dom(600, 200).createFromCache("sesssionBrowserDOM"),
       "obj_sessionBrowser"
     );
-
-    const sessionBrowserDOM =
-      this.GetObject<Phaser.GameObjects.DOMElement>("obj_sessionBrowser");
     if (!sessionBrowserDOM) {
       return;
     }
