@@ -55,11 +55,20 @@ function addPlayerInfo(dom: Phaser.GameObjects.DOMElement, players: PlayerState[
     // Create and append server players span
     const readySpan = document.createElement('span');
     readySpan.className = 'ready-status';
+    readySpan.id = `ready-status-${player.id}`
     readySpan.textContent = `${player.readyStatus ? 'YES' : 'NO'}`; // Assuming these properties exist in the session object
     playerRowDataDiv.appendChild(readySpan);
 
     // Append the serverRowDataDiv to the server-list div
     playerListDiv!.appendChild(playerRowDataDiv);
+
+    player.listen('readyStatus', (isReady) => {
+      const readyStatusElement = dom?.getChildByID(`ready-status-${player.id}`);
+      if(!readyStatusElement)
+        return;
+      readyStatusElement.innerHTML = isReady ? 'Ready✅' : 'Not Ready❌';
+    });
+
   });
 }
 
@@ -111,15 +120,25 @@ export class SessionLobbyScene extends BaseScene {
     );
 
     const cb = networkManager.getState()?.listen("sessionState", (value) => {
-      console.log("session state updated ", value)
       if (value === "SPAWN_SELECTION_STATE")
         this.scene.start(CONSTANT.SCENES.SPAWNSELECTSCENE);
     })
     if (cb)
       this.AddStateChangeListener(cb);
 
-    this.lobbyDOM.getChildByID('btn_ready')?.addEventListener('click', () => {
-      buttonState = !buttonState;
+    const readyButton = this.lobbyDOM.getChildByID('btn_ready');
+    const leaveSessionButton = this.lobbyDOM.getChildByID('btn_quitLobby');
+
+    leaveSessionButton?.addEventListener('click', () => {
+      networkManager.disconnectGameServer();
+      this.scene.start(CONSTANT.SCENES.MENU);
+    });
+
+    readyButton!.addEventListener('click', () => {
+      const state = readyButton?.getAttribute('readyState');
+      const buttonState = !state;
+      readyButton!.innerHTML = buttonState ? 'Ready✅' : 'Not Ready❌';
+      readyButton!.setAttribute('readyState', `${buttonState ? 'y' : ''}`);
       if (buttonState)
         networkManager.sendEventToServer(PacketType.ByClient.PLAYER_READY, {
           readyStatus: true,
