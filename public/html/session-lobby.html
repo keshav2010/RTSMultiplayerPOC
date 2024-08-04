@@ -1,0 +1,104 @@
+<style>
+    body {
+        font-family: Arial, sans-serif;
+    }
+
+    .session-lobby {
+        width: 800px;
+        margin: 0 auto;
+        background-color: #f8f8f8;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .header,
+    .player-row-data {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        /* Vertically center content */
+    }
+
+    .players-list {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+
+    .player-row-data,
+    .search-box {
+        padding: 0 10px;
+    }
+
+    /* Scrollbar styles */
+    .players-list::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .players-list::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    .players-list::-webkit-scrollbar-thumb {
+        background: #888;
+    }
+
+    .players-list::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    /* Button styles */
+    button {
+        display: inline-block;
+        padding: 10px 20px;
+        margin: 10px;
+        text-align: center;
+        text-decoration: none;
+        font-size: 16px;
+        cursor: pointer;
+        color: #ffffff;
+        background-color: #4CAF50;
+        border: none;
+        border-radius: 12px;
+        transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+        background-color: #45a049;
+    }
+
+    button:focus {
+        outline: none;
+        border: 2px solid #4CAF50;
+    }
+
+    button:active {
+        background-color: #3e8e41;
+        transform: scale(0.98);
+    }
+
+    .no-servers-found {
+        min-height: 100px;
+        display: flex;
+        text-align: center;
+        justify-content: center;
+    }
+</style>
+<div class="session-lobby">
+    <div class="header">
+        <h1>Lobby <span id="p_sessionId"></span></h1>
+        <h2 id="timer"></h2>
+        <button id="btn_ready">Ready</button>
+        <button id="btn_quitLobby">Exit</button>
+    </div>
+    <div class="players-list">
+        <div data-id="1" class="player-row-data" name="player-data">
+            <span class="player-name">Server 1</span>
+            <span class="player-rank">10/50</span>
+            <span class="ready-status">X</span>
+        </div>
+        <!-- Add more server rows as needed -->
+    </div>
+</div>
