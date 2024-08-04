@@ -150,18 +150,18 @@ export class PlayerStatisticHUD extends BaseScene {
     );
 
     Phaser.Actions.GridAlign([exitButton, captureFlagButton, deleteButton], {
-      width: 640,
+      width: this.sys.canvas.width*0.5,
       cellHeight: 64,
       cellWidth: 64,
-      x: 900,
-      y: 50,
+      x: this.sys.canvas.width*0.8,
+      y: 32,
     });
     Phaser.Actions.GridAlign([tooltip], {
-      width: 640,
+      width: this.sys.canvas.width*0.5,
       cellHeight: 64,
       cellWidth: 640,
-      x: 840,
-      y: 100,
+      x: this.sys.canvas.width*0.8,
+      y: 32*3,
     });
 
     // TODO: optimise

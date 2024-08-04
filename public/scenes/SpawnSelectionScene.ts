@@ -203,15 +203,18 @@ export class SpawnSelectionScene extends BaseScene {
     cursors = this.input.keyboard?.createCursorKeys();
     if (!cursors) return;
 
-    const controlConfig = {
+    const controlConfig: Phaser.Types.Cameras.Controls.SmoothedKeyControlConfig = {
       camera: this.cameras.main,
-      left: cursors.left,
-      right: cursors.right,
-      up: cursors.up,
-      down: cursors.down,
-      drag: 0.001,
-      acceleration: 0.02,
-      maxSpeed: 1.0,
+      left: cursors!.left,
+      right: cursors!.right,
+      up: cursors!.up,
+      down: cursors!.down,
+      zoomIn: this.input.keyboard?.addKey('W'),
+      zoomOut: this.input.keyboard?.addKey('S'),
+      zoomSpeed: 0.02,
+      drag: 0.0001,
+      acceleration: 0.0005,
+      maxSpeed: 0.1,
     };
     this.controls = new Phaser.Cameras.Controls.SmoothedKeyControl(
       controlConfig

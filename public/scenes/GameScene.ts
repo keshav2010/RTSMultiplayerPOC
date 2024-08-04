@@ -18,7 +18,6 @@ var selectorThickness = 2;
 var selectorDraw = false;
 
 var pointerDownWorldSpace: { x: any; y: any } | null = null;
-var cursors;
 
 var networkManager: NetworkManager;
 const SendChatMessage = () => {
@@ -213,7 +212,7 @@ const PointerModeAction: IPointerModeAction = {
         const captureFlags = scene.GetObjectsWithKeyPrefix<CaptureFlag>(
           `obj_captureFlag_${playerId}`
         );
-        
+
         const selectables: (SelectableSceneEntity & Phaser.GameObjects.Sprite)[] = [
           ...soldiers,
           ...captureFlags,
@@ -242,7 +241,7 @@ const PointerModeAction: IPointerModeAction = {
       selectorGraphics.clear();
       pointerDownWorldSpace = null;
     },
-    pointerout: function (scene: GameScene, event: Phaser.Input.Pointer) {},
+    pointerout: function (scene: GameScene, event: Phaser.Input.Pointer) { },
   },
   [PointerMode.FLAG_PLACEMENT]: {
     pointerdown: function (scene: GameScene, pointer: Phaser.Input.Pointer) {
@@ -262,8 +261,8 @@ const PointerModeAction: IPointerModeAction = {
         }
       );
     },
-    pointerup: function (scene: GameScene, pointer: Phaser.Input.Pointer) {},
-    pointerout: function (scene: GameScene, pointer: Phaser.Input.Pointer) {},
+    pointerup: function (scene: GameScene, pointer: Phaser.Input.Pointer) { },
+    pointerout: function (scene: GameScene, pointer: Phaser.Input.Pointer) { },
     pointermove: function (scene: GameScene, pointer: Phaser.Input.Pointer) {
       scene
         .GetObject<Phaser.GameObjects.Sprite>("obj_captureFlagPlaceholder")
@@ -378,7 +377,7 @@ export class GameScene extends BaseScene {
     selectedObjectsMap.set(flagId, selectedCaptureFlag);
   }
 
-  onCaptureFlagUnselected(flagId: string) {}
+  onCaptureFlagUnselected(flagId: string) { }
 
   onSoldierPositionChanged(playerId: string, soldierId: string) {
     const phaserSceneObject = this.GetObject<Spearman>(
@@ -505,21 +504,24 @@ export class GameScene extends BaseScene {
       .setName("WorldCamera");
     this.cameras.main.setBackgroundColor("rgba(255,255,255,0.3)");
 
-    cursors = this.input.keyboard?.createCursorKeys();
-    const controlConfig = {
+    const cursors = this.input.keyboard?.createCursorKeys();
+    const controlConfig: Phaser.Types.Cameras.Controls.SmoothedKeyControlConfig = {
       camera: this.cameras.main,
-      left: cursors?.left,
-      right: cursors?.right,
-      up: cursors?.up,
-      down: cursors?.down,
-      drag: 0.001,
-      acceleration: 0.02,
-      maxSpeed: 1.0,
+      left: cursors!.left,
+      right: cursors!.right,
+      up: cursors!.up,
+      down: cursors!.down,
+      zoomIn: this.input.keyboard?.addKey('W'),
+      zoomOut: this.input.keyboard?.addKey('S'),
+      zoomSpeed: 0.02,
+      drag: 0.0001,
+      acceleration: 0.0005,
+      maxSpeed: 0.1,
     };
     const cameraControl = new Phaser.Cameras.Controls.SmoothedKeyControl(
       controlConfig
     );
-    this.AddObject(cameraControl, "obj_cameraControl");
+    this.controls = this.AddObject(cameraControl, "obj_cameraControl");
 
     this.AddSceneEvent(
       PacketType.ByServer.NEW_CHAT_MESSAGE,
@@ -534,14 +536,14 @@ export class GameScene extends BaseScene {
         const selectedObjectsMap = this.data.get(
           DataKey.SELECTED_OBJECTS_MAP
         ) as Map<string, BaseSoldier | CaptureFlag>;
-        
+
         let soldierIds = [];
         let captureFlagIds = [];
-        for(let selectedObject of selectedObjectsMap.values()) {
-          if(selectedObject instanceof BaseSoldier) {
+        for (let selectedObject of selectedObjectsMap.values()) {
+          if (selectedObject instanceof BaseSoldier) {
             soldierIds.push(selectedObject.id);
           }
-          else if(selectedObject instanceof CaptureFlag) 
+          else if (selectedObject instanceof CaptureFlag)
             captureFlagIds.push(selectedObject.id);
         }
         networkManager.sendEventToServer(
@@ -687,7 +689,7 @@ export class GameScene extends BaseScene {
             player,
             newFlag
           );
-          
+
           if (networkManager.getClientId() === player.id) {
             flag.setTint(0x00ff00);
           } else flag.setTint(0xff0000);
