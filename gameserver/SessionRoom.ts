@@ -42,6 +42,7 @@ export class SessionRoom extends Room<SessionState> {
   }
 
   onJoin(client: Client, options: any) {
+    console.log(client.id, ' joined room with sessionId', client.sessionId);
     this.dispatcher.dispatch(new OnJoinCommand(), {
       client,
       message: options,
@@ -59,6 +60,7 @@ export class SessionRoom extends Room<SessionState> {
       message: commandPayload,
       gameManager: this.gameManager,
     });
+    console.log(client.id, ' left room with sid : ', client.sessionId)
   }
 
   onDispose() {

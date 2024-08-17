@@ -3,7 +3,7 @@ import Phaser from "phaser";
 import { SessionState } from "../gameserver/schema/SessionState";
 import { ITiled2DMap } from '../common/ITiled2DMap';
 
-const URL = `${window.location.host}`;
+const URL = `${window.document.location.host.replace(/:.*/, '')}`;
 import axios from 'axios';
 export type RoomEventHandlerCallbackType = (
   type: "onStateChange" | "onMessage" | "onLeave" | "onError",
@@ -25,9 +25,8 @@ export class NetworkManager {
     phaserGame: Phaser.Game,
     phaserRegistry: Phaser.Data.DataManager
   ) {
-    console.log(window.location);
-    const protocol = window.location.protocol.includes("https:") ? "wss" : "ws";
-    this.client = new Colyseus.Client(`${protocol}://${URL}`);
+    const endpoint = `${location.protocol.replace("http", "ws")}//${URL}${location.port ? ':'+location.port : ''}`
+    this.client = new Colyseus.Client(endpoint);
     this.room = null;
 
     this.game = phaserGame;
@@ -157,24 +156,20 @@ export class NetworkManager {
     let rooms = await this.client.getAvailableRooms(roomName);
     return rooms;
   }
-  async hostAndJoinSession(roomName: string) {
+  async hostAndJoinSession(name: string) {
     try {
-      console.log(`[hostSession] : room(${roomName}) host requested.`);
+      console.log(`[hostSession] : room(${name}) host requested.`);
       await this.disconnectGameServer().catch((err) => {
         console.error(err);
       });
-
-      console.log(
-        `[hostSession] : Attempted to disconnect to any existing room, Now Creating new session.`
-      );
       this.room = await this.client.create("session_room", {
-        name: roomName,
+        name: name,
         playerName: this.getPlayerName(),
       });
       console.log("session created successfully.", this.room.roomId);
       this.setupRoomListener();
     } catch (err) {
-      console.log(`Error occurred during host and join session`, this.room);
+      console.log(`Error occurred during host and join session`);
       throw err;
     }
   }

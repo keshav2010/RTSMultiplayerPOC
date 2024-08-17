@@ -15,18 +15,6 @@ import { IBoidAgent } from "../core/types/IBoidAgent";
 import * as helper from "../helpers";
 import { VectorState } from "./VectorState";
 import { SessionState } from "./SessionState";
-function mapRange(
-  val: number,
-  mapRangeStart: number,
-  mapRangeEnd: number,
-  targetRangeStart: number,
-  targetRangeEnd: number
-) {
-  let givenRange = mapRangeEnd - mapRangeStart;
-  let targetRange = targetRangeEnd - targetRangeStart;
-  let normalizedGivenRange = (val - mapRangeStart) / givenRange;
-  return targetRangeStart + normalizedGivenRange * targetRange;
-}
 
 export class SoldierState extends Schema implements ISceneItem, IBoidAgent {
   @type(VectorState) currentPosition: VectorState = new VectorState();

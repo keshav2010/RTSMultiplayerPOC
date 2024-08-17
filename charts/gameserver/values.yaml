@@ -1,0 +1,22 @@
+replicaCount: 1
+namespace: rts
+
+image:
+  repository: localhost:30000/gameserver
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 3000
+  targetPort: 3000
+
+ingress:
+  enabled: true
+  className: nginx
+  host: localhost
+  proxyReadTimeout: "86400"
+  proxySendTimeout: "86400"
+  upgrade: "true"
+  websocket: "true"
+  proxyCacheBypass: "$http_upgrade"
