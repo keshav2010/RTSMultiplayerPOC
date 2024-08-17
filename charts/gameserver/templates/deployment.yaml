@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+        - name: gameserver
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          env:
+            # Define any environment variables needed by your game server here
+            - name: NODE_ENV
+              value: "development"
+            - name: TICKRATE
+              value: "24"
+            - name: COUNTDOWN
+              value: "15000"
+            - name: COUNTDOWN_SPAWN_SELECTION
+              value: "15000"
+            - name: COUNTDOWN_DEFAULT
+              value: "15000"
+            - name: MAX_SESSION_PER_WORKER
+              value: "1"
+            - name: MINIMUM_PLAYERS_PER_SESSION
+              value: "1"
+            - name: PORT
+              value: "3000"
+            - name: NODE_ENV
+              value: "development"
+            - name: REDIS_HOST
+              value: "test"
+            - name: REDIS_PORT
+              value: "22107"
+            - name: PUBLIC_ADDRESS
+              value: "localhost:3000"
+            - name: REDIS_USERNAME
+              value: default
+            - name: REDIS_PASSWORD
+              value: test
+            - name: ADMIN_USERNAME
+              value: keshav
+            - name: ADMIN_PASSWORD
+              value: keshav

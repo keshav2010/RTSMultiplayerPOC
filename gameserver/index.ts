@@ -8,9 +8,11 @@
  *
  * See: https://docs.colyseus.io/server/api/#constructor-options
  */
+import dotenv from "dotenv";
+dotenv.config();
 import express from "express";
 import { createServer } from "http";
-import { Server } from "colyseus";
+import { matchMaker, RedisDriver, RedisPresence, Server } from "colyseus";
 import { SessionRoom } from "./SessionRoom";
 import cors from "cors";
 import { playground } from "@colyseus/playground";
@@ -19,14 +21,16 @@ import path from "path";
 import fs from "fs";
 import { readFile } from "fs/promises";
 
-import dotenv from "dotenv";
 import basicAuth from "express-basic-auth";
 import { ITiled2DMap } from "../common/ITiled2DMap";
+
+
+console.log(process.env);
+console.log('***********************************')
 
 const username = process.env.ADMIN_USERNAME as string;
 const password = process.env.ADMIN_PASSWORD as string;
 const basicAuthMiddleware = basicAuth({
-  // list of users and passwords
   users: {
     [username]: password,
   },
@@ -35,24 +39,22 @@ const basicAuthMiddleware = basicAuth({
   challenge: true,
 });
 
-dotenv.config();
-const PORT = process.env.PORT;
+const PORT = Number(process.env.PORT) + Number(process.env.NODE_APP_INSTANCE || 0);
 const app = express();
 app.use(express.json());
-app.use(cors());
 
 app.use(express.static("dist"));
 app.use(express.static("public"));
 app.use(express.static("static"));
-
-app.use("/monitor", basicAuthMiddleware, monitor());
-app.use("/playground", basicAuthMiddleware, playground);
 
 /**
  * Use @colyseus/monitor
  * It is recommended to protect this route with a password
  * Read more: https://docs.colyseus.io/tools/monitor/#restrict-access-to-the-panel-using-a-password
  */
+app.use("/monitor", basicAuthMiddleware, monitor());
+app.use("/playground", basicAuthMiddleware, playground);
+
 const cachedMap = new Map<
   string,
   ITiled2DMap
@@ -68,6 +70,7 @@ async function loadMap(filename: string) {
   cachedMap.set(filename, data);
   return data as ITiled2DMap;
 }
+
 app.get("/", async (req, res) => {
   try {
     const pathName = path.resolve(__dirname, "dist");
@@ -97,8 +100,8 @@ app.get("/maps", async (req, res) => {
   try {
     const requestedFile = <string>req.query.id;
     const jsonMap = await loadMap(requestedFile);
-    if(!jsonMap)
-        throw new Error(`map not found`);
+    if (!jsonMap)
+      throw new Error(`map not found`);
     return res.status(200).json({
       data: jsonMap,
     });
@@ -109,12 +112,32 @@ app.get("/maps", async (req, res) => {
     });
   }
 });
+console.log('NODE_APP_INSTANCE: ', process.env.NODE_APP_INSTANCE);
+const publicAddressForProcess = `server-${process.env.NODE_APP_INSTANCE}.${process.env.PUBLIC_ADDRESS}`;
+const redisOption = {
+  host: process.env.REDIS_HOST,
+  port: Number(process.env.REDIS_PORT),
+  username: process.env.REDIS_USERNAME,
+  password: process.env.REDIS_PASSWORD
+}
+
+console.log('public address of process: ', publicAddressForProcess);
 const gameServer = new Server({
   server: createServer(app),
-  // transport: new uWebSocketsTransport(),
-  // driver: new RedisDriver(),
-  // presence: new RedisPresence(),
+  presence: new RedisPresence(redisOption),
+  driver: new RedisDriver(redisOption),
+  publicAddress: publicAddressForProcess,
+  selectProcessIdToCreateRoom: async function (roomName: string, clientOptions: any) {
+    // process with least connection atm is picked for room creation
+    const pid = (await matchMaker.stats.fetchAll())
+      .sort((p1, p2) => p1.ccu > p2.ccu ? 1 : -1)[0]
+      .processId;
+    console.log('process picked for room creation: ', pid);
+    return pid;
+  },
 });
 gameServer.define("session_room", SessionRoom);
-gameServer.listen(Number(PORT));
-console.log("SERVER WILL BE LISTENING ON PORT ", PORT);
+
+gameServer.listen(PORT, undefined, undefined, () => {
+  console.log("SERVER WILL BE LISTENING ON PORT ", PORT, 'with address ', publicAddressForProcess);
+});

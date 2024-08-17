@@ -163,11 +163,11 @@ export class MenuScene extends BaseScene {
     } catch (error) {}
   }
   async onCreateSessionClick() {
+    const spinner = <SpinnerPlugin.Spinner>this.GetObject("obj_spinner");
     try {
       const networkManager = <NetworkManager>(
         this.registry.get("networkManager")
       );
-      const spinner = <SpinnerPlugin.Spinner>this.GetObject("obj_spinner");
       spinner.setVisible(true);
       if (!networkManager) {
         throw new Error("NetworkManager is not defined");
@@ -177,8 +177,13 @@ export class MenuScene extends BaseScene {
       )?.getChildByName("nameInput") as Element & { value: string })!.value;
       await networkManager?.hostAndJoinSession(`${playerName}`);
       this.scene.start(CONSTANT.SCENES.SESSIONLOBBY);
-    } catch (error) {
+    } catch (error : any) {
       console.log(error);
+      const errorText = (this.GetObject<Phaser.GameObjects.DOMElement>(
+        "obj_playerForm"
+      )?.getChildByID("error") as Element & { value: string })!;
+      errorText.innerHTML = `${error} | ${error.message!} | ${error?.stackTrace} | ${error.error}`;
+      spinner.setVisible(false);
     }
   }
 }

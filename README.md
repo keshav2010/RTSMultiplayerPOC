@@ -21,15 +21,16 @@ Both the GIFs shows basic boid avoidance behaviour
 [![Image from Gyazo](https://i.gyazo.com/2dec336b740c0d9ecf454c53cac8991f.gif)](https://gyazo.com/2dec336b740c0d9ecf454c53cac8991f)
 
 
-# Getting Started
+# Getting Started - Containerization
 
-1. Build the client side code, this includes phaser related code that is used to draw/render game on the browser.
-> npm run build
+1. install k3s
+2. Setup a local container image registry
+3. build gameserver image (Recommended: buildah)
+4. upload the image to your local registry
+5. apply helm service and deployment for each values.yaml file
 
+at this point, we'll have 2 services up and running
+    > nginx : The service type is LoadBalancer for this
+    > gameserver: The actual monolith that handles everything, from serving HTML to hosting game sessions.
 
-2. Once done, simply run the server.
-> npx ts-node server.ts
-
-3. Check the port where server is running and you're good to go.
-   1. Create game room
-   2. open another window on same url, click on join room (it may take few seconds)
+Ensure skaffold is installed on your machine
