@@ -1,4 +1,4 @@
-/**
+ /**
  * IMPORTANT:
  * ---------
  * Do not manually edit this file if you'd like to host your server on Colyseus Cloud
@@ -12,17 +12,18 @@ import dotenv from "dotenv";
 dotenv.config();
 import express from "express";
 import { createServer } from "http";
+import { nanoid } from 'nanoid';
 import { matchMaker, RedisDriver, RedisPresence, Server } from "colyseus";
 import { SessionRoom } from "./SessionRoom";
-import cors from "cors";
 import { playground } from "@colyseus/playground";
 import { monitor } from "@colyseus/monitor";
 import path from "path";
 import fs from "fs";
 import { readFile } from "fs/promises";
-
 import basicAuth from "express-basic-auth";
 import { ITiled2DMap } from "../common/ITiled2DMap";
+console.log(process.env);
+console.log('***********************************')
 
 
 console.log(process.env);
@@ -71,6 +72,9 @@ async function loadMap(filename: string) {
   return data as ITiled2DMap;
 }
 
+app.get('/liveness', async (req, res) => {
+  return res.status(200).send();
+})
 app.get("/", async (req, res) => {
   try {
     const pathName = path.resolve(__dirname, "dist");
@@ -113,7 +117,7 @@ app.get("/maps", async (req, res) => {
   }
 });
 console.log('NODE_APP_INSTANCE: ', process.env.NODE_APP_INSTANCE);
-const publicAddressForProcess = `server-${process.env.NODE_APP_INSTANCE}.${process.env.PUBLIC_ADDRESS}`;
+const publicAddressForProcess = `server-${nanoid()}.${process.env.PUBLIC_ADDRESS}`;
 const redisOption = {
   host: process.env.REDIS_HOST,
   port: Number(process.env.REDIS_PORT),
@@ -139,5 +143,5 @@ const gameServer = new Server({
 gameServer.define("session_room", SessionRoom);
 
 gameServer.listen(PORT, undefined, undefined, () => {
-  console.log("SERVER WILL BE LISTENING ON PORT ", PORT, 'with address ', publicAddressForProcess);
+  console.log("SERVER WILL BE LISTENING ON PORT ", PORT, 'with ws-server ', publicAddressForProcess);
 });

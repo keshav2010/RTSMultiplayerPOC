@@ -19,10 +19,13 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           ports:
             - containerPort: {{ .Values.service.port }}
+          resources:
+            limits:
+              cpu: "1000m"
+              memory: "2000Mi"
           env:
-            # Define any environment variables needed by your game server here
             - name: NODE_ENV
-              value: "development"
+              value: "production"
             - name: TICKRATE
               value: "24"
             - name: COUNTDOWN
@@ -37,19 +40,17 @@ spec:
               value: "1"
             - name: PORT
               value: "3000"
-            - name: NODE_ENV
-              value: "development"
             - name: REDIS_HOST
-              value: "test"
+              value: "aiven-cloud-url"
             - name: REDIS_PORT
               value: "22107"
+            - name: REDIS_USERNAME
+              value: "default"
+            - name: REDIS_PASSWORD
+              value: "password"
             - name: PUBLIC_ADDRESS
               value: "localhost:3000"
-            - name: REDIS_USERNAME
-              value: default
-            - name: REDIS_PASSWORD
-              value: test
             - name: ADMIN_USERNAME
-              value: keshav
+              value: "keshav"
             - name: ADMIN_PASSWORD
-              value: keshav
+              value: "keshav"

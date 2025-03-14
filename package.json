@@ -9,7 +9,7 @@
     "build-dev": "webpack  --watch --config webpack.config.js && npx tsc",
     "build": "webpack --config webpack.config.js && npx tsc",
     "start": "tsx watch gameserver/index",
-    "deploy": "npx webpack --config webpack.config.js && pm2 start"
+    "deploy": "pm2-runtime start ecosystem.config.js"
   },
   "author": "keshav",
   "license": "ISC",

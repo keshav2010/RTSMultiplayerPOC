@@ -1,4 +1,5 @@
 replicaCount: 1
+namespace: rts
 
 image:
   repository: localhost:30000/gameserver
@@ -12,10 +13,10 @@ service:
 
 ingress:
   enabled: true
-  path: /
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-  hosts:
-    - host: localhost
-      paths:
-        - /
+  className: nginx
+  host: localhost
+  proxyReadTimeout: "86400"
+  proxySendTimeout: "86400"
+  upgrade: "true"
+  websocket: "true"
+  proxyCacheBypass: "$http_upgrade"
