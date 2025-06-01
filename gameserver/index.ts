@@ -10,6 +10,7 @@
  */
 import dotenv from "dotenv";
 dotenv.config();
+
 import express from "express";
 import { createServer } from "http";
 import { nanoid } from 'nanoid';
@@ -22,12 +23,6 @@ import fs from "fs";
 import { readFile } from "fs/promises";
 import basicAuth from "express-basic-auth";
 import { ITiled2DMap } from "../common/ITiled2DMap";
-console.log(process.env);
-console.log('***********************************')
-
-
-console.log(process.env);
-console.log('***********************************')
 
 const username = process.env.ADMIN_USERNAME as string;
 const password = process.env.ADMIN_PASSWORD as string;
@@ -41,6 +36,7 @@ const basicAuthMiddleware = basicAuth({
 });
 
 const PORT = Number(process.env.PORT) + Number(process.env.NODE_APP_INSTANCE || 0);
+
 const app = express();
 app.use(express.json());
 
@@ -116,27 +112,36 @@ app.get("/maps", async (req, res) => {
     });
   }
 });
-console.log('NODE_APP_INSTANCE: ', process.env.NODE_APP_INSTANCE);
-const publicAddressForProcess = `server-${nanoid()}.${process.env.PUBLIC_ADDRESS}`;
+
+// used for client redirection, this will ensure client is able to reach to our nginx reverse proxy, which then takes over the responsibility
+// of load balancing the traffic.
+const publicAddressForProcess = process.env.PUBLIC_ADDRESS;
 const redisOption = {
   host: process.env.REDIS_HOST,
   port: Number(process.env.REDIS_PORT),
   username: process.env.REDIS_USERNAME,
+  maxRetriesPerRequest: 3,
   password: process.env.REDIS_PASSWORD
 }
 
-console.log('public address of process: ', publicAddressForProcess);
 const gameServer = new Server({
   server: createServer(app),
   presence: new RedisPresence(redisOption),
   driver: new RedisDriver(redisOption),
   publicAddress: publicAddressForProcess,
   selectProcessIdToCreateRoom: async function (roomName: string, clientOptions: any) {
+    
+    console.log('[selectProcessIdToCreateRoom] : Selecting Process in order to create/query a room.')
+
     // process with least connection atm is picked for room creation
-    const pid = (await matchMaker.stats.fetchAll())
+    const fetchedProcesses = await matchMaker.stats.fetchAll();
+
+    console.log(`   > [selectProcessIdToCreateRoom]: Found ${fetchedProcesses.length} processes.`); 
+    const pid = fetchedProcesses
       .sort((p1, p2) => p1.ccu > p2.ccu ? 1 : -1)[0]
       .processId;
-    console.log('process picked for room creation: ', pid);
+    
+    console.log(`   > [selectProcessIdToCreateRoom] process(${pid}) picked for room creation.`);
     return pid;
   },
 });

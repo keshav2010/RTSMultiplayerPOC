@@ -1,6 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  namespace: rts
   name: {{ .Chart.Name }}
   labels:
     app: {{ .Chart.Name }}
@@ -25,7 +26,7 @@ spec:
               memory: "2000Mi"
           env:
             - name: NODE_ENV
-              value: "production"
+              value: {{ .Values.env.NODE_ENV | quote }}
             - name: TICKRATE
               value: "24"
             - name: COUNTDOWN
@@ -41,15 +42,15 @@ spec:
             - name: PORT
               value: "3000"
             - name: REDIS_HOST
-              value: "aiven-cloud-url"
+              value: {{ .Values.env.REDIS_HOST | quote }}
             - name: REDIS_PORT
-              value: "22107"
+              value: {{ .Values.env.REDIS_PORT | quote }}
             - name: REDIS_USERNAME
-              value: "default"
+              value: {{ .Values.env.REDIS_USERNAME | quote }}
             - name: REDIS_PASSWORD
-              value: "password"
+              value: {{ .Values.env.REDIS_PASSWORD | quote }}
             - name: PUBLIC_ADDRESS
-              value: "localhost:3000"
+              value: {{ .Values.env.PUBLIC_ADDRESS | quote }}
             - name: ADMIN_USERNAME
               value: "keshav"
             - name: ADMIN_PASSWORD

@@ -1,0 +1,28 @@
+apiVersion: skaffold/v4beta13
+kind: Config
+metadata:
+  name: rtsmultiplayerpoc
+
+profiles:
+  - name: dev
+    build:
+      local:
+        push: true
+      artifacts:
+        - image: localhost:5000/gameserver
+          context: .
+          docker:
+            dockerfile: Dockerfile
+        - image: localhost:5000/registry
+          context: .
+          docker:
+            dockerfile: registry.Dockerfile
+    deploy:
+      helm:
+        releases:
+          - name: gameserver
+            chartPath: charts/gameserver
+            namespace: 'rts'
+            createNamespace: true
+            valuesFiles:
+              - charts/gameserver/values.yaml

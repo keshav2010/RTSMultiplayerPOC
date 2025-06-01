@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: registry
+  repository: localhost:5000/registry
   tag: "2"
 
 service:

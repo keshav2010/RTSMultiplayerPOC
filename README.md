@@ -1,17 +1,6 @@
 # RTSMultiplayerPOC
 [![Node.js CI](https://github.com/keshav2010/RTSMultiplayerPOC/actions/workflows/node.js.yml/badge.svg?branch=main)](https://github.com/keshav2010/RTSMultiplayerPOC/actions/workflows/node.js.yml)
 
-Multiplayer RTS Dedicated Game Server written in NodeJS for a small-scale game.
-
-Approach
-
-1. Client send their Inputs/State
-2. Server pushes client requests in a FIFO approach
-3. Server update game state in each tick (gameserver may ideally have a tick rate of say 10, i.e 100ms are allocated for each tick)
-4. Server also builds a cumulativeUpdate packet (delta updates)
-5. Server send back delta updates (stored in cumulativeUpdate array) back to all clients
-
-This is a timestep based approach that makes sure server only send delta updates back to all clients instead of whole game state.
 
 # Preview (Debug info is displayed for each unit)
 
@@ -20,17 +9,24 @@ This is a timestep based approach that makes sure server only send delta updates
 Both the GIFs shows basic boid avoidance behaviour
 [![Image from Gyazo](https://i.gyazo.com/2dec336b740c0d9ecf454c53cac8991f.gif)](https://gyazo.com/2dec336b740c0d9ecf454c53cac8991f)
 
+# Dev Testing with kubernetes setup:
 
-# Getting Started - Containerization
+In case you're on windows, it is recommended to use rancher-desktop to run the infra locally.
+* Please Ensure that rancher is setup to use dockerd (moby) instead of containerd as a container-engine.
 
-1. install k3s
-2. Setup a local container image registry
-3. build gameserver image (Recommended: buildah)
-4. upload the image to your local registry
-5. apply helm service and deployment for each values.yaml file
+Additionally, You'll be required to install
+1. skaffold
+2. redis (run it on windows via docker / rancher) , you may as well use any online hosted redis installation if not willing to setup a local instance of it.
 
-at this point, we'll have 2 services up and running
-    > nginx : The service type is LoadBalancer for this
-    > gameserver: The actual monolith that handles everything, from serving HTML to hosting game sessions.
 
-Ensure skaffold is installed on your machine
+Once you've installed rancher-desktop, and skaffold you're now ready to run the infra locally, use the command 
+"npm run setup-local-infra"
+
+This will
+1. Create a local registry, where the images will be uploaded.
+2. Create a gameserver service.
+
+# DEV Testing without infra/k3s setup
+1. npm run build
+2. npm run start
+

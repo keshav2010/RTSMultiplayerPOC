@@ -2,7 +2,7 @@ replicaCount: 1
 namespace: rts
 
 image:
-  repository: localhost:30000/gameserver
+  repository: localhost:5000/gameserver
   tag: latest
   pullPolicy: IfNotPresent
 
@@ -11,12 +11,27 @@ service:
   port: 3000
   targetPort: 3000
 
-ingress:
-  enabled: true
+env:
+  NODE_ENV: development
+  PUBLIC_ADDRESS: gameserver.127.0.0.1.nip.io
+  REDIS_HOST: redis
+  REDIS_PASSWORD: ""
+  REDIS_PORT: 6379
+  REDIS_USERNAME: default
+
+# here are the values that are required when using nginx ingress
+nginx_ingress:
+  enabled: false
   className: nginx
   host: localhost
+  port: 3000
   proxyReadTimeout: "86400"
   proxySendTimeout: "86400"
   upgrade: "true"
   websocket: "true"
   proxyCacheBypass: "$http_upgrade"
+
+traefik_ingress:
+  enabled: true
+  host: gameserver.127.0.0.1.nip.io
+  className: traefik

@@ -170,6 +170,7 @@ export class NetworkManager {
       this.setupRoomListener();
     } catch (err) {
       console.log(`Error occurred during host and join session`);
+      console.log(err);
       throw err;
     }
   }
