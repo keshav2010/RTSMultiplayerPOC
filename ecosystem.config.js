@@ -1,22 +1,19 @@
+// ecosystem.config.js : This file is used to manage multiple applications that can be managed via pm2
 const os = require('os');
-
-/**
- * COLYSEUS CLOUD WARNING:
- * ----------------------
- * PLEASE DO NOT UPDATE THIS FILE MANUALLY AS IT MAY CAUSE DEPLOYMENT ISSUES
- */
-
+require('dotenv').config();
 module.exports = {
-  apps: [{
-    name: "colyseus-app",
-    script: 'build/index.js',
-    time: true,
-    watch: true,
-    instances: os.cpus().length,
-    exec_mode: 'fork',
-    wait_ready: true,
-    env_production: {
-      NODE_ENV: 'development'
-    }
-  }],
-};
+    apps: [{
+        port        : 3000,
+        name        : "colyseus-rts-gameserver",
+        script      : "gameserver_dist/gameserver/index.js", // your entrypoint file
+        time        : true,
+        watch       : process.env.NODE_ENV !== 'production',           // optional
+        instances   : 1, //Math.max(os.cpus().length-1, 1),
+        wait_ready  : process.env.NODE_ENV === 'production',
+        exec_mode   : 'fork',         // IMPORTANT: do not use cluster mode.
+        env: {
+            DEBUG: "colyseus:errors",
+            NODE_ENV: process.env.NODE_ENV || "production",
+        }
+    }]
+}

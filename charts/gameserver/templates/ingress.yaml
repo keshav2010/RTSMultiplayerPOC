@@ -1,0 +1,52 @@
+{{- if .Values.nginx_ingress.enabled | default false }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress
+  namespace: {{ .Values.namespace | quote }}
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "{{ .Values.ingress.proxyReadTimeout }}"
+    nginx.ingress.kubernetes.io/upgrade: "{{ .Values.ingress.upgrade }}"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/websocket-services: {{ .Chart.Name | quote }}
+    nginx.ingress.kubernetes.io/websocket: "{{ .Values.ingress.websocket }}"
+    nginx.ingress.kubernetes.io/proxy-cache-bypass: "{{ .Values.ingress.proxyCacheBypass }}"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+spec:
+  ingressClassName: {{ .Values.ingress.className | default "nginx" }}  # Specify the Ingress class here
+  rules:
+  - host: "{{ .Values.ingress.host }}"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: "gameserver"
+            port:
+              number: {{ .Values.service.port }}
+{{- end }}
+
+{{- if .Values.traefik_ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress
+  namespace: {{ .Values.namespace | quote }}
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: "web"  # or "websecure" if using HTTPS
+    traefik.ingress.kubernetes.io/router.tls: "false"         # set to "true" for HTTPS
+spec:
+  ingressClassName: {{ .Values.traefik_ingress.className | default "traefik" }}
+  rules:
+    - host: {{ .Values.traefik_ingress.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "gameserver"
+                port:
+                  number: {{ .Values.service.port }}
+{{- end }}

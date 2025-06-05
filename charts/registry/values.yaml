@@ -1,0 +1,12 @@
+replicaCount: 1
+
+image:
+  repository: localhost:5000/registry
+  tag: "2"
+
+service:
+  type: NodePort
+  port: 5000
+  targetPort: 5000
+  nodePort: 30000
+
