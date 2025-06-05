@@ -1,6 +1,6 @@
 // ecosystem.config.js : This file is used to manage multiple applications that can be managed via pm2
 const os = require('os');
-
+require('dotenv').config();
 module.exports = {
     apps: [{
         port        : 3000,

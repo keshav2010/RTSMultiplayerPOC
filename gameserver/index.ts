@@ -14,7 +14,7 @@ dotenv.config();
 import express from "express";
 import { createServer } from "http";
 import { nanoid } from 'nanoid';
-import { matchMaker, RedisDriver, RedisPresence, Server } from "colyseus";
+import { matchMaker, RedisDriver, RedisPresence, Server, ServerOptions } from "colyseus";
 import { SessionRoom } from "./SessionRoom";
 import { playground } from "@colyseus/playground";
 import { monitor } from "@colyseus/monitor";
@@ -124,10 +124,14 @@ const redisOption = {
   password: process.env.REDIS_PASSWORD
 }
 
-const gameServer = new Server({
-  server: createServer(app),
+console.log({ENV: process.env.NODE_ENV})
+const opts : ServerOptions = process.env.NODE_ENV === 'production' ? {
   presence: new RedisPresence(redisOption),
   driver: new RedisDriver(redisOption),
+} : {};
+const gameServer = new Server({
+  server: createServer(app),
+  ...opts,
   publicAddress: publicAddressForProcess,
   selectProcessIdToCreateRoom: async function (roomName: string, clientOptions: any) {
     
