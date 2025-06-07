@@ -57,7 +57,7 @@ export class PlayerStatisticHUD extends BaseScene {
   create() {
     var gameScene = this.scene.get<GameScene>(CONSTANT.SCENES.GAME);
     var networkManager = this.registry.get("networkManager") as NetworkManager;
-
+    networkManager.startPing()
     $("#soldierSelectionDiv #option_villager").on("click", () => {
       console.log("trying to create villager");
     });
@@ -214,6 +214,11 @@ export class PlayerStatisticHUD extends BaseScene {
     );
 
     this.AddObject(
+      this.add.text(120, 80, "PING:0ms", textStyle),
+      "obj_text_ping"
+    );
+
+    this.AddObject(
       this.add.text(50, 110, "Soldiers Queued: 0", textStyle),
       "obj_text_soldiersQueued"
     );
@@ -242,6 +247,13 @@ export class PlayerStatisticHUD extends BaseScene {
         );
       }
     );
+
+    gameScene.AddSceneEvent(
+      PacketType.ByServer.PONG_RESPONSE,
+      (data : any) => {
+        this.GetObject<Phaser.GameObjects.Text>('obj_text_ping')?.setText(`PING:${Date.now() - (networkManager?.lastPingTimestamp || Date.now()-999)!}`);
+      }
+    )
 
     gameScene.AddSceneEvent(
       PacketType.ByServer.PLAYER_RESOURCE_UPDATED,

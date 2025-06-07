@@ -9,6 +9,20 @@ export type RoomEventHandlerCallbackType = (
   type: "onStateChange" | "onMessage" | "onLeave" | "onError",
   data: any
 ) => void;
+
+export enum NetworkErrorCode {
+  MAP_NOT_FOUND = "MAP_NOT_FOUND",
+  ERROR_DURING_ROOM_DISCONNECT = "ERROR_DURING_ROOM_DISCONNECT",
+  FAILED_TO_HOST_SESSION = "FAILED_TO_HOST_SESSION",
+
+}
+export class NetworkError extends Error {
+  errorCode: NetworkErrorCode;
+  constructor(errorCode: NetworkErrorCode, message: string) {
+    super(message);
+    this.errorCode = errorCode;
+  }
+}
 export class NetworkManager {
   client: Colyseus.Client;
   room: Colyseus.Room<SessionState> | null;
@@ -20,12 +34,15 @@ export class NetworkManager {
 
   // the JSON stringified data for scene map (tiled2D json format)
   private mapData: ITiled2DMap | null = null;
+  private pingIntervalId: NodeJS.Timeout | undefined;
+  lastPingTimestamp: number = 0;
+  latency: number = 999;
 
   constructor(
     phaserGame: Phaser.Game,
     phaserRegistry: Phaser.Data.DataManager
   ) {
-    const endpoint = `${location.protocol.replace("http", "ws")}//${URL}${location.port ? ':'+location.port : ''}`
+    const endpoint = `${location.protocol.replace("http", "ws")}//${URL}${location.port ? ':' + location.port : ''}`
     this.client = new Colyseus.Client(endpoint);
     this.room = null;
 
@@ -36,6 +53,16 @@ export class NetworkManager {
 
     this.playerName = null;
     this.eventHandlersBinded = false;
+  }
+
+  // In your setupRoomListener() or after joining a room:
+  startPing() {
+    this.pingIntervalId = setInterval(() => {
+      if (this.room) {
+        this.lastPingTimestamp = Date.now();
+        this.room.send("ping", { timestamp: this.lastPingTimestamp });
+      }
+    }, 500);
   }
 
   getState() {
@@ -100,7 +127,7 @@ export class NetworkManager {
         this.mapData = res.data.data;
         return;
       }
-      throw new Error(`Map not found.`);
+      throw new NetworkError(NetworkErrorCode.MAP_NOT_FOUND, "Failed to find map.");
     } catch (error) {
       this.mapData = null;
       throw error;
@@ -133,9 +160,10 @@ export class NetworkManager {
 
   async disconnectGameServer() {
     try {
+      this.pingIntervalId && clearInterval(this.pingIntervalId);
       await this.room?.leave();
     } catch (error) {
-      console.log(`disconnect failed`, error);
+      throw new NetworkError(NetworkErrorCode.ERROR_DURING_ROOM_DISCONNECT, "Encountered error while trying to disconnect.");
     }
   }
 
@@ -158,20 +186,22 @@ export class NetworkManager {
   }
   async hostAndJoinSession(name: string) {
     try {
-      console.log(`[hostSession] : room(${name}) host requested.`);
-      await this.disconnectGameServer().catch((err) => {
-        console.error(err);
+      await this.disconnectGameServer().catch(err => {
+        console.log(err);
       });
+
       this.room = await this.client.create("session_room", {
-        name: name,
+        name,
         playerName: this.getPlayerName(),
       });
-      console.log("session created successfully.", this.room.roomId);
+      
       this.setupRoomListener();
     } catch (err) {
-      console.log(`Error occurred during host and join session`);
-      console.log(err);
-      throw err;
+      console.error(err);
+      throw new NetworkError(
+        NetworkErrorCode.FAILED_TO_HOST_SESSION,
+        "Failed to host a new session"
+      )
     }
   }
 }

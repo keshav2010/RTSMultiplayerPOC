@@ -9,6 +9,7 @@ import { SessionBrowserScene } from "./scenes/SessionBrowserScene";
 import SpinnerPlugin from "phaser3-rex-plugins/templates/spinner/spinner-plugin.js";
 
 import Phaser from "phaser";
+import { TutorialScene } from "./scenes/TutorialScene";
 const config = {
   type: Phaser.AUTO,
   width: 1200,
@@ -27,6 +28,7 @@ const config = {
     SpawnSelectionScene,
     GameScene,
     ResultScene,
+    TutorialScene
   ],
   dom: {
     createContainer: true,

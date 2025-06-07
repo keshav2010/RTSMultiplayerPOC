@@ -14,6 +14,8 @@ export enum ClientToServerPacketType {
   SOLDIER_SPAWN_REQUESTED = "unitspwnreq",
   CAPTURE_FLAG_CREATE_REQUESTED = "cptrflgrqst",
   CAPTURE_FLAG_DELETE_REQUESTED = "cptrflgdltrqst",
+  
+  PING_REQUESTED = "ping"
 }
 export enum ServerToClientPacketType {
   NEW_CHAT_MESSAGE = "newcm",
@@ -35,6 +37,8 @@ export enum ServerToClientPacketType {
   SOLDIER_STATE_DEBUG = "debug_soldierState",
   
   SOLDIER_SPAWN_REQUEST_UPDATED = "spawn_request_updated",
+  
+  PONG_RESPONSE = "pong"
 }
 
 export const PacketType = {

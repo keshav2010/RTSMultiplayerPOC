@@ -84,7 +84,7 @@ export class SessionBrowserScene extends BaseScene {
   }
   create() {
     let networkManager = this.registry.get("networkManager") as NetworkManager;
-    this.AddObject(this.add.text(100, 20, "War.IO"), "obj_introText");
+    this.AddObject(this.add.text(100, 20, "Conquesta"), "obj_introText");
     addBackgroundImage(this, "background");
 
     const sessionBrowserDOM = this.AddObject(
@@ -104,7 +104,7 @@ export class SessionBrowserScene extends BaseScene {
       this.scene.start(CONSTANT.SCENES.MENU);
     });
     inputField?.addEventListener("input", (event) => {
-      var inputName = sessionBrowserDOM.getChildByID("nameInput") as Element & {
+      var inputName = sessionBrowserDOM.getChildByID("player-name-input") as Element & {
         value: string;
       };
       if (!inputName) return;
