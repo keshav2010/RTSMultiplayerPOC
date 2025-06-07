@@ -52,6 +52,8 @@ export class PlayerStatisticHUD extends BaseScene {
       frameHeight: 22,
     });
     this.load.html("soldierSelectionWidget", "../html/soldier-selection.html");
+    this.load.html("phaserChatbox", "../html/phaser-chatbox.html");
+    this.load.html("game-action-panel", "../html/game-action-panel.html");
     this.scene.bringToTop();
   }
   create() {
@@ -295,6 +297,258 @@ export class PlayerStatisticHUD extends BaseScene {
     this.AddSceneEvent("destroy", () => {
       this.input.removeAllListeners();
       this.events.removeAllListeners();
+    });
+
+    // Add chatbox DOM element to HUD
+    const chatbox = this.add.dom(10, this.sys.canvas.height - 320).createFromCache("phaserChatbox");
+    chatbox.setOrigin(0, 0);
+    chatbox.setDepth(10000); // Always on top
+    this.AddObject(chatbox, "obj_chatbox");
+
+    // Chatbox event handling
+    const chatInput = chatbox.getChildByID("phaser-chatbox-input") as HTMLInputElement | null;
+    const chatSendBtn = chatbox.getChildByID("phaser-chatbox-send") as HTMLButtonElement | null;
+    const chatMessages = chatbox.getChildByID("phaser-chatbox-messages") as HTMLDivElement | null;
+    const chatboxContainer = chatbox.getChildByID("phaser-chatbox-container") as HTMLDivElement | null;
+    const chatboxHeader = chatbox.getChildByID("phaser-chatbox-header") as HTMLDivElement | null;
+    const chatboxBody = chatbox.getChildByID("phaser-chatbox-body") as HTMLDivElement | null;
+    const chatboxMinBtn = chatbox.getChildByID("phaser-chatbox-min-btn") as HTMLButtonElement | null;
+    const chatboxResize = chatbox.getChildByID("phaser-chatbox-resize") as HTMLDivElement | null;
+    const MAX_LENGTH = 60;
+    let isChatFocused = false;
+    let isDragging = false;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+    // --- Draggable chatbox logic ---
+    if (chatboxHeader && chatboxContainer) {
+      chatboxHeader.addEventListener("mousedown", (e: MouseEvent) => {
+        isDragging = true;
+        dragOffsetX = e.clientX - chatbox.x;
+        dragOffsetY = e.clientY - chatbox.y;
+        document.body.style.userSelect = "none";
+      });
+      window.addEventListener("mousemove", (e: MouseEvent) => {
+        if (isDragging) {
+          chatbox.x = Math.max(0, Math.min(this.sys.canvas.width - chatbox.width, e.clientX - dragOffsetX));
+          chatbox.y = Math.max(0, Math.min(this.sys.canvas.height - chatbox.height, e.clientY - dragOffsetY));
+        }
+      });
+      window.addEventListener("mouseup", () => {
+        isDragging = false;
+        document.body.style.userSelect = "";
+      });
+    }
+    // --- Minimize/maximize logic ---
+    if (chatboxMinBtn && chatboxBody) {
+      chatboxMinBtn.addEventListener("click", () => {
+        if (chatboxBody.style.display === "none") {
+          chatboxBody.style.display = "flex";
+          chatboxMinBtn.textContent = "–";
+        } else {
+          chatboxBody.style.display = "none";
+          chatboxMinBtn.textContent = "+";
+        }
+      });
+    }
+    // --- Focus/blur logic to block gameplay input ---
+    if (chatInput) {
+      chatInput.addEventListener("focus", () => {
+        isChatFocused = true;
+      });
+      chatInput.addEventListener("blur", () => {
+        isChatFocused = false;
+      });
+      chatInput.addEventListener("keydown", function(e) {
+        // Prevent propagation so space and other keys work in chat
+        e.stopPropagation();
+        if (e.key === "Enter") {
+          sendChat();
+        }
+      });
+    }
+    // --- Block gameplay input when chat is focused ---
+    const originalInputEnabled = this.input.enabled;
+    this.input.on("gameout", () => {
+      if (!isChatFocused) this.input.enabled = originalInputEnabled;
+    });
+    // Patch pointer/keyboard events to check isChatFocused
+    const blockIfChatFocused = (event: any) => {
+      if (isChatFocused) {
+        event.stopImmediatePropagation && event.stopImmediatePropagation();
+        return false;
+      }
+    };
+    this.input.keyboard?.on("keydown", blockIfChatFocused, this);
+    this.input.on("pointerdown", blockIfChatFocused, this);
+    // --- Chat send logic ---
+    function appendChatMessage(msg: string, sender: string) {
+      if (!chatMessages) return;
+      const div = document.createElement("div");
+      div.innerHTML = `<b>${sender}:</b> ${msg}`;
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    function sendChat() {
+      if (!chatInput) return;
+      let value = chatInput.value.trim();
+      if (!value) return;
+      if (value.length > MAX_LENGTH) value = value.slice(0, MAX_LENGTH);
+      networkManager.sendEventToServer(PacketType.ByClient.CLIENT_SENT_CHAT, { message: value });
+      chatInput.value = "";
+    }
+    if (chatSendBtn) chatSendBtn.addEventListener("click", sendChat);
+    // Listen for new chat messages from the server (reuse GameScene event)
+    gameScene.AddSceneEvent(PacketType.ByServer.NEW_CHAT_MESSAGE, (data: { message: string, senderName: string }) => {
+      appendChatMessage(data.message, data.senderName);
+    });
+    // --- Resizable chatbox logic ---
+    if (chatboxResize && chatboxContainer && chatboxBody && chatMessages) {
+      let resizing = false;
+      let startX = 0, startY = 0, startW = 0, startH = 0;
+      chatboxResize.addEventListener("mousedown", (e: MouseEvent) => {
+        resizing = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startW = chatboxContainer.offsetWidth;
+        startH = chatboxContainer.offsetHeight;
+        document.body.style.userSelect = "none";
+        e.preventDefault();
+        e.stopPropagation();
+      });
+      window.addEventListener("mousemove", (e: MouseEvent) => {
+        if (resizing) {
+          let newW = Math.max(220, Math.min(600, startW + (e.clientX - startX)));
+          let newH = Math.max(80, Math.min(400, startH + (e.clientY - startY)));
+          chatboxContainer.style.width = newW + "px";
+          chatboxContainer.style.height = newH + "px";
+          // Adjust messages area height
+          const headerH = chatboxHeader ? chatboxHeader.offsetHeight : 32;
+          const inputRowH = chatInput ? chatInput.offsetHeight + 16 : 40;
+          if (chatMessages) {
+            chatMessages.style.height = Math.max(40, newH - headerH - inputRowH - 40) + "px";
+          }
+        }
+      });
+      window.addEventListener("mouseup", () => {
+        resizing = false;
+        document.body.style.userSelect = "";
+      });
+    }
+
+    // --- Add Game Action Panel DOM (bottom right, draggable) ---
+    const panelX = this.sys.canvas.width - 10;
+    const panelY = this.sys.canvas.height - 260;
+    const gameActionPanel = this.add.dom(panelX, panelY).createFromCache("game-action-panel");
+    gameActionPanel.setOrigin(1, 0);
+    gameActionPanel.setDepth(10000);
+    gameActionPanel.setScrollFactor(0);
+    this.AddObject(gameActionPanel, "obj_gameActionPanel");
+    // Drag logic
+    const panelContainer = gameActionPanel.getChildByID("game-action-panel-container");
+    const panelDrag = gameActionPanel.getChildByID("game-action-panel-drag");
+    let isPanelDragging = false;
+    let panelDragOffsetX = 0;
+    let panelDragOffsetY = 0;
+    let panelMouseMoveListener: ((e: MouseEvent) => void) | null = null;
+    let panelMouseUpListener: ((e: MouseEvent) => void) | null = null;
+    if (panelDrag && panelContainer) {
+      panelDrag.addEventListener("mousedown", (e) => {
+        const mouseEvent = e as MouseEvent;
+        isPanelDragging = true;
+        panelDragOffsetX = mouseEvent.clientX - gameActionPanel.x;
+        panelDragOffsetY = mouseEvent.clientY - gameActionPanel.y;
+        document.body.style.userSelect = "none";
+      });
+      panelMouseMoveListener = (e: MouseEvent) => {
+        if (isPanelDragging) {
+          let newX = Math.max(0, Math.min(this.sys.canvas.width, e.clientX - panelDragOffsetX));
+          let newY = Math.max(0, Math.min(this.sys.canvas.height - 60, e.clientY - panelDragOffsetY));
+          gameActionPanel.x = newX;
+          gameActionPanel.y = newY;
+        }
+      };
+      panelMouseUpListener = () => {
+        isPanelDragging = false;
+        document.body.style.userSelect = "";
+      };
+      window.addEventListener("mousemove", panelMouseMoveListener);
+      window.addEventListener("mouseup", panelMouseUpListener);
+    }
+    // Button logic
+    const btnDisconnect = gameActionPanel.getChildByID("btn-disconnect");
+    const btnCreateFlag = gameActionPanel.getChildByID("btn-create-flag");
+    const btnDeleteSelected = gameActionPanel.getChildByID("btn-delete-selected");
+    if (btnDisconnect) {
+      btnDisconnect.addEventListener("click", () => {
+        networkManager.disconnectGameServer();
+        gameScene.scene.stop(CONSTANT.SCENES.HUD_SCORE);
+        gameScene.scene.start(CONSTANT.SCENES.MENU);
+      });
+    }
+    if (btnCreateFlag) {
+      btnCreateFlag.addEventListener("click", (event) => {
+        // Only set visibility to true if not already visible
+        const flagPlaceholderData = gameScene.data.get(GameSceneDataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER);
+        if (!flagPlaceholderData?.visibility) {
+          gameScene.data.set(GameSceneDataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER, { visibility: true });
+        }
+      });
+    }
+    if (btnDeleteSelected) {
+      btnDeleteSelected.addEventListener("click", () => {
+        gameScene.events.emit(CONSTANTS.GAMEEVENTS.DELETE_SELECTED_OBJECTS);
+      });
+    }
+    // Tooltip positioning logic: ensure tooltips never overflow the visible canvas
+    // This runs for all .game-action-btn in the panel
+    const panelBtns = (panelContainer?.querySelectorAll('.game-action-btn') ?? []) as NodeListOf<HTMLButtonElement>;
+    panelBtns.forEach(btn => {
+      const tooltip = btn.querySelector('.game-action-tooltip') as HTMLDivElement | null;
+      if (!tooltip) return;
+      btn.addEventListener('mouseenter', (e) => {
+        // Reset to default position (right of button)
+        tooltip.style.left = '';
+        tooltip.style.right = '';
+        tooltip.style.top = '';
+        tooltip.style.bottom = '';
+        tooltip.style.transform = '';
+        tooltip.style.display = 'block';
+        // Get bounding rects
+        const btnRect = btn.getBoundingClientRect();
+        const tipRect = tooltip.getBoundingClientRect();
+        const canvasRect = this.sys.game.canvas.getBoundingClientRect();
+        // Default: right of button, vertically centered
+        let left = btn.offsetWidth + 8;
+        let top = (btn.offsetHeight - tipRect.height) / 2;
+        // Check right overflow
+        if (btnRect.left + left + tipRect.width > canvasRect.right) {
+          left = -tipRect.width - 8;
+        }
+        // Check bottom overflow
+        if (btnRect.top + top + tipRect.height > canvasRect.bottom) {
+          top = btn.offsetHeight - tipRect.height;
+        }
+        // Check top overflow
+        if (btnRect.top + top < canvasRect.top) {
+          top = 0;
+        }
+        tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
+      });
+      btn.addEventListener('mouseleave', () => {
+        tooltip.style.display = '';
+      });
+    });
+    // Cleanup on shutdown/destroy
+    this.events.on("shutdown", () => {
+      gameActionPanel.destroy();
+      if (panelMouseMoveListener) window.removeEventListener("mousemove", panelMouseMoveListener);
+      if (panelMouseUpListener) window.removeEventListener("mouseup", panelMouseUpListener);
+    });
+    this.events.on("destroy", () => {
+      gameActionPanel.destroy();
+      if (panelMouseMoveListener) window.removeEventListener("mousemove", panelMouseMoveListener);
+      if (panelMouseUpListener) window.removeEventListener("mouseup", panelMouseUpListener);
     });
   }
 

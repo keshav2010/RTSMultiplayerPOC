@@ -1,0 +1,100 @@
+<style>
+  .spawn-timer-bar-container {
+    width: 420px;
+    margin: 0 auto;
+    padding: 0 0 18px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(255,255,255,0.35);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(255,255,255,0.25);
+    position: relative;
+    user-select: none;
+    transition: box-shadow 0.3s;
+  }
+  .spawn-timer-bar-container:active {
+    box-shadow: 0 2px 16px 0 rgba(31, 38, 135, 0.28);
+  }
+  .spawn-timer-drag-handle {
+    width: 100%;
+    height: 24px;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.18) 0%, rgba(200,200,255,0.12) 100%);
+    margin-bottom: 2px;
+  }
+  .spawn-timer-drag-icon {
+    width: 36px;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(120,120,180,0.25);
+    margin-top: 8px;
+    margin-bottom: 4px;
+  }
+  .spawn-timer-label {
+    font-size: 22px;
+    color: #222;
+    margin-bottom: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-shadow: 0 1px 2px #fff8;
+  }
+  .spawn-timer-bar {
+    width: 340px;
+    height: 26px;
+    background: rgba(220,220,220,0.7);
+    border-radius: 13px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 8px #0001;
+    position: relative;
+  }
+  .spawn-timer-bar-inner {
+    height: 100%;
+    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+    width: 100%;
+    transition: width 0.3s cubic-bezier(.4,2,.6,1);
+    position: relative;
+    z-index: 1;
+  }
+  .spawn-timer-bar-shine {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 2;
+    background: linear-gradient(120deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 60%, rgba(255,255,255,0.25) 100%);
+    animation: shine 2.5s linear infinite;
+    opacity: 0.7;
+  }
+  @keyframes shine {
+    0% { background-position: -340px 0; }
+    100% { background-position: 340px 0; }
+  }
+  .spawn-timer-countdown {
+    font-size: 20px;
+    color: #1976d2;
+    font-weight: 600;
+    margin-top: 2px;
+    text-shadow: 0 1px 2px #fff8;
+    letter-spacing: 0.5px;
+  }
+</style>
+<div class="spawn-timer-bar-container" id="spawn-timer-bar-container">
+  <div class="spawn-timer-drag-handle" id="spawn-timer-drag-handle">
+    <div class="spawn-timer-drag-icon"></div>
+  </div>
+  <div class="spawn-timer-label">Time to Choose Spawn Point</div>
+  <div class="spawn-timer-bar">
+    <div class="spawn-timer-bar-inner" id="spawn-timer-bar-inner"></div>
+    <div class="spawn-timer-bar-shine"></div>
+  </div>
+  <div class="spawn-timer-countdown" id="spawn-timer-countdown">10.0s</div>
+</div> 

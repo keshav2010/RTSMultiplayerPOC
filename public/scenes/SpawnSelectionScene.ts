@@ -7,6 +7,7 @@ import { PacketType } from "../../common/PacketType";
 import SessionStateClientHelpers from "../helpers/SessionStateClientHelpers";
 import SAT from "sat";
 import { PlayerCastle } from "../gameObjects/PlayerCastle";
+import SpawnTimerBar from "../ui/SpawnTimerBar";
 
 var networkManager: NetworkManager;
 var selectorGraphics: Phaser.GameObjects.Graphics;
@@ -21,6 +22,7 @@ export class SpawnSelectionScene extends BaseScene {
   canvasWidth: number;
   canvasHeight: number;
   controls: Phaser.Cameras.Controls.SmoothedKeyControl | undefined;
+  private timerBar?: SpawnTimerBar;
   constructor() {
     super(CONSTANT.SCENES.SPAWNSELECTSCENE);
     this.canvasWidth = 1962;
@@ -33,6 +35,7 @@ export class SpawnSelectionScene extends BaseScene {
     this.load.image("spearman", "../assets/spearman.png");
     this.load.image("castle", "../assets/castle.png");
     this.load.image("img_groundtiles", "../assets/groundtiles.png");
+    this.load.html("spawn-timer-bar", "../html/spawn-timer-bar.html");
   }
   create() {
     networkManager = this.registry.get("networkManager") as NetworkManager;
@@ -107,17 +110,9 @@ export class SpawnSelectionScene extends BaseScene {
       );
     });
 
-    this.AddObject(
-      new LoadingBar(this, this, {
-        x: 250,
-        y: 150,
-        maxValue: (GameSessionState.countdown || 5000) / 1000,
-        currentValue: (GameSessionState.countdown || 5000) / 1000,
-        width: 500,
-        height: 30,
-      }),
-      "obj_timerBar"
-    );
+    // Timer bar
+    this.timerBar = new SpawnTimerBar(this);
+    this.AddObject(this.timerBar.getDom(), "obj_spawnTimerDom");
 
     this.AddInputEvent("pointerdown", (pointer: any) => {
       if (pointer.button === 0) {
@@ -262,11 +257,10 @@ export class SpawnSelectionScene extends BaseScene {
     if (GameSessionState.sessionState !== "SPAWN_SELECTION_STATE") {
       return;
     }
-    this.GetObject<LoadingBar>("obj_timerBar")?.setValue(
-      (GameSessionState.countdown || 0) / 1000
-    );
+    const max = 10; // fallback to 10 seconds if maxCountdown is not available
+    const val = (GameSessionState.countdown || 0) / 1000;
+    this.timerBar?.update(val, max);
     this.controls?.update(delta);
-    this.GetObject<LoadingBar>("obj_timerBar")?.draw();
   }
 
   showSpawnFlag(
