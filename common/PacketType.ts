@@ -38,7 +38,8 @@ export enum ServerToClientPacketType {
   
   SOLDIER_SPAWN_REQUEST_UPDATED = "spawn_request_updated",
   
-  PONG_RESPONSE = "pong"
+  PONG_RESPONSE = "pong",
+  GAME_OVER = "gameover"
 }
 
 export const PacketType = {

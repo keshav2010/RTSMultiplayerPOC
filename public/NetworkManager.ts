@@ -155,7 +155,7 @@ export class NetworkManager {
   }
 
   isSocketConnected() {
-    return this.room != null;
+    return this.room != null && this.room.connection?.isOpen;
   }
 
   async disconnectGameServer() {

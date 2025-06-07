@@ -1,0 +1,32 @@
+<style>
+  .network-status-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 400px;
+    height: 160px;
+    background: rgba(255,255,255,0.97);
+    border-radius: 16px;
+    box-shadow: 0 2px 16px #0008;
+  }
+  .network-status-overlay h2 {
+    color: #dc3545;
+    margin-top: 32px;
+    margin-bottom: 0;
+  }
+  .network-status-overlay .spinner-container {
+    margin-top: 16px;
+    margin-bottom: 0;
+  }
+  .network-status-overlay .reconnect-msg {
+    color: #dc3545;
+    margin-top: 12px;
+    font-size: 16px;
+  }
+</style>
+<div class="network-status-overlay">
+  <h2>Connection Lost</h2>
+  <div class="spinner-container" id="spinner-container"></div>
+  <div class="reconnect-msg">Attempting to reconnect...</div>
+</div> 
