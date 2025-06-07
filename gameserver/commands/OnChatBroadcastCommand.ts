@@ -14,9 +14,11 @@ export class OnChatBroadcastCommand extends Command<
 > {
   execute({ client, message, gameManager }: CommandPayload<IChatBroadcast>) {
     const sessionId = client.sessionId;
+    const sender = gameManager?.getPlayer(sessionId);
+
     this.room.broadcast(PacketType.ByServer.NEW_CHAT_MESSAGE, {
       sender: sessionId, 
-      senderName: this.room.state.players.get(sessionId)?.name,
+      senderName: sender?.name,
       message: message.message,
     });
   }

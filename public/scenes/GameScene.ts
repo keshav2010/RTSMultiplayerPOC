@@ -492,6 +492,31 @@ export class GameScene extends BaseScene {
       PointerModeAction[this.pointerMode]["pointermove"](this, pointer);
     });
 
+    this.AddSceneEvent(PacketType.ByServer.GAME_OVER, (data: { winningPlayerId: string }) => {
+      const clientId = networkManager.getClientId();
+      const isWinner = data.winningPlayerId === clientId;
+      // Create a simple popup using Phaser DOM element
+      const popupHtml = `
+        <div id="gameover-popup" style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:350px;height:200px;background:rgba(255,255,255,0.95);border-radius:16px;box-shadow:0 2px 16px #0008;">
+          <h2 style='color:${isWinner ? "#28a745" : "#dc3545"};margin-top:32px;'>${isWinner ? "You Won!" : "You Lost!"}</h2>
+          <button id="btn-back-menu" style="margin-top:32px;padding:12px 32px;font-size:18px;border-radius:8px;background:#007bff;color:white;border:none;cursor:pointer;">Back to Menu</button>
+        </div>
+      `;
+      const dom = this.add.dom(this.cameras.main.centerX, this.cameras.main.centerY).createFromHTML(popupHtml);
+      dom.setOrigin(0.5, 0.5);
+      dom.setDepth(10001);
+      dom.setScrollFactor(0);
+      this.input.enabled = false; // Prevent further game input
+      // Button event
+      const btn = dom.getChildByID("btn-back-menu");
+      btn?.addEventListener("click", () => {
+        dom.destroy();
+        this.input.enabled = true;
+        this.scene.stop(CONSTANT.SCENES.HUD_SCORE);
+        this.scene.start(CONSTANT.SCENES.MENU);
+      });
+    });
+
     this.scene.launch(CONSTANT.SCENES.HUD_SCORE);
 
     this.cameras.main

@@ -397,8 +397,8 @@ export class PlayerStatisticHUD extends BaseScene {
     }
     if (chatSendBtn) chatSendBtn.addEventListener("click", sendChat);
     // Listen for new chat messages from the server (reuse GameScene event)
-    gameScene.AddSceneEvent(PacketType.ByServer.NEW_CHAT_MESSAGE, (data: { message: string, sender: string }) => {
-      appendChatMessage(data.message, data.sender);
+    gameScene.AddSceneEvent(PacketType.ByServer.NEW_CHAT_MESSAGE, (data: { message: string, senderName: string }) => {
+      appendChatMessage(data.message, data.senderName);
     });
     // --- Resizable chatbox logic ---
     if (chatboxResize && chatboxContainer && chatboxBody && chatMessages) {
