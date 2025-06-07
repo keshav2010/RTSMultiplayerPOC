@@ -275,7 +275,7 @@ export class GameScene extends BaseScene {
   canvasWidth: number;
   canvasHeight: number;
   controls?: Phaser.Cameras.Controls.SmoothedKeyControl;
-  rexSpinner: SpinnerPlugin.Spinner | undefined;
+  rexSpinner: SpinnerPlugin | undefined;
 
   pointerMode: PointerMode = PointerMode.DEFAULT;
   constructor() {
@@ -295,6 +295,11 @@ export class GameScene extends BaseScene {
     this.load.image(Textures.CASTLE, "../assets/castle.png");
     this.load.image(Textures.GROUNDTILES, "../assets/groundtiles.png");
     this.load.image(Textures.CAPTUREFLAG, "../assets/captureFlag.png");
+    this.load.scenePlugin({
+      key: "rexSpinner",
+      url: SpinnerPlugin,
+      sceneKey: "rexSpinner",
+    });
   }
 
   onSoldierAdded(soldier: SoldierState, ownerPlayer: PlayerState) {
@@ -837,6 +842,82 @@ export class GameScene extends BaseScene {
     this.AddSceneEvent("destroy", () => {
       this.input.removeAllListeners();
       this.events.removeAllListeners();
+    });
+
+    // --- Network status overlay ---
+    let networkStatusDom: Phaser.GameObjects.DOMElement | null = null;
+    let spinner: any = null;
+    let networkOverlayVisible = true;
+    const showNetworkOverlay = () => {
+      if (networkOverlayVisible) return;
+      networkOverlayVisible = true;
+      // Use cached HTML for overlay
+      networkStatusDom = this.add.dom(this.cameras.main.centerX, this.cameras.main.centerY).createFromCache("network-status-overlay");
+      networkStatusDom.setOrigin(0.5, 0.5);
+      networkStatusDom.setDepth(10002);
+      networkStatusDom.setScrollFactor(0);
+      this.input.enabled = false;
+      // Add spinner to the spinner-container using the plugin instance
+      spinner = this.rexSpinner!.add.spinner({
+        width: 48,
+        height: 48,
+        duration: 800,
+        x: 0,
+        y: 0,
+      });
+      this.AddObject(spinner, 'obj_networkOverlaySpinner');
+      if (spinner) {
+        spinner.setDepth(10003);
+        spinner.setOrigin(0.5, 0.5);
+        spinner.setVisible(true);
+        // Attach spinner's canvas to the overlay
+        const domNode = networkStatusDom.node as HTMLElement;
+        const spinnerContainer = domNode.querySelector('#spinner-container');
+        if (spinnerContainer && spinner.canvas) {
+          spinnerContainer.appendChild(spinner.canvas);
+        }
+      }
+    };
+    const hideNetworkOverlay = () => {
+      if (!networkOverlayVisible) return;
+      networkOverlayVisible = false;
+      networkStatusDom?.destroy();
+      networkStatusDom = null;
+      if (spinner) {
+        spinner.destroy();
+        spinner = null;
+        this.DestroyObjectById('obj_networkOverlaySpinner');
+      }
+      this.input.enabled = true;
+    };
+    // Listen for disconnects/errors
+    if (networkManager.room) {
+      networkManager.room.onError((code, message) => {
+        showNetworkOverlay();
+      });
+      networkManager.room.onLeave((code) => {
+        showNetworkOverlay();
+      });
+    }
+    // Periodically check connection
+    this.time.addEvent({
+      delay: 1000,
+      loop: true,
+      callback: () => {
+        if (!networkManager.isSocketConnected()) {
+          showNetworkOverlay();
+        } else {
+          hideNetworkOverlay();
+        }
+      },
+    });
+
+    // Listen for browser network changes
+    window.addEventListener('offline', showNetworkOverlay);
+    window.addEventListener('online', hideNetworkOverlay);
+    this.events.on('shutdown', () => {
+      window.removeEventListener('offline', showNetworkOverlay);
+      window.removeEventListener('online', hideNetworkOverlay);
     });
   }
 
