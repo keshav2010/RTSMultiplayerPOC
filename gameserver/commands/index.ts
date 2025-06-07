@@ -13,6 +13,7 @@ import { OnChatBroadcastCommand } from "./OnChatBroadcastCommand";
 import { OnPlayerLoadedCommand } from "./OnPlayerLoadedCommand";
 import { OnCaptureFlagCreateCommand } from "./OnCaptureFlagCreateCommand";
 import { OnCaptureFlagDeleteCommand } from "./OnCaptureFlagDeleteCommand";
+import { OnPingCommand } from "./OnPingCommand";
 
 export class CommandFactory {
   static createCommand(
@@ -53,6 +54,9 @@ export class CommandFactory {
       case PacketType.ByClient.CAPTURE_FLAG_DELETE_REQUESTED:
         return new OnCaptureFlagDeleteCommand();
 
+      case PacketType.ByClient.PING_REQUESTED:
+        return new OnPingCommand();
+        
       default:
         return null;
     }

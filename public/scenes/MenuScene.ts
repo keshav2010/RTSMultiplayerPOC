@@ -1,6 +1,6 @@
 import CONSTANT from "../constant";
 import { BaseScene } from "./BaseScene";
-import { NetworkManager } from "../NetworkManager";
+import { NetworkError, NetworkManager } from "../NetworkManager";
 import { addBackgroundImage } from "../helpers/addBackgroundImage";
 import SpinnerPlugin from "phaser3-rex-plugins/templates/spinner/spinner-plugin.js";
 
@@ -36,10 +36,10 @@ export class MenuScene extends BaseScene {
     spinner.setDepth(9999);
     spinner.setVisible(false);
     this.AddObject(spinner, "obj_spinner");
-    
+
     let networkManager = this.registry.get("networkManager") as NetworkManager;
     addBackgroundImage(this, "background");
-    this.AddObject(this.add.text(100, 20, "War.IO"), "obj_introText");
+    this.AddObject(this.add.text(100, 20, `Conquesta V1.0.1`), "obj_introText");
 
     this.AddObject(
       this.add.dom(600, 200).createFromCache("playerForm"),
@@ -56,11 +56,13 @@ export class MenuScene extends BaseScene {
     let createSessionBtn = playerForm.getChildByName("btnCreate");
     const tutorialBtn = playerForm.getChildByName("btnTutorial");
 
-    let inputField = playerForm.getChildByName("nameInput");
+    let playerNameInput = playerForm.getChildByName("player-name-input");
+    if (networkManager.getPlayerName().length > 0)
+      (playerForm.getChildByName("player-name-input") as any).value = networkManager.getPlayerName();
 
-    inputField?.addEventListener("input", (event) => {
+    playerNameInput?.addEventListener("input", (event) => {
       var inputName = <Element & { value: string }>(
-        playerForm.getChildByName("nameInput")
+        playerForm.getChildByName("player-name-input")
       );
       if (!inputName) return;
       if (inputName.value !== "") {
@@ -114,7 +116,7 @@ export class MenuScene extends BaseScene {
       "networkManager"
     ) as NetworkManager;
     var inputName = <Element & { value: string }>(
-      playerForm.getChildByName("nameInput")
+      playerForm.getChildByName("player-name-input")
     );
     if (inputName?.nodeValue !== "") {
       let name = inputName?.value.trim().replace(" ", "-");
@@ -157,10 +159,12 @@ export class MenuScene extends BaseScene {
 
       const playerName = (this.GetObject<Phaser.GameObjects.DOMElement>(
         "obj_playerForm"
-      )?.getChildByName("nameInput") as Element & { value: string })!.value;
+      )?.getChildByName("player-name-input") as Element & { value: string })!.value;
       const sessions = await networkManager.getAvailableSession();
       console.log("available sessions ", sessions);
-    } catch (error) {}
+    } catch (error) {
+      console.error(error);
+    }
   }
   async onCreateSessionClick() {
     const spinner = <SpinnerPlugin.Spinner>this.GetObject("obj_spinner");
@@ -174,11 +178,10 @@ export class MenuScene extends BaseScene {
       }
       const playerName = (this.GetObject<Phaser.GameObjects.DOMElement>(
         "obj_playerForm"
-      )?.getChildByName("nameInput") as Element & { value: string })!.value;
+      )?.getChildByName("player-name-input") as Element & { value: string })!.value;
       await networkManager?.hostAndJoinSession(`${playerName}`);
       this.scene.start(CONSTANT.SCENES.SESSIONLOBBY);
-    } catch (error : any) {
-      console.log(error);
+    } catch (error: any) {
       const errorText = (this.GetObject<Phaser.GameObjects.DOMElement>(
         "obj_playerForm"
       )?.getChildByID("error") as Element & { value: string })!;
