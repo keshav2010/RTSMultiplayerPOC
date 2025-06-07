@@ -1,4 +1,4 @@
-# RTSMultiplayerPOC
+# Conquesta-RTS
 [![Node.js CI](https://github.com/keshav2010/RTSMultiplayerPOC/actions/workflows/node.js.yml/badge.svg?branch=main)](https://github.com/keshav2010/RTSMultiplayerPOC/actions/workflows/node.js.yml)
 
 

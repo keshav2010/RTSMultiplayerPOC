@@ -53,6 +53,7 @@ export class PlayerStatisticHUD extends BaseScene {
     });
     this.load.html("soldierSelectionWidget", "../html/soldier-selection.html");
     this.load.html("phaserChatbox", "../html/phaser-chatbox.html");
+    this.load.html("game-action-panel", "../html/game-action-panel.html");
     this.scene.bringToTop();
   }
   create() {
@@ -433,6 +434,122 @@ export class PlayerStatisticHUD extends BaseScene {
         document.body.style.userSelect = "";
       });
     }
+
+    // --- Add Game Action Panel DOM (bottom right, draggable) ---
+    const panelX = this.sys.canvas.width - 10;
+    const panelY = this.sys.canvas.height - 260;
+    const gameActionPanel = this.add.dom(panelX, panelY).createFromCache("game-action-panel");
+    gameActionPanel.setOrigin(1, 0);
+    gameActionPanel.setDepth(10000);
+    gameActionPanel.setScrollFactor(0);
+    this.AddObject(gameActionPanel, "obj_gameActionPanel");
+    // Drag logic
+    const panelContainer = gameActionPanel.getChildByID("game-action-panel-container");
+    const panelDrag = gameActionPanel.getChildByID("game-action-panel-drag");
+    let isPanelDragging = false;
+    let panelDragOffsetX = 0;
+    let panelDragOffsetY = 0;
+    let panelMouseMoveListener: ((e: MouseEvent) => void) | null = null;
+    let panelMouseUpListener: ((e: MouseEvent) => void) | null = null;
+    if (panelDrag && panelContainer) {
+      panelDrag.addEventListener("mousedown", (e) => {
+        const mouseEvent = e as MouseEvent;
+        isPanelDragging = true;
+        panelDragOffsetX = mouseEvent.clientX - gameActionPanel.x;
+        panelDragOffsetY = mouseEvent.clientY - gameActionPanel.y;
+        document.body.style.userSelect = "none";
+      });
+      panelMouseMoveListener = (e: MouseEvent) => {
+        if (isPanelDragging) {
+          let newX = Math.max(0, Math.min(this.sys.canvas.width, e.clientX - panelDragOffsetX));
+          let newY = Math.max(0, Math.min(this.sys.canvas.height - 60, e.clientY - panelDragOffsetY));
+          gameActionPanel.x = newX;
+          gameActionPanel.y = newY;
+        }
+      };
+      panelMouseUpListener = () => {
+        isPanelDragging = false;
+        document.body.style.userSelect = "";
+      };
+      window.addEventListener("mousemove", panelMouseMoveListener);
+      window.addEventListener("mouseup", panelMouseUpListener);
+    }
+    // Button logic
+    const btnDisconnect = gameActionPanel.getChildByID("btn-disconnect");
+    const btnCreateFlag = gameActionPanel.getChildByID("btn-create-flag");
+    const btnDeleteSelected = gameActionPanel.getChildByID("btn-delete-selected");
+    if (btnDisconnect) {
+      btnDisconnect.addEventListener("click", () => {
+        networkManager.disconnectGameServer();
+        gameScene.scene.stop(CONSTANT.SCENES.HUD_SCORE);
+        gameScene.scene.start(CONSTANT.SCENES.MENU);
+      });
+    }
+    if (btnCreateFlag) {
+      btnCreateFlag.addEventListener("click", (event) => {
+        // Only set visibility to true if not already visible
+        const flagPlaceholderData = gameScene.data.get(GameSceneDataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER);
+        if (!flagPlaceholderData?.visibility) {
+          gameScene.data.set(GameSceneDataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER, { visibility: true });
+        }
+      });
+    }
+    if (btnDeleteSelected) {
+      btnDeleteSelected.addEventListener("click", () => {
+        gameScene.events.emit(CONSTANTS.GAMEEVENTS.DELETE_SELECTED_OBJECTS);
+      });
+    }
+    // Tooltip positioning logic: ensure tooltips never overflow the visible canvas
+    // This runs for all .game-action-btn in the panel
+    const panelBtns = (panelContainer?.querySelectorAll('.game-action-btn') ?? []) as NodeListOf<HTMLButtonElement>;
+    panelBtns.forEach(btn => {
+      const tooltip = btn.querySelector('.game-action-tooltip') as HTMLDivElement | null;
+      if (!tooltip) return;
+      btn.addEventListener('mouseenter', (e) => {
+        // Reset to default position (right of button)
+        tooltip.style.left = '';
+        tooltip.style.right = '';
+        tooltip.style.top = '';
+        tooltip.style.bottom = '';
+        tooltip.style.transform = '';
+        tooltip.style.display = 'block';
+        // Get bounding rects
+        const btnRect = btn.getBoundingClientRect();
+        const tipRect = tooltip.getBoundingClientRect();
+        const canvasRect = this.sys.game.canvas.getBoundingClientRect();
+        // Default: right of button, vertically centered
+        let left = btn.offsetWidth + 8;
+        let top = (btn.offsetHeight - tipRect.height) / 2;
+        // Check right overflow
+        if (btnRect.left + left + tipRect.width > canvasRect.right) {
+          left = -tipRect.width - 8;
+        }
+        // Check bottom overflow
+        if (btnRect.top + top + tipRect.height > canvasRect.bottom) {
+          top = btn.offsetHeight - tipRect.height;
+        }
+        // Check top overflow
+        if (btnRect.top + top < canvasRect.top) {
+          top = 0;
+        }
+        tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
+      });
+      btn.addEventListener('mouseleave', () => {
+        tooltip.style.display = '';
+      });
+    });
+    // Cleanup on shutdown/destroy
+    this.events.on("shutdown", () => {
+      gameActionPanel.destroy();
+      if (panelMouseMoveListener) window.removeEventListener("mousemove", panelMouseMoveListener);
+      if (panelMouseUpListener) window.removeEventListener("mouseup", panelMouseUpListener);
+    });
+    this.events.on("destroy", () => {
+      gameActionPanel.destroy();
+      if (panelMouseMoveListener) window.removeEventListener("mousemove", panelMouseMoveListener);
+      if (panelMouseUpListener) window.removeEventListener("mouseup", panelMouseUpListener);
+    });
   }
 
   addButton(
