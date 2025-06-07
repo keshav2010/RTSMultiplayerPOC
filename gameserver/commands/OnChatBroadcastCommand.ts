@@ -14,9 +14,9 @@ export class OnChatBroadcastCommand extends Command<
 > {
   execute({ client, message, gameManager }: CommandPayload<IChatBroadcast>) {
     const sessionId = client.sessionId;
-    console.log(`[OnChatBroadcastCommand]: Received Chat.`, message);
     this.room.broadcast(PacketType.ByServer.NEW_CHAT_MESSAGE, {
-      sender: sessionId,
+      sender: sessionId, 
+      senderName: this.room.state.players.get(sessionId)?.name,
       message: message.message,
     });
   }

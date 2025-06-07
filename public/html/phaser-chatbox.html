@@ -1,0 +1,132 @@
+<style>
+  .phaser-chatbox-container {
+    width: 320px;
+    min-width: 220px;
+    min-height: 80px;
+    background: rgba(30, 30, 30, 0.85);
+    border-radius: 10px;
+    padding: 0 0 10px 0;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    user-select: none;
+    resize: none;
+  }
+  .phaser-chatbox-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #222;
+    color: #fff;
+    border-radius: 10px 10px 0 0;
+    padding: 6px 10px;
+    cursor: move;
+    font-size: 15px;
+    font-weight: bold;
+    user-select: none;
+  }
+  .phaser-chatbox-min-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    margin-left: 8px;
+    padding: 0 6px;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+  .phaser-chatbox-min-btn:hover {
+    background: #444;
+  }
+  .phaser-chatbox-body {
+    display: flex;
+    flex-direction: column;
+    padding: 0 10px 0 10px;
+    transition: max-height 0.2s;
+  }
+  .phaser-chatbox-messages {
+    height: 120px;
+    min-height: 40px;
+    overflow-y: auto;
+    background: rgba(0,0,0,0.2);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    color: #fff;
+    font-size: 14px;
+    padding: 4px 6px;
+    transition: height 0.1s;
+  }
+  .phaser-chatbox-input-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+  .phaser-chatbox-input {
+    flex: 1;
+    border-radius: 6px;
+    border: none;
+    padding: 6px 8px;
+    font-size: 15px;
+    outline: none;
+    background: #222;
+    color: #fff;
+  }
+  .phaser-chatbox-send-btn {
+    background: #ffc107;
+    color: #222;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 15px;
+    transition: background 0.2s;
+  }
+  .phaser-chatbox-send-btn:hover {
+    background: #ffb300;
+  }
+  .phaser-chatbox-resize {
+    position: absolute;
+    right: 2px;
+    bottom: 2px;
+    width: 18px;
+    height: 18px;
+    cursor: se-resize;
+    z-index: 10;
+    background: none;
+    border-radius: 0 0 8px 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    user-select: none;
+  }
+  .phaser-chatbox-resize:after {
+    content: "";
+    display: block;
+    width: 14px;
+    height: 14px;
+    border-right: 2px solid #aaa;
+    border-bottom: 2px solid #aaa;
+    border-radius: 0 0 6px 0;
+    margin-bottom: 2px;
+    margin-right: 2px;
+  }
+</style>
+<div class="phaser-chatbox-container" id="phaser-chatbox-container">
+  <div class="phaser-chatbox-header" id="phaser-chatbox-header">
+    Chat
+    <button class="phaser-chatbox-min-btn" id="phaser-chatbox-min-btn" title="Minimize">–</button>
+  </div>
+  <div class="phaser-chatbox-body" id="phaser-chatbox-body">
+    <div class="phaser-chatbox-messages" id="phaser-chatbox-messages"></div>
+    <div class="phaser-chatbox-input-row">
+      <input type="text" id="phaser-chatbox-input" class="phaser-chatbox-input" maxlength="60" placeholder="Type a message... (emojis supported)" />
+      <button id="phaser-chatbox-send" class="phaser-chatbox-send-btn">Send</button>
+    </div>
+  </div>
+  <div class="phaser-chatbox-resize" id="phaser-chatbox-resize"></div>
+</div> 

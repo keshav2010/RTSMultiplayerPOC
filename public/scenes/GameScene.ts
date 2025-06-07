@@ -525,9 +525,9 @@ export class GameScene extends BaseScene {
 
     this.AddSceneEvent(
       PacketType.ByServer.NEW_CHAT_MESSAGE,
-      (data: { message: string; sender: string }) => {
-        const { message, sender } = data;
-        addNewChatMessage(message, sender);
+      (data: { message: string; senderName: string; sender: string }) => {
+        const { message, senderName } = data;
+        addNewChatMessage(message, senderName);
       }
     );
 
