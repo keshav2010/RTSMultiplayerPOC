@@ -10,6 +10,6 @@ liberapay: # Replace with a single Liberapay username
 issuehunt: # Replace with a single IssueHunt username
 lfx_crowdfunding: # Replace with a single LFX Crowdfunding project-name e.g., cloud-foundry
 polar: # Replace with a single Polar username
-buy_me_a_coffee: <a href="https://www.buymeacoffee.com/keshavsh" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-red.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+buy_me_a_coffee: https://www.buymeacoffee.com/keshavsh
 thanks_dev: # Replace with a single thanks.dev username
 custom: # Replace with up to 4 custom sponsorship URLs e.g., ['link1', 'link2']
