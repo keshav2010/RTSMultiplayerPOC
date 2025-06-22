@@ -245,7 +245,7 @@ const PointerModeAction: IPointerModeAction = {
   },
   [PointerMode.FLAG_PLACEMENT]: {
     pointerdown: function (scene: GameScene, pointer: Phaser.Input.Pointer) {
-      const buttonPressed = pointer.button;
+      const buttonPressed = pointer.button; // (0,1,2) => (lmb, mmb, rmb)
       if (buttonPressed !== 0) {
         scene.data.set(DataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER, {
           visibility: false,
@@ -591,24 +591,22 @@ export class GameScene extends BaseScene {
       }
     );
 
-    this.data.events.on(
-      `setdata-${DataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER}`,
-      (_parent: any, value: { visibility: boolean }) => {
-        this.GetObject<Phaser.GameObjects.Sprite>(
-          "obj_captureFlagPlaceholder"
-        )?.setVisible(value.visibility || false);
-      }
-    );
+    this.AddSceneEvent(CONSTANT.GAMEEVENTS.CREATE_CAPTURE_FLAG_BUTTON_CLICKED, () => {
+      this.pointerMode = PointerMode.FLAG_PLACEMENT;
+      this.GetObject<Phaser.GameObjects.Sprite>(
+        "obj_captureFlagPlaceholder"
+      )?.setVisible(true);
+    });
+
     this.data.events.on(
       `changedata-${DataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER}`,
       (_: any, value: any) => {
-        if (value.visibility === true)
-          this.pointerMode = PointerMode.FLAG_PLACEMENT;
-        else this.pointerMode = PointerMode.DEFAULT;
+        if (value.visibility === false)
+          this.pointerMode = PointerMode.DEFAULT;
 
         this.GetObject<Phaser.GameObjects.Sprite>(
           "obj_captureFlagPlaceholder"
-        )?.setVisible(value.visibility || false);
+        )?.setVisible(false);
       }
     );
 
