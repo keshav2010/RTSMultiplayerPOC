@@ -43,7 +43,7 @@ export class PlayerStatisticHUD extends BaseScene {
     this.load.image(Textures.TRACK, "../assets/track.png");
     this.load.image(
       Textures.CAPTUREFLAG_BUTTON,
-      "../assets/newCaptureFlagButton.png"
+      "../assets/btnFlag32x32.png",
     );
     this.load.image(Textures.CAPTUREFLAG, "../assets/captureFlag.png");
 
@@ -130,7 +130,7 @@ export class PlayerStatisticHUD extends BaseScene {
     );
     const captureFlagButton = this.addButton(
       Textures.CAPTUREFLAG_BUTTON,
-      "obj_newCaptureFlagButton",
+      "obj_btnFlag32x32",
       (eventType: any) => {
         const buttonPressed = eventType.button;
         if (buttonPressed !== 0) {

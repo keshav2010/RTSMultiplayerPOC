@@ -290,11 +290,11 @@ export class GameScene extends BaseScene {
       new Map<string, BaseSoldier | CaptureFlag>()
     );
     this.load.image(Textures.PLAY_BUTTON, "../assets/playbutton.png");
-    this.load.image(Textures.KNIGHT, "../assets/knight.png");
-    this.load.image(Textures.SPEARMAN, "../assets/spearman.png");
+    this.load.image(Textures.KNIGHT, "../assets/knight32x32.png");
+    this.load.image(Textures.SPEARMAN, "../assets/spearman32x32.png");
     this.load.image(Textures.CASTLE, "../assets/castle.png");
     this.load.image(Textures.GROUNDTILES, "../assets/groundtiles.png");
-    this.load.image(Textures.CAPTUREFLAG, "../assets/captureFlag.png");
+    this.load.image(Textures.CAPTUREFLAG, "../assets/btnFlag32x32.png");
     this.load.scenePlugin({
       key: "rexSpinner",
       url: SpinnerPlugin,
