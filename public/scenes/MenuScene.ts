@@ -110,62 +110,6 @@ export class MenuScene extends BaseScene {
     });
   }
 
-  async onPlayButtonClick(buttonParentForm: Phaser.GameObjects.DOMElement) {
-    const playerForm = buttonParentForm;
-    const networkManager = this.registry.get(
-      "networkManager"
-    ) as NetworkManager;
-    var inputName = <Element & { value: string }>(
-      playerForm.getChildByName("player-name-input")
-    );
-    if (inputName?.nodeValue !== "") {
-      let name = inputName?.value.trim().replace(" ", "-");
-      networkManager.setPlayerName(name || "");
-    }
-    try {
-      let rooms = await networkManager.getAvailableSession();
-      if (!rooms || rooms.length === 0) {
-        return;
-      }
-      let sessionId = rooms[0].roomId;
-      const onConnectHandler = () => {
-        playerForm.setVisible(false);
-        playerForm.destroy();
-        this.scene.start(CONSTANT.SCENES.SESSIONLOBBY, {
-          sessionId,
-        });
-      };
-      const onDisconnectHandler = () => {
-        console.log("SocketDisconnect: Launching Menu Scene");
-        this.scene.start(CONSTANT.SCENES.MENU);
-      };
-      //join session
-      await (
-        this.registry.get("networkManager") as NetworkManager
-      ).connectGameServer(`${URL}/${sessionId}`);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  async onJoinSessionClick() {
-    try {
-      const networkManager = this.registry.get(
-        "networkManager"
-      ) as NetworkManager;
-      if (!networkManager) {
-        throw new Error("NetworkManager is not defined");
-      }
-
-      const playerName = (this.GetObject<Phaser.GameObjects.DOMElement>(
-        "obj_playerForm"
-      )?.getChildByName("player-name-input") as Element & { value: string })!.value;
-      const sessions = await networkManager.getAvailableSession();
-      console.log("available sessions ", sessions);
-    } catch (error) {
-      console.error(error);
-    }
-  }
   async onCreateSessionClick() {
     const spinner = <SpinnerPlugin.Spinner>this.GetObject("obj_spinner");
     try {
