@@ -37,13 +37,11 @@ export class PlayerStatisticHUD extends BaseScene {
     this.load.image(Textures.PLAY_BUTTON, "../assets/playbutton.png");
     this.load.image(Textures.EXIT_BUTTON, "../assets/exitbutton.png");
     this.load.image(Textures.DELETE_BUTTON, "../assets/deletebutton.png");
-    this.load.image(Textures.SPEARMAN, "../assets/spearman.png");
-    this.load.image(Textures.KNIGHT, "../assets/knight.png");
     this.load.image(Textures.SOLDIER_BUTTON, "../assets/sprite.png");
     this.load.image(Textures.TRACK, "../assets/track.png");
     this.load.image(
       Textures.CAPTUREFLAG_BUTTON,
-      "../assets/newCaptureFlagButton.png"
+      "../assets/btnFlag32x32.png",
     );
     this.load.image(Textures.CAPTUREFLAG, "../assets/captureFlag.png");
 
@@ -110,61 +108,6 @@ export class PlayerStatisticHUD extends BaseScene {
       this.add.text(0, 0, "", tooltipTextStyle).setVisible(false),
       "text_tooltip"
     );
-
-    const exitButton = this.addButton(
-      Textures.EXIT_BUTTON,
-      "obj_exitbutton",
-      () => {
-        networkManager.disconnectGameServer();
-      },
-      "Disconnect from current session"
-    );
-    const deleteButton = this.addButton(
-      Textures.DELETE_BUTTON,
-      "obj_deletebutton",
-      () => {
-        const gameScene = this.scene.get(CONSTANT.SCENES.GAME);
-        gameScene.events.emit(CONSTANTS.GAMEEVENTS.DELETE_SELECTED_OBJECTS);
-      },
-      "Delete selected objects"
-    );
-    const captureFlagButton = this.addButton(
-      Textures.CAPTUREFLAG_BUTTON,
-      "obj_newCaptureFlagButton",
-      (eventType: any) => {
-        const buttonPressed = eventType.button;
-        if (buttonPressed !== 0) {
-          return;
-        }
-        const gameScene = this.scene.get(CONSTANT.SCENES.GAME);
-        const flagPlaceholderData = gameScene.data.get(
-          GameSceneDataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER
-        );
-        gameScene.data.set(GameSceneDataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER, {
-          visibility: !(flagPlaceholderData?.visibility || false),
-        });
-        console.log(
-          `setting flagPlaceholderData to:`,
-          gameScene.data.get(GameSceneDataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER)
-        );
-      },
-      "Create Territory Capture Flag"
-    );
-
-    Phaser.Actions.GridAlign([exitButton, captureFlagButton, deleteButton], {
-      width: this.sys.canvas.width*0.5,
-      cellHeight: 64,
-      cellWidth: 64,
-      x: this.sys.canvas.width*0.8,
-      y: 32,
-    });
-    Phaser.Actions.GridAlign([tooltip], {
-      width: this.sys.canvas.width*0.5,
-      cellHeight: 64,
-      cellWidth: 640,
-      x: this.sys.canvas.width*0.8,
-      y: 32*3,
-    });
 
     // TODO: optimise
     gameScene.AddSceneEvent(
@@ -475,30 +418,24 @@ export class PlayerStatisticHUD extends BaseScene {
       window.addEventListener("mouseup", panelMouseUpListener);
     }
     // Button logic
-    const btnDisconnect = gameActionPanel.getChildByID("btn-disconnect");
-    const btnCreateFlag = gameActionPanel.getChildByID("btn-create-flag");
-    const btnDeleteSelected = gameActionPanel.getChildByID("btn-delete-selected");
-    if (btnDisconnect) {
-      btnDisconnect.addEventListener("click", () => {
-        networkManager.disconnectGameServer();
-        gameScene.scene.stop(CONSTANT.SCENES.HUD_SCORE);
-        gameScene.scene.start(CONSTANT.SCENES.MENU);
-      });
-    }
-    if (btnCreateFlag) {
-      btnCreateFlag.addEventListener("click", (event) => {
-        // Only set visibility to true if not already visible
-        const flagPlaceholderData = gameScene.data.get(GameSceneDataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER);
-        if (!flagPlaceholderData?.visibility) {
-          gameScene.data.set(GameSceneDataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER, { visibility: true });
-        }
-      });
-    }
-    if (btnDeleteSelected) {
-      btnDeleteSelected.addEventListener("click", () => {
-        gameScene.events.emit(CONSTANTS.GAMEEVENTS.DELETE_SELECTED_OBJECTS);
-      });
-    }
+    const btnDisconnect = gameActionPanel.getChildByID("btn-disconnect")!;
+    const btnCreateFlag = gameActionPanel.getChildByID("btn-create-flag")!;
+    const btnDeleteSelected = gameActionPanel.getChildByID("btn-delete-selected")!;
+
+    btnDisconnect.addEventListener("click", () => {
+      networkManager.disconnectGameServer();
+      gameScene.scene.stop(CONSTANT.SCENES.HUD_SCORE);
+      gameScene.scene.start(CONSTANT.SCENES.MENU);
+    });
+    btnCreateFlag.addEventListener("click", (event) => {
+      const gameScene = this.scene.get(CONSTANT.SCENES.GAME);
+      gameScene.events.emit(CONSTANTS.GAMEEVENTS.CREATE_CAPTURE_FLAG_BUTTON_CLICKED);
+    });
+
+    btnDeleteSelected.addEventListener("click", () => {
+      gameScene.events.emit(CONSTANTS.GAMEEVENTS.DELETE_SELECTED_OBJECTS);
+    });
+
     // Tooltip positioning logic: ensure tooltips never overflow the visible canvas
     // This runs for all .game-action-btn in the panel
     const panelBtns = (panelContainer?.querySelectorAll('.game-action-btn') ?? []) as NodeListOf<HTMLButtonElement>;

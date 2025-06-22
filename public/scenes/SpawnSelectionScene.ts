@@ -31,8 +31,6 @@ export class SpawnSelectionScene extends BaseScene {
 
   preload() {
     this.load.image("playbutton", "../assets/playbutton.png");
-    this.load.image("knight", "../assets/knight.png");
-    this.load.image("spearman", "../assets/spearman.png");
     this.load.image("castle", "../assets/castle.png");
     this.load.image("img_groundtiles", "../assets/groundtiles.png");
     this.load.html("spawn-timer-bar", "../html/spawn-timer-bar.html");

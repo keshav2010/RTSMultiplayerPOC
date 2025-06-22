@@ -245,7 +245,7 @@ const PointerModeAction: IPointerModeAction = {
   },
   [PointerMode.FLAG_PLACEMENT]: {
     pointerdown: function (scene: GameScene, pointer: Phaser.Input.Pointer) {
-      const buttonPressed = pointer.button;
+      const buttonPressed = pointer.button; // (0,1,2) => (lmb, mmb, rmb)
       if (buttonPressed !== 0) {
         scene.data.set(DataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER, {
           visibility: false,
@@ -290,11 +290,11 @@ export class GameScene extends BaseScene {
       new Map<string, BaseSoldier | CaptureFlag>()
     );
     this.load.image(Textures.PLAY_BUTTON, "../assets/playbutton.png");
-    this.load.image(Textures.KNIGHT, "../assets/knight.png");
-    this.load.image(Textures.SPEARMAN, "../assets/spearman.png");
+    this.load.image(Textures.KNIGHT, "../assets/knight32x32.png");
+    this.load.image(Textures.SPEARMAN, "../assets/spearman32x32.png");
     this.load.image(Textures.CASTLE, "../assets/castle.png");
     this.load.image(Textures.GROUNDTILES, "../assets/groundtiles.png");
-    this.load.image(Textures.CAPTUREFLAG, "../assets/captureFlag.png");
+    this.load.image(Textures.CAPTUREFLAG, "../assets/btnFlag32x32.png");
     this.load.scenePlugin({
       key: "rexSpinner",
       url: SpinnerPlugin,
@@ -591,24 +591,22 @@ export class GameScene extends BaseScene {
       }
     );
 
-    this.data.events.on(
-      `setdata-${DataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER}`,
-      (_parent: any, value: { visibility: boolean }) => {
-        this.GetObject<Phaser.GameObjects.Sprite>(
-          "obj_captureFlagPlaceholder"
-        )?.setVisible(value.visibility || false);
-      }
-    );
+    this.AddSceneEvent(CONSTANT.GAMEEVENTS.CREATE_CAPTURE_FLAG_BUTTON_CLICKED, () => {
+      this.pointerMode = PointerMode.FLAG_PLACEMENT;
+      this.GetObject<Phaser.GameObjects.Sprite>(
+        "obj_captureFlagPlaceholder"
+      )?.setVisible(true);
+    });
+
     this.data.events.on(
       `changedata-${DataKey.SHOW_CAPTURE_FLAG_PLACEHOLDER}`,
       (_: any, value: any) => {
-        if (value.visibility === true)
-          this.pointerMode = PointerMode.FLAG_PLACEMENT;
-        else this.pointerMode = PointerMode.DEFAULT;
+        if (value.visibility === false)
+          this.pointerMode = PointerMode.DEFAULT;
 
         this.GetObject<Phaser.GameObjects.Sprite>(
           "obj_captureFlagPlaceholder"
-        )?.setVisible(value.visibility || false);
+        )?.setVisible(false);
       }
     );
 
