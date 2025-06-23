@@ -92,8 +92,7 @@ export class MenuScene extends BaseScene {
     createSessionBtn?.addEventListener("pointerdown", async (event) => {
       try {
         event.stopPropagation();
-
-        await this.onCreateSessionClick();
+        this.scene.start(CONSTANT.SCENES.SESSIONHOSTSETTINGS);
       } catch (error) {
         console.log(error);
       }
@@ -108,29 +107,5 @@ export class MenuScene extends BaseScene {
       this.input.removeAllListeners();
       this.events.removeAllListeners();
     });
-  }
-
-  async onCreateSessionClick() {
-    const spinner = <SpinnerPlugin.Spinner>this.GetObject("obj_spinner");
-    try {
-      const networkManager = <NetworkManager>(
-        this.registry.get("networkManager")
-      );
-      spinner.setVisible(true);
-      if (!networkManager) {
-        throw new Error("NetworkManager is not defined");
-      }
-      const playerName = (this.GetObject<Phaser.GameObjects.DOMElement>(
-        "obj_playerForm"
-      )?.getChildByName("player-name-input") as Element & { value: string })!.value;
-      await networkManager?.hostAndJoinSession(`${playerName}`);
-      this.scene.start(CONSTANT.SCENES.SESSIONLOBBY);
-    } catch (error: any) {
-      const errorText = (this.GetObject<Phaser.GameObjects.DOMElement>(
-        "obj_playerForm"
-      )?.getChildByID("error") as Element & { value: string })!;
-      errorText.innerHTML = `${error} | ${error.message!} | ${error?.stackTrace} | ${error.error}`;
-      spinner.setVisible(false);
-    }
   }
 }

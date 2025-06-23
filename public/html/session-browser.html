@@ -2,6 +2,7 @@
     body {
         font-family: Arial, sans-serif;
     }
+
     .server-browser {
         width: 800px;
         margin: 0 auto;
@@ -9,13 +10,22 @@
         padding: 20px;
         border-radius: 5px;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        box-sizing: border-box;
     }
-    .header,
-    .server-row-data {
+
+    .header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        /* Vertically center content */
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+
+    .search-box {
+        flex: 1;
+        margin-left: 10px;
+        padding: 8px;
+        font-size: 14px;
     }
 
     .server-list {
@@ -23,85 +33,96 @@
         overflow-y: auto;
         border: 1px solid #ddd;
         border-radius: 5px;
+        background: #fff;
     }
 
-    .server-row {
+    .server-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .server-table thead {
+        background-color: #e0e0e0;
+        font-weight: bold;
+    }
+
+    .server-table th,
+    .server-table td {
         padding: 10px;
+        text-align: center;
         border-bottom: 1px solid #ddd;
     }
 
-    .server-row-data,
-    .search-box {
-        padding: 0 10px;
+    .server-table tbody tr:hover {
+        background-color: #f1f1f1;
     }
 
-    /* Scrollbar styles */
-    .server-list::-webkit-scrollbar {
-        width: 8px;
+    .server-table button {
+        padding: 6px 12px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
     }
 
-    .server-list::-webkit-scrollbar-track {
-        background: #f1f1f1;
+    .server-table button:hover {
+        background-color: #45a049;
     }
 
-    .server-list::-webkit-scrollbar-thumb {
-        background: #888;
-    }
-
-    .server-list::-webkit-scrollbar-thumb:hover {
-        background: #555;
-    }
-
-    /* Button styles */
     button {
         display: inline-block;
-        padding: 10px 20px;
-        margin: 10px;
-        text-align: center;
-        text-decoration: none;
-        font-size: 16px;
+        padding: 8px 16px;
+        margin: 5px;
+        font-size: 14px;
         cursor: pointer;
         color: #ffffff;
         background-color: #4CAF50;
         border: none;
-        border-radius: 12px;
+        border-radius: 8px;
         transition: background-color 0.3s ease;
     }
 
-    button:hover {
-        background-color: #45a049;
-    }
-
-    button:focus {
-        outline: none;
-        border: 2px solid #4CAF50;
-    }
-
-    button:active {
-        background-color: #3e8e41;
-        transform: scale(0.98);
-    }
     .no-servers-found {
-        min-height: 100px;
+        min-height: 80px;
         display: flex;
-        text-align: center;
+        align-items: center;
         justify-content: center;
+        font-style: italic;
+        color: #888;
     }
 </style>
+
 <div class="server-browser">
     <div class="header">
-        <h1>Server Browser</h1>
+        <h2>Server Browser</h2>
         <button id="btn_serverListBrowser">Refresh</button>
         <button id="btn_backToMenu">Back To Menu</button>
         <input id="input_searchServer" type="text" placeholder="Search servers..." class="search-box">
     </div>
+
     <div class="server-list">
-        <div data-id="1" class="server-row-data" name="server-row-data">
-            <span class="server-name">Server 1</span>
-            <span class="server-players">10/50</span>
-            <span class="server-capacity">50</span>
-            <span><button>Join</button></span>
-        </div>
-        <!-- Add more server rows as needed -->
+        <table class="server-table">
+            <thead>
+                <tr>
+                    <th>Session Name</th>
+                    <th>Min Players</th>
+                    <th>Max Players</th>
+                    <th>Current Players</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="serverTableBody">
+                <!-- Sample Row -->
+                <tr data-id="1" name="server-row-data">
+                    <td>Alpha Room</td>
+                    <td>2</td>
+                    <td>6</td>
+                    <td>3/6</td>
+                    <td><button>Join</button></td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>

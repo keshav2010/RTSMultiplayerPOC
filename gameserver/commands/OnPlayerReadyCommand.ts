@@ -14,7 +14,7 @@ export class OnPlayerReadyCommand extends Command<SessionRoom, CommandPayload> {
     if (!player || !player.isLoaded) return;
     player.readyStatus = message.readyStatus;
     if (
-      this.state.countReadyPlayers() >= SERVER_CONFIG.MINIMUM_PLAYERS_PER_SESSION
+      this.state.countReadyPlayers() >= this.state.minPlayers
     ) {
       gameManager?.stateMachine.controller.send("StartMatch");
     }

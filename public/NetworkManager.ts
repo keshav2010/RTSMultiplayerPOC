@@ -184,15 +184,25 @@ export class NetworkManager {
     let rooms = await this.client.getAvailableRooms(roomName);
     return rooms;
   }
-  async hostAndJoinSession(name: string) {
+  async hostAndJoinSession(sessionName: string, roomOptions : {
+    minPlayers: number,
+    maxPlayers: number,
+    spawnSelectionTimer: number
+  }) {
     try {
+
+      // disconnect from any existing server.
       await this.disconnectGameServer().catch(err => {
         console.log(err);
       });
 
+      // ref newly launched room
       this.room = await this.client.create("session_room", {
-        name,
+        name: sessionName,
         playerName: this.getPlayerName(),
+        minPlayers: roomOptions.minPlayers,
+        maxPlayers: roomOptions.maxPlayers,
+        spawnSelectionTimer: roomOptions.spawnSelectionTimer
       });
       
       this.setupRoomListener();

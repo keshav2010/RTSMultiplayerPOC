@@ -2,100 +2,84 @@
     @import url('https://fonts.googleapis.com/css2?family=Montserrat&family=Poppins:wght@500&display=swap');
 
     .conter {
-        position: relative;
-        padding: 1px;
-        width: 400px;
-        background: white;
+        width: 100%;
+        max-width: 400px;
+        padding: 16px;
         border-radius: 10px;
-        font-family: montserrat;
         background: #2980b9;
+        font-family: 'Montserrat', sans-serif;
+        color: white;
+        box-sizing: border-box;
     }
 
     .conter h1 {
         text-align: center;
-        padding: 0 0 20px 0;
+        margin-bottom: 16px;
     }
 
-    .conter form {
-        padding: 0 40px;
-        box-sizing: border-box;
-    }
-
-    .txt_field {
-        position: relative;
+    .form-field {
         display: flex;
-        margin-left: 10px;
-        margin-right: 10px;
         flex-direction: column;
-        align-items: center;
-
+        margin-bottom: 16px;
     }
 
-    .txt_field input {
-        width: 90%;
-        padding: 0 5px;
-        height: 40px;
-        font-size: 16px;
+    .form-field label {
+        margin-bottom: 6px;
+        font-size: 14px;
+    }
+
+    .form-field input[type="number"],
+    .form-field input[type="text"] {
+        padding: 8px;
+        border-radius: 6px;
         border: none;
-        background: none;
-        outline: none;
-    }
-
-    .txt_field label {
-        position: relative;
-        top: 50%;
-        left: 5px;
-        color: #adadad;
         font-size: 16px;
-        pointer-events: none;
-        transition: .5s;
-    }
-
-    .txt_field span::before {
-        content: '';
-        position: absolute;
-        top: 40px;
-        left: 0;
-        width: 0%;
-        height: 2px;
-        background: #2691d9;
-        transition: .5s;
-
-    }
-
-    input[type="submit"] {
         width: 100%;
-        height: 50px;
-        border: 5px solid;
-        margin: 5px;
-        border-radius: 25px;
-        font-size: 18px;
-        color: #130808;
-        font-weight: 700;
-        cursor: pointer;
     }
 
-    input[type="submit"]:hover {
-        border-color: #d92626;
+    .form-field input[type="range"] {
+        width: 100%;
+    }
+
+    .range-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .submit-btn {
+        width: 100%;
+        height: 45px;
+        border-radius: 25px;
+        border: none;
+        background: #fff;
+        color: #2980b9;
+        font-weight: bold;
+        font-size: 16px;
+        cursor: pointer;
+        margin-top: 10px;
+        transition: background 0.3s;
+    }
+
+    .submit-btn:hover {
+        background: #f2f2f2;
     }
 
     .lds-dual-ring {
-        display: inline-block;
-        width: 80px;
-        height: 80px;
-        position: absolute;
-        left:50%;
-        transform: translateX(-50%);
+        display: none;
+        width: 40px;
+        height: 40px;
+        margin: 20px auto;
     }
 
     .lds-dual-ring:after {
         content: " ";
         display: block;
-        width: 64px;
-        height: 64px;
-        margin: 8px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
-        border: 6px solid #fff;
+        border: 4px solid #fff;
         border-color: #fff transparent #fff transparent;
         animation: lds-dual-ring 1.2s linear infinite;
     }
@@ -112,14 +96,64 @@
 </style>
 <div class="conter">
     <h1>Server Settings</h1>
-    <div class="txt_field">
-        <input type="text" name="player-name-input" required style="background-color: white;">
-        <span></span>
-        <label>Select Minimum Players: </label>
+
+    <div class="form-field">
+        <label for="minPlayers">Minimum Players Required:</label>
+        <input type="range" id="minPlayers" name="minPlayers" min="2" max="10" value="2" step="1"
+            oninput="updateMinPlayers(this.value)">
+        <div class="range-label">
+            <span>2</span>
+            <span id="minPlayersValue">2</span>
+            <span>10</span>
+        </div>
     </div>
-    <div style="padding:10px;margin: 30px;">
-        <input type="submit" value="Join Session" name="btnJoin">
-        <input type="submit" value="Create Session" name="btnCreate">
+
+    <div class="form-field">
+        <label for="maxPlayers">Maximum Players Allowed:</label>
+        <input type="range" id="maxPlayers" name="maxPlayers" min="2" max="10" value="2" step="1"
+            oninput="updateMaxPlayers(this.value)">
+        <div class="range-label">
+            <span id="maxPlayersMinLabel">2</span>
+            <span id="maxPlayersValue">2</span>
+            <span>10</span>
+        </div>
     </div>
-    <div class="lds-dual-ring" name="loadingSpinner1"></div>
+
+    <div class="form-field">
+        <label for="spawnTime">Spawn Selection Time Period (seconds):</label>
+        <input type="range" id="spawnTime" name="spawnTime" min="0" max="10" value="10" step="1"
+            oninput="document.getElementById('spawnValue').textContent = this.value + 's';">
+        <div class="range-label">
+            <span>0s</span>
+            <span id="spawnValue">10s</span>
+            <span>10s</span>
+        </div>
+    </div>
+
+    <button class="submit-btn" id="btnHostSession">Host Session</button>
+    <button class="submit-btn" id="btnCancel">Cancel</button>
+
+    <div class="lds-dual-ring" id="loadingSpinner1"></div>
 </div>
+
+<script>
+    function updateMinPlayers(value) {
+        const minVal = parseInt(value);
+        const maxSlider = document.getElementById('maxPlayers');
+
+        document.getElementById('minPlayersValue').textContent = minVal;
+
+        // Adjust max slider if needed
+        maxSlider.min = minVal;
+        document.getElementById('maxPlayersMinLabel').textContent = minVal;
+
+        if (parseInt(maxSlider.value) < minVal) {
+            maxSlider.value = minVal;
+            document.getElementById('maxPlayersValue').textContent = minVal;
+        }
+    }
+
+    function updateMaxPlayers(value) {
+        document.getElementById('maxPlayersValue').textContent = value;
+    }
+</script>

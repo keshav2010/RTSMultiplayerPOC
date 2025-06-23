@@ -20,10 +20,8 @@ export default {
       await room.unlock();
     }
 
-    const atleastMinimumPlayersJoined =
-      sessionState.players.size >= SERVER_CONFIG.MINIMUM_PLAYERS_PER_SESSION;
-    const allClientsLoaded =
-      sessionState.countLoadedPlayers() >= sessionState.players.size;
+    const atleastMinimumPlayersJoined = sessionState.players.size >= sessionState.minPlayers;
+    const allClientsLoaded = sessionState.countLoadedPlayers() >= sessionState.players.size;
 
     if (!allClientsLoaded) {
       sessionState.countdown = SERVER_CONFIG.COUNTDOWN;
