@@ -4,6 +4,13 @@ import { nanoid } from "nanoid";
 import { SERVER_CONFIG } from "../config";
 import { TilemapState } from "./TilemapState";
 
+export interface SessionOptions {
+  minPlayers: number;
+  maxPlayers: number;
+  spawnSelectionTimer: number;
+  lobbyWaitTmer: number;
+  sessionName: string;
+}
 export class SessionState extends Schema {
   // Key : sessionId
   @type({ map: PlayerState }) players = new MapSchema<PlayerState>();
@@ -12,13 +19,21 @@ export class SessionState extends Schema {
     | "SPAWN_SELECTION_STATE"
     | "BATTLE_STATE"
     | "BATTLE_END_STATE" = "SESSION_LOBBY_STATE";
+
   @type("number") countdown: number = SERVER_CONFIG.COUNTDOWN_DEFAULT;
   @type("string") mapId: string = "map1";
   @type(TilemapState) tilemap = new TilemapState();
 
   captureFlagIdToParentId: Map<string, string> = new Map<string, string>();
-  constructor() {
+  @type("number") minPlayers: number;
+  @type("number") maxPlayers: number;
+  @type("string") sessionName: string;
+  constructor(sessionOpts : SessionOptions) {
     super();
+    this.sessionName = sessionOpts.sessionName;
+    this.countdown = sessionOpts.spawnSelectionTimer;
+    this.minPlayers = sessionOpts.minPlayers || SERVER_CONFIG.MINIMUM_PLAYERS_PER_SESSION;
+    this.maxPlayers = sessionOpts.maxPlayers;
   }
 
   public addPlayer(

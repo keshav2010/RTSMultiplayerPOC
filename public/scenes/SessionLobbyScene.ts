@@ -25,7 +25,7 @@ function removePlayerList(dom: Phaser.GameObjects.DOMElement) {
   });
 }
 
-function addPlayerInfo(dom: Phaser.GameObjects.DOMElement, players: PlayerState[]) {
+function addPlayerInfo(dom: Phaser.GameObjects.DOMElement, players: PlayerState[] = []) {
   removePlayerList(dom);
   // Access the underlying HTML element
   const htmlElement = dom.node;
