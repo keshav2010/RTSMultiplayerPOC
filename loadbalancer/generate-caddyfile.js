@@ -23,5 +23,5 @@ for (const { path, target } of entries) {
 caddyConfig += "}\n";
 
 console.log(caddyConfig);
-fs.writeFileSync("Caddyfile", caddyConfig);
+fs.writeFileSync("/etc/caddy/Caddyfile", caddyConfig);
 console.log("✅ Caddyfile generated!");
