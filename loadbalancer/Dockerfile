@@ -1,13 +1,12 @@
 FROM node:18 AS generator
 WORKDIR /app
 
-# Copy project files first
-COPY . .
-
-# Install dependencies
+# Only copy what's needed from the subfolder
+COPY loadbalancer/generate-caddyfile.js .
+# Install dotenv
 RUN npm install dotenv
 
-# Now run the script
+# Run the script
 RUN node generate-caddyfile.js
 
 FROM caddy:2.7.5

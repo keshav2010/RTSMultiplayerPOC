@@ -1,7 +1,7 @@
 const fs = require("fs");
 
-const domain = 'asd.com'// process.env.DOMAIN;
-const rawPaths = 'ws='// process.env.PROXY_PATHS;
+const domain =  process.env.DOMAIN;
+const rawPaths = process.env.PROXY_PATHS;
 
 if (!domain || !rawPaths) {
   console.error("Missing DOMAIN or PROXY_PATHS env variable");
