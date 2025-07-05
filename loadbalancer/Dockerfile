@@ -10,8 +10,9 @@ RUN npm install dotenv
 FROM caddy:2.7.5
 
 # Copy generate-caddyfile script
-COPY --from=builder /app/generate-caddyfile.js /app/generate-caddyfile.js
-COPY --from=builder /app/node_modules /app/node_modules
+COPY loadbalancer/generate-caddyfile.js /app/generate-caddyfile.js
+COPY loadbalancer/entrypoint.sh /entrypoint.sh
+COPY loadbalancer/node_modules /app/node_modules
 
 # Add entrypoint to generate the file before starting Caddy
 COPY --from=builder /app/entrypoint.sh /entrypoint.sh
