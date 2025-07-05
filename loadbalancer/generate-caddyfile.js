@@ -1,4 +1,5 @@
 const fs = require("fs");
+require('dotenv').config();
 
 const domain =  process.env.DOMAIN;
 const rawPaths = process.env.PROXY_PATHS;
