@@ -10,6 +10,7 @@ import SpinnerPlugin from "phaser3-rex-plugins/templates/spinner/spinner-plugin.
 
 import Phaser from "phaser";
 import { TutorialScene } from "./scenes/TutorialScene";
+import { SessionCreateSettingsScene } from "./scenes/SessionCreateSettingsScene";
 const config = {
   type: Phaser.AUTO,
   width: 1200,
@@ -22,6 +23,7 @@ const config = {
   disableContextMenu: true,
   scene: [
     MenuScene,
+    SessionCreateSettingsScene,
     SessionBrowserScene,
     SessionLobbyScene,
     PlayerStatisticHUD,

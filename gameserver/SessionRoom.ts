@@ -1,5 +1,5 @@
 import { Room, Client } from "@colyseus/core";
-import { SessionState } from "./schema/SessionState";
+import { SessionOptions, SessionState } from "./schema/SessionState";
 import { Dispatcher } from "@colyseus/command";
 import { CommandFactory } from "./commands";
 import { OnJoinCommand } from "./commands/OnJoinCommand";
@@ -8,6 +8,7 @@ import { GameStateManager } from "./core/GameStateManager";
 import SessionStateMachineAction from "./stateMachines/server-state-machine/SessionStateBehaviour";
 import SessionStateMachineJSON from "./stateMachines/server-state-machine/SessionStateMachine.json";
 import { PlayerState } from "./schema/PlayerState";
+import { SERVER_CONFIG } from "./config";
 
 export class SessionRoom extends Room<SessionState> {
   maxClients = 10;
@@ -20,8 +21,25 @@ export class SessionRoom extends Room<SessionState> {
   );
 
   onCreate(options: any) {
-    console.log("CREATED GAME SESSION", options);
-    this.setState(new SessionState());
+    console.log("Received Request to Create Game Session with following options ", options);
+    
+    this.setState(new SessionState({
+      spawnSelectionTimer: options.spawnSelectionTimer,
+      minPlayers: options.minPlayers,
+      sessionName: options.name,
+      maxPlayers: options.maxPlayers
+    } as SessionOptions));
+
+    this.setMetadata({
+      spawnSelectionTimer: options.spawnSelectionTimer,
+      minPlayers: options.minPlayers,
+      sessionName: options.name,
+      createdAt: new Date().toISOString(),
+      maxPlayers: options.maxPlayers
+    });
+
+    this.maxClients = options.maxPlayers || 8;
+     
     this.onMessage("*", (client, type, message) => {
       try {
         const commandToDispatch = CommandFactory.createCommand(type as string);

@@ -5,7 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "build-dev": "webpack  --watch --config webpack.config.js && npx tsc",
-    "build": "webpack --watch --config webpack.config.js",
+    "build": "webpack --config webpack.config.js",
     "start": "tsx watch gameserver/index",
     "deploy": "npx tsc && pm2-runtime start ecosystem.config.js",
     "setup-local-infra": "node setup-local-infra.js"
