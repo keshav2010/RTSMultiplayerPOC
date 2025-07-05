@@ -34,6 +34,7 @@ export class SessionRoom extends Room<SessionState> {
       spawnSelectionTimer: options.spawnSelectionTimer,
       minPlayers: options.minPlayers,
       sessionName: options.name,
+      createdAt: new Date().toISOString(),
       maxPlayers: options.maxPlayers
     });
 

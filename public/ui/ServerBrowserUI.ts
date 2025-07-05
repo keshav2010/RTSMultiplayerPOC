@@ -8,6 +8,7 @@ interface ServerSession {
   minPlayers: number;
   maxPlayers: number;
   clients: number;
+  createdAt: string;
 }
 
 export class ServerBrowserUI {
