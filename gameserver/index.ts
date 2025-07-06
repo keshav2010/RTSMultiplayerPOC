@@ -121,7 +121,8 @@ const redisOption = {
   port: Number(process.env.REDIS_PORT),
   username: process.env.REDIS_USERNAME,
   maxRetriesPerRequest: 3,
-  password: process.env.REDIS_PASSWORD
+  password: process.env.REDIS_PASSWORD,
+  family: 4
 }
 
 console.log({ENV: process.env.NODE_ENV})
