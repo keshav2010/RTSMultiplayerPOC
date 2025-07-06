@@ -1,5 +1,0 @@
-apiVersion: v2
-name: registry
-description: A Helm chart for a local Docker registry
-version: 0.1.0
-appVersion: "2.0.0"
