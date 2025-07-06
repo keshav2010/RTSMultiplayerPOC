@@ -3,12 +3,12 @@ const os = require('os');
 require('dotenv').config();
 module.exports = {
     apps: [{
-        port        : 3000,
+        port        : process.env.PORT || 3000,
         name        : "colyseus-rts-gameserver",
         script      : "gameserver_dist/gameserver/index.js", // your entrypoint file
         time        : true,
         watch       : process.env.NODE_ENV !== 'production',           // optional
-        instances   : 1, //Math.max(os.cpus().length-1, 1),
+        instances   : Math.max(os.cpus().length-1, 1),
         wait_ready  : process.env.NODE_ENV === 'production',
         exec_mode   : 'fork',         // IMPORTANT: do not use cluster mode.
         env: {
