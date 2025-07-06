@@ -7,7 +7,7 @@ RUN apk add --no-cache bash curl
 RUN mkdir -p /var/log/nginx
 
 # Copy custom NGINX config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # Optionally serve a landing page
 COPY public/ /usr/share/nginx/html
