@@ -11,7 +11,7 @@ module.exports = {
         script      : "gameserver_dist/gameserver/index.js", // your entrypoint file
         time        : true,
         watch       : process.env.NODE_ENV !== 'production',           // optional
-        instances   : process.env.FIX_INSTANCEMath.max(os.cpus().length-1, 1),
+        instances   : process.env.FIX_INSTANCE ? Number(process.env.FIX_INSTANCE_COUNT) : Math.max(os.cpus().length-1, 1),
         wait_ready  : process.env.NODE_ENV === 'production',
         exec_mode   : 'fork',         // IMPORTANT: do not use cluster mode.
         env: {
